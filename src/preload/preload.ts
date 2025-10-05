@@ -38,7 +38,7 @@ const api: PreloadAPI = {
   },
   files: { read: (p) => ipcRenderer.invoke('file:read', p) },
   annotations: {
-    add: (payload) => ipcRenderer.invoke('annotations:add', payload)
+    add: (payload) => ipcRenderer.invoke('annotations:add', payload),
   },
 };
 

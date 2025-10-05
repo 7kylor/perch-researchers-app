@@ -7,7 +7,7 @@ GlobalWorkerOptions.workerSrc = workerSrc as unknown as string;
 
 type Props = { filePath: string; paperId: string };
 
-export function PdfReader({ filePath, paperId }: Props): JSX.Element {
+export function PdfReader({ filePath, paperId }: Props) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [pageNum, setPageNum] = React.useState(1);
   const [numPages, setNumPages] = React.useState<number>(1);

@@ -79,28 +79,75 @@ ipcMain.handle('file:read', async (_e, absPath: string) => {
   return fs.promises.readFile(absPath);
 });
 
-ipcMain.handle('annotations:add', (_e, payload: {
-  paperId: string;
-  page: number;
+ipcMain.handle(
+  'annotations:add',
+  (
+    _e,
+    payload: {
+      paperId: string;
+      page: number;
+      color: string;
+      note?: string;
+      tags: string[];
+      anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
+    },
+  ) => {
+    const id = uuid();
+    const now = new Date().toISOString();
+    db.prepare(
+      `insert into annotations (id, paperId, page, color, note, tags, anchors, createdAt)
+             values (@id, @paperId, @page, @color, @note, @tags, @anchors, @createdAt)`,
+    ).run({
+      id,
+      paperId: payload.paperId,
+      page: payload.page,
+      color: payload.color,
+      note: payload.note ?? null,
+      tags: JSON.stringify(payload.tags),
+      anchors: JSON.stringify(payload.anchors),
+      createdAt: now,
+    });
+    return id;
+  },
+);
+
+ipcMain.handle('annotations:getByPaper', (_e, paperId: string) => {
+  const rows = db.prepare(`select * from annotations where paperId = ? order by page, createdAt`).all(paperId);
+  return rows.map((r) => ({
+    ...r,
+    tags: JSON.parse(r.tags as string),
+    anchors: JSON.parse(r.anchors as string)
+  }));
+});
+
+ipcMain.handle('annotations:update', (_e, id: string, updates: Partial<{
   color: string;
   note?: string;
   tags: string[];
-  anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
-}) => {
-  const id = uuid();
-  const now = new Date().toISOString();
-  db.prepare(`insert into annotations (id, paperId, page, color, note, tags, anchors, createdAt)
-             values (@id, @paperId, @page, @color, @note, @tags, @anchors, @createdAt)`).run({
-    id,
-    paperId: payload.paperId,
-    page: payload.page,
-    color: payload.color,
-    note: payload.note ?? null,
-    tags: JSON.stringify(payload.tags),
-    anchors: JSON.stringify(payload.anchors),
-    createdAt: now
-  });
-  return id;
+}>) => {
+  const fields: string[] = [];
+  const values: Record<string, unknown> = { id };
+
+  if (updates.color) {
+    fields.push('color = @color');
+    values.color = updates.color;
+  }
+  if (updates.note !== undefined) {
+    fields.push('note = @note');
+    values.note = updates.note ?? null;
+  }
+  if (updates.tags) {
+    fields.push('tags = @tags');
+    values.tags = JSON.stringify(updates.tags);
+  }
+
+  if (fields.length > 0) {
+    db.prepare(`update annotations set ${fields.join(', ')} where id = @id`).run(values);
+  }
+});
+
+ipcMain.handle('annotations:delete', (_e, id: string) => {
+  db.prepare(`delete from annotations where id = ?`).run(id);
 });
 
 function sanitizeForFts(input: string): string | null {
