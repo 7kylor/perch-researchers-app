@@ -22,6 +22,22 @@ export type PreloadAPI = {
       tags: string[];
       anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
     }) => Promise<string>;
+    getByPaper: (paperId: string) => Promise<Array<{
+      id: string;
+      paperId: string;
+      page: number;
+      color: string;
+      note?: string;
+      tags: string[];
+      anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
+      createdAt: string;
+    }>>;
+    update: (id: string, updates: Partial<{
+      color: string;
+      note?: string;
+      tags: string[];
+    }>) => Promise<void>;
+    delete: (id: string) => Promise<void>;
   };
 };
 
@@ -39,6 +55,9 @@ const api: PreloadAPI = {
   files: { read: (p) => ipcRenderer.invoke('file:read', p) },
   annotations: {
     add: (payload) => ipcRenderer.invoke('annotations:add', payload),
+    getByPaper: (paperId) => ipcRenderer.invoke('annotations:getByPaper', paperId),
+    update: (id, updates) => ipcRenderer.invoke('annotations:update', id, updates),
+    delete: (id) => ipcRenderer.invoke('annotations:delete', id),
   },
 };
 
