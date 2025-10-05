@@ -1,124 +1,94 @@
 import React from 'react';
+import { X } from 'lucide-react';
 
-type Props = {
+type SettingsPanelProps = {
   onClose: () => void;
 };
 
-export function SettingsPanel({ onClose }: Props) {
-  const [aiType, setAiType] = React.useState<'local' | 'openai'>('local');
-  const [apiKey, setApiKey] = React.useState('');
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const [theme, setTheme] = React.useState<'light' | 'dark' | 'system'>('system');
-  const [language, setLanguage] = React.useState<'en' | 'ar'>('en');
 
-  const handleSave = async () => {
-    // Initialize AI provider
-    if (aiType === 'openai' && apiKey) {
-      await window.api.ai.init('openai', apiKey);
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    // Apply theme to document
+    if (newTheme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+      document.documentElement.dataset.theme = systemTheme;
     } else {
-      await window.api.ai.init('local');
+      document.documentElement.dataset.theme = newTheme;
     }
-
-    // Save theme preference (would be stored in localStorage or DB)
-    if (theme !== 'system') {
-      document.documentElement.dataset.theme = theme;
-    }
-
-    // Save language preference
-    // In a real app, this would update the i18n system
-
-    onClose();
+    // Save to localStorage
+    localStorage.setItem('theme', newTheme);
   };
+
+  React.useEffect(() => {
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      handleThemeChange(savedTheme);
+    }
+  }, []);
 
   return (
     <div className="settings-overlay">
       <div className="settings-panel">
         <div className="settings-header">
           <h2>Settings</h2>
-          <button type="button" className="btn" onClick={onClose}>
-            Close
+          <button type="button" className="settings-close" onClick={onClose}>
+            <X size={20} />
           </button>
         </div>
-
         <div className="settings-content">
-          <div className="settings-section">
-            <h3>AI Provider</h3>
-            <div className="setting-item">
-              <label>
-                <input
-                  type="radio"
-                  value="local"
-                  checked={aiType === 'local'}
-                  onChange={(e) => setAiType(e.target.value as 'local')}
-                />
-                Local AI (Free)
-              </label>
-            </div>
-            <div className="setting-item">
-              <label>
-                <input
-                  type="radio"
-                  value="openai"
-                  checked={aiType === 'openai'}
-                  onChange={(e) => setAiType(e.target.value as 'openai')}
-                />
-                OpenAI (Requires API Key)
-              </label>
-              {aiType === 'openai' && (
-                <input
-                  type="password"
-                  placeholder="OpenAI API Key"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="input"
-                />
-              )}
-            </div>
-          </div>
-
           <div className="settings-section">
             <h3>Appearance</h3>
             <div className="setting-item">
-              <label>Theme:</label>
-              <select value={theme} onChange={(e) => setTheme(e.target.value as any)}>
-                <option value="system">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
+              <label>Theme</label>
+              <div className="theme-options">
+                <button
+                  type="button"
+                  className={`theme-btn ${theme === 'light' ? 'active' : ''}`}
+                  onClick={() => handleThemeChange('light')}
+                >
+                  Light
+                </button>
+                <button
+                  type="button"
+                  className={`theme-btn ${theme === 'dark' ? 'active' : ''}`}
+                  onClick={() => handleThemeChange('dark')}
+                >
+                  Dark
+                </button>
+                <button
+                  type="button"
+                  className={`theme-btn ${theme === 'system' ? 'active' : ''}`}
+                  onClick={() => handleThemeChange('system')}
+                >
+                  System
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="settings-section">
-            <h3>Language</h3>
+            <h3>Library</h3>
             <div className="setting-item">
-              <label>Language:</label>
-              <select value={language} onChange={(e) => setLanguage(e.target.value as any)}>
-                <option value="en">English</option>
-                <option value="ar">العربية</option>
-              </select>
+              <label>Default View</label>
+              <div className="setting-info">Grid view (List view removed)</div>
             </div>
           </div>
 
           <div className="settings-section">
-            <h3>Subscription</h3>
+            <h3>About</h3>
             <div className="setting-item">
-              <p className="muted">
-                Free tier: 5 AI actions per day
-                <br />
-                Pro tier: Unlimited AI, OCR, sync, and more
-              </p>
-              <button type="button" className="btn primary">
-                Upgrade to Pro
-              </button>
+              <label>Version</label>
+              <div className="setting-info">Researchers App v1.0.0</div>
             </div>
           </div>
-        </div>
-
-        <div className="settings-footer">
-          <button type="button" className="btn primary" onClick={handleSave}>
-            Save Settings
-          </button>
         </div>
       </div>
     </div>
   );
-}
+};

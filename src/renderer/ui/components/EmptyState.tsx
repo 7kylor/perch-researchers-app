@@ -1,4 +1,5 @@
-import type React from 'react';
+import React from 'react';
+import { BookOpen } from 'lucide-react';
 
 type EmptyStateProps = {
   category: string;
@@ -8,20 +9,26 @@ type EmptyStateProps = {
 export const EmptyState: React.FC<EmptyStateProps> = ({ category, onAddItem }) => {
   const getCategoryDisplayName = (categoryId: string) => {
     switch (categoryId) {
+      case 'all':
+        return 'papers';
+      case 'recent':
+        return 'recent papers';
       case 'ai-models':
-        return 'AI Models';
+        return 'AI models';
       case 'ml':
-        return 'ML';
+        return 'ML papers';
       case 'segmentation':
-        return 'Segmentation';
+        return 'segmentation papers';
       default:
-        return 'Library';
+        return 'papers';
     }
   };
 
   return (
     <div className="empty-state">
-      <div className="empty-icon">📚</div>
+      <div className="empty-icon">
+        <BookOpen size={48} />
+      </div>
       <h3 className="empty-title">No {getCategoryDisplayName(category)} found</h3>
       <p className="empty-description">
         Start building your library by adding your first paper or document.

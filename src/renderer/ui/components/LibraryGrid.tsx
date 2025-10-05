@@ -19,17 +19,31 @@ type LibraryGridProps = {
   papers: Paper[];
   category: string;
   onPaperSelect: (id: string) => void;
+  selectedPapers: Set<string>;
+  isSelectionMode: boolean;
+  onToggleSelection: (id: string) => void;
 };
 
-export const LibraryGrid: React.FC<LibraryGridProps> = ({ papers, category, onPaperSelect }) => {
+export const LibraryGrid: React.FC<LibraryGridProps> = ({
+  papers,
+  category,
+  onPaperSelect,
+  selectedPapers,
+  isSelectionMode,
+  onToggleSelection,
+}) => {
   const getCategoryDisplayName = (categoryId: string) => {
     switch (categoryId) {
+      case 'all':
+        return 'All Papers';
+      case 'recent':
+        return 'Recent';
       case 'ai-models':
-        return '2025 AI Models';
+        return 'AI Models';
       case 'ml':
-        return '2025 ML';
+        return 'ML';
       case 'segmentation':
-        return '2025 Segmentation';
+        return 'Segmentation';
       default:
         return 'Library Items';
     }
@@ -65,12 +79,19 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({ papers, category, onPa
           <LibraryCard
             id={paper.id}
             title={paper.title}
-            identifier={getPaperIdentifier(paper)}
+            authors={paper.authors}
+            venue={paper.venue}
+            year={paper.year}
+            doi={paper.doi}
+            abstract={paper.abstract}
             status={getPaperStatus(paper)}
             category={getCategoryDisplayName(category)}
             isNew={index < 5} // Mark first 5 as new
             count={0} // TODO: Add comment/note count
             onClick={onPaperSelect}
+            isSelected={selectedPapers.has(paper.id)}
+            isSelectionMode={isSelectionMode}
+            onToggleSelection={onToggleSelection}
           />
         </div>
       ))}

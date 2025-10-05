@@ -61,21 +61,6 @@ export function openDatabase(): Database.Database {
       dim integer not null,
       createdAt text not null
     );
-
-    create virtual table if not exists embeddings_vss using vss0(
-      vector(384),
-      paperId unindexed,
-      chunkId unindexed,
-      model unindexed,
-      dim unindexed,
-      createdAt unindexed
-    );
-    create trigger if not exists embeddings_vss_ai after insert on embeddings begin
-      insert into embeddings_vss(rowid, vector) values (new.rowid, new.vector);
-    end;
-    create trigger if not exists embeddings_vss_ad after delete on embeddings begin
-      insert into embeddings_vss(embeddings_vss, rowid, vector) values ('delete', old.rowid, old.vector);
-    end;
   `);
   return db as unknown as Database.Database;
 }
