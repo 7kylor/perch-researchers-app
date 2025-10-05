@@ -28,6 +28,16 @@ export function openDatabase(): Database.Database {
       addedAt text not null,
       updatedAt text not null
     );
+    create table if not exists annotations (
+      id text primary key,
+      paperId text not null,
+      page integer,
+      color text not null,
+      note text,
+      tags text not null,
+      anchors text not null,
+      createdAt text not null
+    );
     create virtual table if not exists papers_fts using fts5(
       title, abstract, content='papers', content_rowid='rowid'
     );

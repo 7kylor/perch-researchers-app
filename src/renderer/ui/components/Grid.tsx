@@ -8,7 +8,7 @@ export const Grid: React.FC<GridProps> = ({ items }) => {
   return (
     <div className="grid-cards">
       {items.map((i) => (
-        <div key={i.id} className="card">
+        <div key={i.id} className="card" data-id={i.id}>
           <div className="card-title">{i.title}</div>
           {i.meta && <div className="card-meta">{i.meta}</div>}
         </div>

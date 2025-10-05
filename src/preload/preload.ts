@@ -6,10 +6,22 @@ export type PreloadAPI = {
   papers: {
     add: (paper: Omit<Paper, 'id' | 'addedAt' | 'updatedAt'>) => Promise<string>;
     search: (q: string) => Promise<Paper[]>;
+    get: (id: string) => Promise<Paper | null>;
   };
   ingest: {
     doi: (doi: string) => Promise<string>;
     pdf: (absPath: string) => Promise<string>;
+  };
+  files: { read: (absPath: string) => Promise<Uint8Array> };
+  annotations: {
+    add: (payload: {
+      paperId: string;
+      page: number;
+      color: string;
+      note?: string;
+      tags: string[];
+      anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
+    }) => Promise<string>;
   };
 };
 
@@ -18,10 +30,15 @@ const api: PreloadAPI = {
   papers: {
     add: (paper) => ipcRenderer.invoke('papers:add', paper),
     search: (q) => ipcRenderer.invoke('papers:search', q),
+    get: (id) => ipcRenderer.invoke('papers:get', id),
   },
   ingest: {
     doi: (doi) => ipcRenderer.invoke('import:doi', doi),
     pdf: (p) => ipcRenderer.invoke('import:pdf', p),
+  },
+  files: { read: (p) => ipcRenderer.invoke('file:read', p) },
+  annotations: {
+    add: (payload) => ipcRenderer.invoke('annotations:add', payload)
   },
 };
 

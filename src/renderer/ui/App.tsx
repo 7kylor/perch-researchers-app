@@ -1,5 +1,6 @@
 import React from 'react';
 import { Grid } from './components/Grid';
+import { PdfReader } from './components/PdfReader';
 
 function useSystemTheme(): 'light' | 'dark' {
   const [theme, setTheme] = React.useState<'light' | 'dark'>(
@@ -51,6 +52,8 @@ export const App: React.FC = () => {
 const LibraryDemo: React.FC = () => {
   const [q, setQ] = React.useState('');
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
+  const [openId, setOpenId] = React.useState<string | null>(null);
+  const openPaper = (id: string) => setOpenId(id);
 
   const onSearch = async () => {
     const rows = await window.api.papers.search(q || '*');
@@ -90,13 +93,45 @@ const LibraryDemo: React.FC = () => {
           Add demo
         </button>
       </div>
-      <Grid
-        items={results.map((p) => ({
-          id: p.id,
-          title: p.title,
-          meta: [p.venue, String(p.year ?? '')].filter(Boolean).join(' • '),
-        }))}
-      />
+      <div
+        onClick={(e) => {
+          const t = (e.target as HTMLElement).closest('[data-id]') as HTMLElement | null;
+          if (t) openPaper(t.dataset.id as string);
+        }}
+      >
+        <Grid
+          items={results.map((p) => ({
+            id: p.id,
+            title: p.title,
+            meta: [p.venue, String(p.year ?? '')].filter(Boolean).join(' • '),
+          }))}
+        />
+      </div>
+      {openId && <PaperViewer id={openId} onClose={() => setOpenId(null)} />}
+    </div>
+  );
+};
+
+const PaperViewer: React.FC<{ id: string; onClose: () => void }> = ({ id, onClose }) => {
+  const [paper, setPaper] = React.useState<import('../../shared/types').Paper | null>(null);
+  React.useEffect(() => {
+    window.api.papers.get(id).then(setPaper);
+  }, [id]);
+  if (!paper) return null;
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="grid">
+        <div className="h1">{paper.title}</div>
+        <div className="spacer" />
+        <button className="btn" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      {paper.filePath ? (
+        <PdfReader filePath={paper.filePath} paperId={paper.id} />
+      ) : (
+        <div className="muted">No file attached.</div>
+      )}
     </div>
   );
 };

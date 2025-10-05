@@ -3,6 +3,8 @@ import { openDatabase } from './db';
 import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types';
 import { importByDOI, importPDF } from './ingest/importer';
+import fs from 'node:fs';
+import { randomUUID as uuid } from 'node:crypto';
 
 const db = openDatabase();
 
@@ -65,6 +67,40 @@ ipcMain.handle('import:doi', async (_e, doi: string) => {
 ipcMain.handle('import:pdf', async (_e, absPath: string) => {
   const partial = await importPDF(absPath);
   return insertPaper(partial);
+});
+
+ipcMain.handle('papers:get', (_e, id: string) => {
+  const row = db.prepare(`select * from papers where id = ?`).get(id) as DBPaperRow | undefined;
+  if (!row) return null;
+  return { ...row, authors: JSON.parse(row.authors) } as Paper;
+});
+
+ipcMain.handle('file:read', async (_e, absPath: string) => {
+  return fs.promises.readFile(absPath);
+});
+
+ipcMain.handle('annotations:add', (_e, payload: {
+  paperId: string;
+  page: number;
+  color: string;
+  note?: string;
+  tags: string[];
+  anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
+}) => {
+  const id = uuid();
+  const now = new Date().toISOString();
+  db.prepare(`insert into annotations (id, paperId, page, color, note, tags, anchors, createdAt)
+             values (@id, @paperId, @page, @color, @note, @tags, @anchors, @createdAt)`).run({
+    id,
+    paperId: payload.paperId,
+    page: payload.page,
+    color: payload.color,
+    note: payload.note ?? null,
+    tags: JSON.stringify(payload.tags),
+    anchors: JSON.stringify(payload.anchors),
+    createdAt: now
+  });
+  return id;
 });
 
 function sanitizeForFts(input: string): string | null {
