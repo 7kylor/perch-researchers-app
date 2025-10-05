@@ -16,7 +16,10 @@ type Props = {
   annotations: Annotation[];
   onAnnotationSelect: (annotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
-  onAnnotationUpdate: (id: string, updates: Partial<{ color: string; note?: string; tags: string[] }>) => void;
+  onAnnotationUpdate: (
+    id: string,
+    updates: Partial<{ color: string; note?: string; tags: string[] }>,
+  ) => void;
   selectedAnnotationId?: string;
 };
 
@@ -26,7 +29,7 @@ export function Sidebar({
   onAnnotationSelect,
   onAnnotationDelete,
   onAnnotationUpdate,
-  selectedAnnotationId
+  selectedAnnotationId,
 }: Props) {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editNote, setEditNote] = React.useState('');
@@ -109,9 +112,7 @@ export function Sidebar({
                   </button>
                 </div>
               ) : (
-                <div className="highlight-note">
-                  {annotation.note || 'No note'}
-                </div>
+                <div className="highlight-note">{annotation.note || 'No note'}</div>
               )}
 
               {annotation.tags.length > 0 && (

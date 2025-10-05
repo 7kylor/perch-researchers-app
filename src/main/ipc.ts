@@ -4,7 +4,9 @@ import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types';
 import { importByDOI, importPDF } from './ingest/importer';
 import fs from 'node:fs';
-import { randomUUID as uuid } from 'node:crypto';
+import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline';
+import { createRAGSystem } from './ai/rag';
+import { processPaperOCR } from './ocr/batch';
 
 const db = openDatabase();
 
@@ -92,7 +94,7 @@ ipcMain.handle(
       anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
     },
   ) => {
-    const id = uuid();
+    const id = randomUUID();
     const now = new Date().toISOString();
     db.prepare(
       `insert into annotations (id, paperId, page, color, note, tags, anchors, createdAt)
@@ -111,43 +113,104 @@ ipcMain.handle(
   },
 );
 
+type DBAnnotationRow = {
+  id: string;
+  paperId: string;
+  page: number;
+  color: string;
+  note?: string;
+  tags: string;
+  anchors: string;
+  createdAt: string;
+};
+
 ipcMain.handle('annotations:getByPaper', (_e, paperId: string) => {
-  const rows = db.prepare(`select * from annotations where paperId = ? order by page, createdAt`).all(paperId);
+  const rows = db
+    .prepare(`select * from annotations where paperId = ? order by page, createdAt`)
+    .all(paperId) as DBAnnotationRow[];
   return rows.map((r) => ({
     ...r,
-    tags: JSON.parse(r.tags as string),
-    anchors: JSON.parse(r.anchors as string)
+    tags: JSON.parse(r.tags),
+    anchors: JSON.parse(r.anchors),
   }));
 });
 
-ipcMain.handle('annotations:update', (_e, id: string, updates: Partial<{
-  color: string;
-  note?: string;
-  tags: string[];
-}>) => {
-  const fields: string[] = [];
-  const values: Record<string, unknown> = { id };
+ipcMain.handle(
+  'annotations:update',
+  (
+    _e,
+    id: string,
+    updates: Partial<{
+      color: string;
+      note?: string;
+      tags: string[];
+    }>,
+  ) => {
+    const fields: string[] = [];
+    const values: Record<string, unknown> = { id };
 
-  if (updates.color) {
-    fields.push('color = @color');
-    values.color = updates.color;
-  }
-  if (updates.note !== undefined) {
-    fields.push('note = @note');
-    values.note = updates.note ?? null;
-  }
-  if (updates.tags) {
-    fields.push('tags = @tags');
-    values.tags = JSON.stringify(updates.tags);
-  }
+    if (updates.color) {
+      fields.push('color = @color');
+      values['color'] = updates.color;
+    }
+    if (updates.note !== undefined) {
+      fields.push('note = @note');
+      values['note'] = updates.note ?? null;
+    }
+    if (updates.tags) {
+      fields.push('tags = @tags');
+      values['tags'] = JSON.stringify(updates.tags);
+    }
 
-  if (fields.length > 0) {
-    db.prepare(`update annotations set ${fields.join(', ')} where id = @id`).run(values);
-  }
-});
+    if (fields.length > 0) {
+      db.prepare(`update annotations set ${fields.join(', ')} where id = @id`).run(values);
+    }
+  },
+);
 
 ipcMain.handle('annotations:delete', (_e, id: string) => {
   db.prepare(`delete from annotations where id = ?`).run(id);
+});
+
+ipcMain.handle('embeddings:process', async (_e, paperId: string, text: string) => {
+  await processPaperForEmbeddings(paperId, text);
+});
+
+ipcMain.handle('search:similar', async (_e, query: string, limit = 10) => {
+  return await searchSimilarPapers(query, limit);
+});
+
+// RAG system instance (global for the app)
+let ragSystem: ReturnType<typeof createRAGSystem> | null = null;
+
+ipcMain.handle('ai:init', (_e, type: 'openai' | 'local', apiKey?: string) => {
+  ragSystem = createRAGSystem(type, apiKey);
+});
+
+ipcMain.handle('ai:summarize', async (_e, paperId: string) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.summarizePaper(paperId);
+});
+
+ipcMain.handle('ai:question', async (_e, question: string, paperId?: string) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.answerQuestion(question, paperId);
+});
+
+ipcMain.handle('ai:related', async (_e, query: string) => {
+  if (!ragSystem) return [];
+  ragSystem.incrementUsage();
+  return await ragSystem.generateRelatedPapers(query);
+});
+
+ipcMain.handle('ai:usage', () => {
+  return ragSystem?.getUsageCount() || 0;
+});
+
+ipcMain.handle('ocr:process', async (_e, paperId: string, pdfPath: string) => {
+  return await processPaperOCR(paperId, pdfPath);
 });
 
 function sanitizeForFts(input: string): string | null {

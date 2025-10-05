@@ -26,3 +26,13 @@ export const annotations = sqliteTable('annotations', {
   anchors: text('anchors').notNull(), // JSON string
   createdAt: text('createdAt').notNull(),
 });
+
+export const embeddings = sqliteTable('embeddings', {
+  id: text('id').primaryKey().notNull(),
+  paperId: text('paperId').notNull(),
+  chunkId: text('chunkId').notNull(),
+  vector: text('vector').notNull(), // JSON string of float array
+  model: text('model').notNull(),
+  dim: integer('dim').notNull(),
+  createdAt: text('createdAt').notNull(),
+});

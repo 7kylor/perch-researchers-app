@@ -15,6 +15,11 @@
     "format": "prettier -w .",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test && npm run test:e2e",
     "rebuild": "electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -62,10 +67,14 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "readability-js": "^1.0.7",
+    "sqlite-vss": "^0.1.2",
     "tesseract.js": "^6.0.1",
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.6.2",
     "@types/react": "^19.2.0",
@@ -73,6 +82,7 @@
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/ui": "^3.2.4",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron-builder": "^26.0.12",
@@ -82,10 +92,13 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^6.1.1",
+    "jsdom": "^27.0.0",
+    "playwright": "^1.55.1",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "vite": "^5.4.20",
+    "vitest": "^3.2.4",
     "wait-on": "^9.0.1"
   }
 }
