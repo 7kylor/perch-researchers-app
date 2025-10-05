@@ -16,4 +16,3 @@ export const Grid: React.FC<GridProps> = ({ items }) => {
     </div>
   );
 };
-

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Grid } from './components/Grid';
 
 function useSystemTheme(): 'light' | 'dark' {
   const [theme, setTheme] = React.useState<'light' | 'dark'>(
@@ -89,11 +90,13 @@ const LibraryDemo: React.FC = () => {
           Add demo
         </button>
       </div>
-      <ul>
-        {results.map((p) => (
-          <li key={p.id}>{p.title}</li>
-        ))}
-      </ul>
+      <Grid
+        items={results.map((p) => ({
+          id: p.id,
+          title: p.title,
+          meta: [p.venue, String(p.year ?? '')].filter(Boolean).join(' • '),
+        }))}
+      />
     </div>
   );
 };

@@ -31,7 +31,9 @@ function insertPaper(payload: Omit<Paper, 'id' | 'addedAt' | 'updatedAt'>): stri
   return id;
 }
 
-ipcMain.handle('papers:add', (_e, payload: Omit<Paper, 'id' | 'addedAt' | 'updatedAt'>) => insertPaper(payload));
+ipcMain.handle('papers:add', (_e, payload: Omit<Paper, 'id' | 'addedAt' | 'updatedAt'>) =>
+  insertPaper(payload),
+);
 
 type DBPaperRow = Omit<Paper, 'authors'> & { authors: string };
 
