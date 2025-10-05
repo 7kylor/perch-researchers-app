@@ -1,0 +1,89 @@
+{
+  "name": "researchers-app",
+  "version": "1.0.0",
+  "description": "Local-first Electron app for researchers (papers, annotations, AI)",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm:tsc:watch\" \"vite --port 5173 --strictPort\" \"wait-on tcp:5173 dist/main/index.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "tsc:watch": "tsc -w -p tsconfig.main.json",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "build": "npm run build:main && npm run build:renderer",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "start": "electron .",
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "rebuild": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "build": {
+    "appId": "app.researchers.desktop",
+    "files": [
+      "dist/**",
+      "node_modules/**",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "zip"
+      ]
+    },
+    "directories": {
+      "buildResources": "build"
+    }
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "drizzle-orm": "^0.44.6",
+    "electron": "^31.7.7",
+    "onnxruntime-node": "^1.23.0",
+    "pdfjs-dist": "^5.4.149",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "readability-js": "^1.0.7",
+    "tesseract.js": "^6.0.1",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.6.2",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^6.1.1",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.20",
+    "wait-on": "^9.0.1"
+  }
+}
