@@ -6,6 +6,11 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { LibrarySidebar } from './components/LibrarySidebar';
 import { LibraryHeader } from './components/LibraryHeader';
 import { LibraryGrid } from './components/LibraryGrid';
+import { LoadingSkeleton } from './components/LoadingSkeleton';
+import { EmptyState } from './components/EmptyState';
+import { SearchBar } from './components/SearchBar';
+import { AddItemModal } from './components/AddItemModal';
+import { LibraryList } from './components/LibraryList';
 
 function useSystemTheme(): 'light' | 'dark' {
   const [theme, setTheme] = React.useState<'light' | 'dark'>(
@@ -47,6 +52,10 @@ export const App: React.FC = () => {
   const [showSettings, setShowSettings] = React.useState(false);
   const [selectedCategory, setSelectedCategory] = React.useState('ai-models');
   const [viewMode, setViewMode] = React.useState<'library' | 'reader'>('library');
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [viewType, setViewType] = React.useState<'grid' | 'list'>('grid');
 
   const openPaper = async (id: string) => {
     const paper = await window.api.papers.get(id);
@@ -60,32 +69,86 @@ export const App: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    // TODO: Implement add item functionality
-    console.log('Add item clicked');
+    setShowAddModal(true);
   };
 
   const handleSearch = () => {
-    // TODO: Implement search functionality
-    console.log('Search clicked');
+    // Search is handled by the SearchBar component
   };
 
   const handleToggleView = () => {
-    // TODO: Implement view toggle functionality
-    console.log('Toggle view clicked');
+    setViewType(viewType === 'grid' ? 'list' : 'grid');
+  };
+
+  const handleAddCategory = () => {
+    // TODO: Implement add category functionality
+    console.log('Add category clicked');
+  };
+
+  const handleSettingsClick = () => {
+    setShowSettings(true);
+  };
+
+  const handleAddPaper = async (item: {
+    title: string;
+    authors: string;
+    doi?: string;
+    url?: string;
+  }) => {
+    try {
+      const paperData = {
+        title: item.title,
+        authors: item.authors ? item.authors.split(',').map((a) => a.trim()) : [],
+        venue: undefined,
+        year: undefined,
+        doi: item.doi,
+        source: item.url ? 'url' : 'pdf',
+        abstract: undefined,
+        status: 'to_read',
+        filePath: undefined,
+        textHash: item.doi || item.url || item.title,
+      };
+
+      await window.api.papers.add(paperData);
+
+      // Refresh the papers list
+      const papers = await window.api.papers.search(searchQuery || '*');
+      setResults(papers);
+    } catch (error) {
+      console.error('Failed to add paper:', error);
+      throw error;
+    }
+  };
+
+  const handleSearchChange = async (query: string) => {
+    setSearchQuery(query);
+    setIsLoading(true);
+
+    try {
+      const papers = await window.api.papers.search(query || '*');
+      setResults(papers);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Load papers on mount
   React.useEffect(() => {
     const loadPapers = async () => {
       try {
-        const papers = await window.api.papers.search('*');
+        setIsLoading(true);
+        const papers = await window.api.papers.search(searchQuery || '*');
         setResults(papers);
       } catch (error) {
         console.error('Failed to load papers:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     loadPapers();
-  }, []);
+  }, [searchQuery]);
 
   const handleAnnotationSelect = (annotation: Annotation) => {
     setSelectedAnnotationId(annotation.id);
@@ -171,6 +234,8 @@ export const App: React.FC = () => {
         <LibrarySidebar
           selectedCategory={selectedCategory}
           onCategorySelect={setSelectedCategory}
+          onAddCategory={handleAddCategory}
+          onSettingsClick={handleSettingsClick}
         />
         <div className="library-main">
           <LibraryHeader
@@ -178,13 +243,28 @@ export const App: React.FC = () => {
             onAddItem={handleAddItem}
             onSearch={handleSearch}
             onToggleView={handleToggleView}
+            viewType={viewType}
           />
+          <SearchBar value={searchQuery} onChange={handleSearchChange} />
           <div className="library-content">
-            <LibraryGrid papers={results} category={selectedCategory} onPaperSelect={openPaper} />
+            {isLoading ? (
+              <LoadingSkeleton count={9} />
+            ) : results.length === 0 ? (
+              <EmptyState category={selectedCategory} onAddItem={handleAddItem} />
+            ) : viewType === 'grid' ? (
+              <LibraryGrid papers={results} category={selectedCategory} onPaperSelect={openPaper} />
+            ) : (
+              <LibraryList papers={results} category={selectedCategory} onPaperSelect={openPaper} />
+            )}
           </div>
         </div>
       </div>
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      <AddItemModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddPaper}
+      />
     </div>
   );
 };

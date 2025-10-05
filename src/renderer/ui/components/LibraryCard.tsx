@@ -12,15 +12,18 @@ type LibraryCardProps = {
 };
 
 const cardColors = [
-  '#8b5cf6', // purple
-  '#a855f7', // violet
-  '#7c3aed', // indigo
-  '#dc2626', // red
-  '#ea580c', // orange
-  '#059669', // emerald
-  '#0891b2', // cyan
-  '#7c2d12', // brown
-  '#4338ca', // blue
+  '#6366f1', // indigo
+  '#8b5cf6', // violet
+  '#a855f7', // purple
+  '#ec4899', // pink
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+  '#ef4444', // red
+  '#84cc16', // lime
+  '#f97316', // orange
+  '#64748b', // slate
 ];
 
 export const LibraryCard: React.FC<LibraryCardProps> = ({

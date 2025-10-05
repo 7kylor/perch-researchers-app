@@ -11,6 +11,8 @@ type Category = {
 type LibrarySidebarProps = {
   selectedCategory: string;
   onCategorySelect: (categoryId: string) => void;
+  onAddCategory: () => void;
+  onSettingsClick: () => void;
 };
 
 const categories: Category[] = [
@@ -22,6 +24,8 @@ const categories: Category[] = [
 export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   selectedCategory,
   onCategorySelect,
+  onAddCategory,
+  onSettingsClick,
 }) => {
   return (
     <aside className="library-sidebar">
@@ -53,16 +57,16 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             <span className="item-count">{category.count}</span>
           </button>
         ))}
-        <div className="sidebar-item add-category">
+        <button type="button" className="sidebar-item add-category" onClick={onAddCategory}>
           <span className="item-text">New category +</span>
-        </div>
+        </button>
       </div>
 
       <div className="sidebar-footer">
-        <div className="sidebar-item">
+        <button type="button" className="sidebar-item" onClick={onSettingsClick}>
           <span className="item-icon">⚙️</span>
           <span className="item-text">Settings</span>
-        </div>
+        </button>
       </div>
     </aside>
   );

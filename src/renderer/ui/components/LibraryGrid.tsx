@@ -55,17 +55,24 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({ papers, category, onPa
   return (
     <div className="library-grid">
       {papers.map((paper, index) => (
-        <LibraryCard
+        <div
           key={paper.id}
-          id={paper.id}
-          title={paper.title}
-          identifier={getPaperIdentifier(paper)}
-          status={getPaperStatus(paper)}
-          category={getCategoryDisplayName(category)}
-          isNew={index < 5} // Mark first 5 as new
-          count={0} // TODO: Add comment/note count
-          onClick={onPaperSelect}
-        />
+          style={{
+            animationDelay: `${index * 0.05}s`,
+            animationFillMode: 'both',
+          }}
+        >
+          <LibraryCard
+            id={paper.id}
+            title={paper.title}
+            identifier={getPaperIdentifier(paper)}
+            status={getPaperStatus(paper)}
+            category={getCategoryDisplayName(category)}
+            isNew={index < 5} // Mark first 5 as new
+            count={0} // TODO: Add comment/note count
+            onClick={onPaperSelect}
+          />
+        </div>
       ))}
     </div>
   );

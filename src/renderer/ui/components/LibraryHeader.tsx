@@ -5,6 +5,7 @@ type LibraryHeaderProps = {
   onAddItem: () => void;
   onSearch: () => void;
   onToggleView: () => void;
+  viewType: 'grid' | 'list';
 };
 
 export const LibraryHeader: React.FC<LibraryHeaderProps> = ({
@@ -12,6 +13,7 @@ export const LibraryHeader: React.FC<LibraryHeaderProps> = ({
   onAddItem,
   onSearch,
   onToggleView,
+  viewType,
 }) => {
   const getCategoryDisplayName = (categoryId: string) => {
     switch (categoryId) {
@@ -38,8 +40,13 @@ export const LibraryHeader: React.FC<LibraryHeaderProps> = ({
         <button type="button" className="header-btn" onClick={onSearch} title="Search">
           <span className="btn-icon">🔍</span>
         </button>
-        <button type="button" className="header-btn" onClick={onToggleView} title="Toggle view">
-          <span className="btn-icon">⊞</span>
+        <button
+          type="button"
+          className="header-btn"
+          onClick={onToggleView}
+          title={`Switch to ${viewType === 'grid' ? 'list' : 'grid'} view`}
+        >
+          <span className="btn-icon">{viewType === 'grid' ? '☰' : '⊞'}</span>
         </button>
       </div>
     </header>
