@@ -54,11 +54,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   }, [counts]);
 
   if (prefs.sidebarCollapsed) {
-    return <nav className="library-sidebar collapsed" aria-label="Library sidebar" />;
+    return <nav className="library-sidebar collapsed" aria-label="Sidebar" />;
   }
 
   return (
-    <nav className="library-sidebar" aria-label="Library sidebar">
+    <nav className="library-sidebar" aria-label="Sidebar">
       <div className="sidebar-grid">
         {/* Quick Stats Header */}
         <div className="sidebar-section stats-section">
@@ -73,10 +73,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
           </div>
         </div>
 
-        {/* Library Section */}
+        {/* Main Navigation Section */}
         <div className="sidebar-section">
           <div className="section-header">
-            <h3 className="section-title">Library</h3>
+            <h3 className="section-title"></h3>
           </div>
           <ul className="section-items">
             <li>
@@ -168,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
         </div>
       </div>
 
-      <SidebarFooter collapsed={false} />
+      <SidebarFooter collapsed={false} user={{ name: 'User', email: 'user@example.com' }} />
     </nav>
   );
 };

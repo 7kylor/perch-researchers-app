@@ -3,6 +3,146 @@ import type { SidebarNode } from '../../../../shared/sidebar';
 import { Folder, Tag, Edit, Trash2 } from 'lucide-react';
 import { ContextMenu } from '../ContextMenu';
 
+// Individual node component for better organization
+type SidebarNodeProps = {
+  node: SidebarNode;
+  depth: number;
+  selectedId: string;
+  collapsedIds: string[];
+  dropTarget: { targetId: string; position: 'before' | 'after' | 'inside' } | null;
+  renamingId: string | null;
+  renameValue: string;
+  onSelect: (id: string) => void;
+  onRenameStart?: (id: string, name: string) => void;
+  onRenameChange?: (value: string) => void;
+  onRenameCommit?: () => void;
+  onRenameCancel?: () => void;
+  onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void;
+  onDragOver?: (e: React.DragEvent<HTMLLIElement>) => void;
+  onDragLeave?: (e: React.DragEvent<HTMLLIElement>) => void;
+  onDrop?: (e: React.DragEvent<HTMLLIElement>) => void;
+  onContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onMouseDown?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onDropOnList?: (e: React.DragEvent<HTMLUListElement>, parentId: string | null) => void;
+};
+
+const SidebarNodeComponent: React.FC<SidebarNodeProps & { node: TreeNode }> = ({
+  node,
+  depth,
+  selectedId,
+  collapsedIds,
+  dropTarget,
+  renamingId,
+  renameValue,
+  onSelect,
+  onRenameStart,
+  onRenameChange,
+  onRenameCommit,
+  onRenameCancel,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onContextMenu,
+  onMouseDown,
+  onDropOnList,
+}) => {
+  const isFolder = node.type === 'folder';
+  const isCollapsed = collapsedIds.includes(node.id);
+  const isDropBefore = dropTarget?.targetId === node.id && dropTarget.position === 'before';
+  const isDropAfter = dropTarget?.targetId === node.id && dropTarget.position === 'after';
+  const isDropInside =
+    dropTarget?.targetId === node.id && dropTarget.position === 'inside' && isFolder;
+  const isRenaming = renamingId === node.id;
+
+  return (
+    <>
+      <li
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        onContextMenu={(e) => onContextMenu?.(e)}
+      >
+        {isDropBefore && <div className="drop-indicator" />}
+        <button
+          type="button"
+          className={`sidebar-item ${selectedId === node.id ? 'selected' : ''} ${isDropInside ? 'drop-into' : ''}`}
+          onClick={() => onSelect(node.id)}
+          onDoubleClick={() => onRenameStart?.(node.id, node.name)}
+          onMouseDown={onMouseDown}
+          draggable
+          onDragStart={onDragStart}
+          onKeyDown={(e) => {
+            if (e.key === 'F2' && onRenameStart) {
+              e.preventDefault();
+              onRenameStart(node.id, node.name);
+            }
+          }}
+        >
+          <span className="item-icon" aria-hidden="true">
+            {isFolder ? <Folder size={16} /> : <Tag size={16} />}
+          </span>
+          {isRenaming ? (
+            <input
+              className="category-edit-input"
+              value={renameValue}
+              onFocus={(e) => e.currentTarget.select()}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onChange={(e) => onRenameChange?.(e.target.value)}
+              onBlur={() => onRenameCommit?.()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  onRenameCommit?.();
+                }
+                if (e.key === 'Escape') {
+                  onRenameCancel?.();
+                }
+                e.stopPropagation();
+              }}
+            />
+          ) : (
+            <span className="item-text">{node.name}</span>
+          )}
+        </button>
+        {isDropAfter && <div className="drop-indicator" />}
+      </li>
+      {isFolder && !isCollapsed && node.children.length > 0 && (
+        <ul
+          className="section-items"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => onDropOnList?.(e, node.id)}
+        >
+          {node.children.map((child) => (
+            <SidebarNodeComponent
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selectedId={selectedId}
+              collapsedIds={collapsedIds}
+              dropTarget={dropTarget}
+              renamingId={renamingId}
+              renameValue={renameValue}
+              onSelect={onSelect}
+              onRenameStart={onRenameStart}
+              onRenameChange={onRenameChange}
+              onRenameCommit={onRenameCommit}
+              onRenameCancel={onRenameCancel}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+              onContextMenu={onContextMenu}
+              onMouseDown={onMouseDown}
+              onDropOnList={onDropOnList}
+            />
+          ))}
+        </ul>
+      )}
+    </>
+  );
+};
+
 type SidebarTreeProps = {
   nodes: SidebarNode[];
   selectedId: string;
@@ -83,50 +223,6 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
     return list;
   }
 
-  function handleKeyActions(e: React.KeyboardEvent<HTMLButtonElement>, node: SidebarNode): void {
-    if (e.key === 'F2' && onRenameStart) {
-      e.preventDefault();
-      onRenameStart(node.id, node.name);
-      return;
-    }
-    if (!onMove || !e.altKey) return;
-    const siblings = getSiblings(node.parentId);
-    const currentIndex = siblings.findIndex((n) => n.id === node.id);
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const targetIndex = Math.max(0, currentIndex - 1);
-      onMove(node.id, node.parentId, targetIndex);
-      return;
-    }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const targetIndex = Math.min(siblings.length - 1, currentIndex + 1);
-      onMove(node.id, node.parentId, targetIndex);
-      return;
-    }
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      const parent = nodes.find((n) => n.id === node.parentId) ?? null;
-      const newParentId = parent ? parent.parentId : null;
-      const newIndex = getSiblings(newParentId).length;
-      onMove(node.id, newParentId, newIndex);
-      return;
-    }
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      const siblingsAll = getSiblings(node.parentId);
-      const idx = siblingsAll.findIndex((n) => n.id === node.id);
-      for (let i = idx - 1; i >= 0; i--) {
-        const candidate = siblingsAll[i];
-        if (candidate && candidate.type === 'folder') {
-          const endIndex = getSiblings(candidate.id).length;
-          onMove(node.id, candidate.id, endIndex);
-          return;
-        }
-      }
-    }
-  }
-
   function computePosition(
     e: React.DragEvent<HTMLElement>,
     li: HTMLLIElement,
@@ -174,16 +270,25 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
   }
 
   const renderNode = (node: TreeNode, depth = 0) => {
-    const isFolder = node.type === 'folder';
-    const isCollapsed = collapsedIds.includes(node.id);
-    const isDropBefore = dropTarget?.targetId === node.id && dropTarget.position === 'before';
-    const isDropAfter = dropTarget?.targetId === node.id && dropTarget.position === 'after';
-    const isDropInside =
-      dropTarget?.targetId === node.id && dropTarget.position === 'inside' && isFolder;
-    const isRenaming = renamingId === node.id;
     return (
-      <li
+      <SidebarNodeComponent
         key={node.id}
+        node={node}
+        depth={depth}
+        selectedId={selectedId}
+        collapsedIds={collapsedIds}
+        dropTarget={dropTarget}
+        renamingId={renamingId}
+        renameValue={renameValue}
+        onSelect={onSelect}
+        onRenameStart={onRenameStart}
+        onRenameChange={onRenameChange}
+        onRenameCommit={onRenameCommit}
+        onRenameCancel={onRenameCancel}
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/plain', node.id);
+          e.dataTransfer.effectAllowed = 'move';
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           const li = e.currentTarget as HTMLLIElement;
@@ -198,71 +303,21 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
           e.preventDefault();
           setMenu({ isOpen: true, x: e.clientX, y: e.clientY, nodeId: node.id });
         }}
-      >
-        {isDropBefore && <div className="drop-indicator" />}
-        <button
-          type="button"
-          className={`sidebar-item ${selectedId === node.id ? 'selected' : ''} ${isDropInside ? 'drop-into' : ''}`}
-          onClick={() => onSelect(node.id)}
-          onDoubleClick={() => onRenameStart?.(node.id, node.name)}
-          onMouseDown={(e) => {
+        onMouseDown={(e) => {
+          if (pressTimer.current) window.clearTimeout(pressTimer.current);
+          const t = window.setTimeout(() => {
+            setMenu({ isOpen: true, x: e.clientX, y: e.clientY, nodeId: node.id });
+          }, 500);
+          pressTimer.current = t;
+          const clear = () => {
             if (pressTimer.current) window.clearTimeout(pressTimer.current);
-            const t = window.setTimeout(() => {
-              setMenu({ isOpen: true, x: e.clientX, y: e.clientY, nodeId: node.id });
-            }, 500);
-            pressTimer.current = t;
-            const clear = () => {
-              if (pressTimer.current) window.clearTimeout(pressTimer.current);
-              pressTimer.current = null;
-              document.removeEventListener('mouseup', clear);
-            };
-            document.addEventListener('mouseup', clear);
-          }}
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData('text/plain', node.id);
-            e.dataTransfer.effectAllowed = 'move';
-          }}
-          onKeyDown={(e) => handleKeyActions(e, node)}
-        >
-          <span className="item-icon" aria-hidden="true">
-            {isFolder ? <Folder size={16} /> : <Tag size={16} />}
-          </span>
-          {isRenaming ? (
-            <input
-              id={`sidebar-rename-input-${node.id}`}
-              className="category-edit-input"
-              value={renameValue}
-              onFocus={(e) => e.currentTarget.select()}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onChange={(e) => onRenameChange?.(e.target.value)}
-              onBlur={() => onRenameCommit?.()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  onRenameCommit?.();
-                }
-                if (e.key === 'Escape') {
-                  onRenameCancel?.();
-                }
-                e.stopPropagation();
-              }}
-            />
-          ) : (
-            <span className="item-text">{node.name}</span>
-          )}
-        </button>
-        {isDropAfter && <div className="drop-indicator" />}
-        {isFolder && !isCollapsed && node.children.length > 0 && (
-          <ul
-            className="section-items"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => handleDropOnList(e, node.id)}
-          >
-            {node.children.map((child) => renderNode(child, depth + 1))}
-          </ul>
-        )}
-      </li>
+            pressTimer.current = null;
+            document.removeEventListener('mouseup', clear);
+          };
+          document.addEventListener('mouseup', clear);
+        }}
+        onDropOnList={handleDropOnList}
+      />
     );
   };
 

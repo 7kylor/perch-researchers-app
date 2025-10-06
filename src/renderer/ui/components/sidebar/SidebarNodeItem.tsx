@@ -1,5 +1,6 @@
-import type React from 'react';
+import React from 'react';
 import type { SidebarNode } from '../../../../shared/sidebar';
+import { Folder, Tag } from 'lucide-react';
 
 type SidebarNodeItemProps = {
   node: SidebarNode;
@@ -15,7 +16,7 @@ export const SidebarNodeItem: React.FC<SidebarNodeItemProps> = ({ node, selected
       onClick={() => onSelect(node.id)}
     >
       <span className="item-icon" aria-hidden="true">
-        {node.type === 'folder' ? '📁' : '🏷️'}
+        {node.type === 'folder' ? <Folder size={16} /> : <Tag size={16} />}
       </span>
       <span className="item-text">{node.name}</span>
     </button>
