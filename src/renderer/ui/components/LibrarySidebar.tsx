@@ -68,6 +68,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   const [virtualScroll, setVirtualScroll] = React.useState(true);
   const [selectedCategories, setSelectedCategories] = React.useState<Set<string>>(new Set());
   const [showSmartSuggestions, setShowSmartSuggestions] = React.useState(false);
+  const [showScrollIndicator, setShowScrollIndicator] = React.useState(false);
 
   const sidebarRef = React.useRef<HTMLElement | null>(null);
   const searchInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -282,6 +283,37 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
     if (!virtualScroll) return filteredCategories;
     return filteredCategories.slice(visibleRange.start, visibleRange.end);
   }, [filteredCategories, visibleRange, virtualScroll]);
+
+  // Detect when categories exceed available space and need scroll indicator
+  React.useEffect(() => {
+    if (!categoryListRef.current) {
+      setShowScrollIndicator(false);
+      return;
+    }
+
+    const checkScrollPosition = () => {
+      const container = categoryListRef.current;
+      if (!container) return;
+
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+
+      // Calculate if we need to show scroll indicator
+      const hasOverflow = scrollHeight > clientHeight;
+      const isScrolledFromTop = scrollTop > 10; // Small buffer from top
+      const isNotAtBottom = scrollTop + clientHeight < scrollHeight - 50; // Not near bottom
+
+      // Show indicator if: has overflow, not at top, and not at bottom
+      setShowScrollIndicator(hasOverflow && isScrolledFromTop && isNotAtBottom);
+    };
+
+    const container = categoryListRef.current;
+    checkScrollPosition();
+    container.addEventListener('scroll', checkScrollPosition);
+
+    return () => container.removeEventListener('scroll', checkScrollPosition);
+  }, [filteredCategories.length]);
 
   // Bulk operations
   const handleCategorySelect = (categoryId: string, isSelected: boolean) => {
@@ -525,98 +557,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       }}
     >
       <div className="sidebar-grid">
-        {/* Search and Controls Section */}
-        {!isCollapsed && (showSearch || categories.length > 10) && (
-          <div className="sidebar-section search-controls-section">
-            <div className="search-controls">
-              <div className="search-container">
-                <button
-                  type="button"
-                  className="search-toggle-btn"
-                  onClick={handleSearchToggle}
-                  title={showSearch ? 'Hide search' : 'Search categories'}
-                  aria-label={showSearch ? 'Hide search' : 'Search categories'}
-                >
-                  {showSearch ? <X className="h-3 w-3" /> : <Search className="h-3 w-3" />}
-                </button>
-                {showSearch && (
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    className="search-input"
-                    placeholder="Search categories..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        clearSearch();
-                      }
-                    }}
-                  />
-                )}
-              </div>
-
-              <div className="view-controls">
-                <div className="view-mode-buttons">
-                  <button
-                    type="button"
-                    className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
-                    onClick={() => setViewMode('list')}
-                    title="List view"
-                    aria-label="List view"
-                  >
-                    <List className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                    onClick={() => setViewMode('grid')}
-                    title="Grid view"
-                    aria-label="Grid view"
-                  >
-                    <Grid3X3 className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    className={`view-mode-btn ${viewMode === 'compact' ? 'active' : ''}`}
-                    onClick={() => setViewMode('compact')}
-                    title="Compact view"
-                    aria-label="Compact view"
-                  >
-                    <Filter className="h-3 w-3" />
-                  </button>
-                </div>
-
-                <select
-                  className="group-by-select"
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}
-                  title="Group categories by"
-                >
-                  <option value="none">No Grouping</option>
-                  <option value="alphabetical">Alphabetical</option>
-                  <option value="usage">By Usage</option>
-                  <option value="recent">Recently Used</option>
-                </select>
-
-                <button
-                  type="button"
-                  className={`view-mode-btn ${virtualScroll ? 'active' : ''}`}
-                  onClick={() => setVirtualScroll(!virtualScroll)}
-                  title={virtualScroll ? 'Disable virtual scrolling' : 'Enable virtual scrolling'}
-                  aria-label={
-                    virtualScroll ? 'Disable virtual scrolling' : 'Enable virtual scrolling'
-                  }
-                >
-                  <MoreHorizontal className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Library Section */}
-        <div className="sidebar-section">
+        <div className="sidebar-section library-section">
           <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Library</h3>
           <ul className={`section-items ${viewMode === 'grid' ? 'grid-view' : ''}`}>
             <li>
@@ -649,8 +591,8 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         </div>
 
         {/* Categories Section */}
-        <div className="sidebar-section">
-          <div className={`section-title ${isCollapsed ? 'hidden' : ''}`}>
+        <div className="sidebar-section categories-section">
+          <div className={`section-title ${isCollapsed ? 'hidden' : ''}`} style={{ flexShrink: 0 }}>
             <span>
               Categories {filteredCategories.length > 0 && `(${filteredCategories.length})`}
             </span>
@@ -713,140 +655,256 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             )}
           </div>
 
-          {/* Category Management Menu */}
-          {showCategoryMenu && !isCollapsed && (
-            <div className="category-management-menu">
-              <button
-                type="button"
-                className="menu-item"
-                onClick={() => {
-                  setShowSmartSuggestions(!showSmartSuggestions);
-                  setShowCategoryMenu(false);
-                }}
-              >
-                Smart Suggestions
-              </button>
-              <button
-                type="button"
-                className="menu-item"
-                onClick={() => {
-                  setVirtualScroll(!virtualScroll);
-                  setShowCategoryMenu(false);
-                }}
-              >
-                {virtualScroll ? 'Disable' : 'Enable'} Virtual Scroll
-              </button>
-              <button
-                type="button"
-                className="menu-item"
-                onClick={() => {
-                  // Export categories logic
-                  const dataStr = JSON.stringify(categories, null, 2);
-                  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                  const url = URL.createObjectURL(dataBlob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'categories.json';
-                  link.click();
-                  URL.revokeObjectURL(url);
-                  setShowCategoryMenu(false);
-                }}
-              >
-                Export Categories
-              </button>
-            </div>
-          )}
-
-          {/* Smart Suggestions */}
-          {showSmartSuggestions && !isCollapsed && (
-            <div className="smart-suggestions">
-              <div className="suggestions-header">
-                <span>Suggested Categories</span>
+          {/* Categories Scrollable Container */}
+          <div className="categories-scroll-container">
+            {/* Category Management Menu */}
+            {showCategoryMenu && !isCollapsed && (
+              <div className="category-management-menu">
                 <button
                   type="button"
-                  className="close-suggestions"
-                  onClick={() => setShowSmartSuggestions(false)}
+                  className="menu-item"
+                  onClick={() => {
+                    setShowSmartSuggestions(!showSmartSuggestions);
+                    setShowCategoryMenu(false);
+                  }}
                 >
-                  <X className="h-3 w-3" />
+                  Smart Suggestions
+                </button>
+                <button
+                  type="button"
+                  className="menu-item"
+                  onClick={() => {
+                    setVirtualScroll(!virtualScroll);
+                    setShowCategoryMenu(false);
+                  }}
+                >
+                  {virtualScroll ? 'Disable' : 'Enable'} Virtual Scroll
+                </button>
+                <button
+                  type="button"
+                  className="menu-item"
+                  onClick={() => {
+                    // Export categories logic
+                    const dataStr = JSON.stringify(categories, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'categories.json';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    setShowCategoryMenu(false);
+                  }}
+                >
+                  Export Categories
                 </button>
               </div>
-              <div className="suggestions-list">
-                {smartSuggestions.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    className="suggestion-item"
-                    onClick={() => addSmartSuggestion(suggestion)}
-                  >
-                    <Layers className="h-3 w-3" />
-                    <span>{suggestion}</span>
-                    <Plus className="h-3 w-3" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
 
-          {groupBy === 'none' ? (
-            <ul
-              ref={categoryListRef}
-              className={`section-items ${viewMode === 'grid' ? 'grid-view' : ''} ${virtualScroll ? 'virtual-scroll' : ''}`}
-              style={
-                virtualScroll
-                  ? {
-                      height: `${Math.min(filteredCategories.length * (viewMode === 'compact' ? 32 : viewMode === 'grid' ? 60 : 44), 400)}px`,
-                      overflowY: filteredCategories.length > 50 ? 'auto' : 'visible',
-                    }
-                  : {}
-              }
-            >
-              {virtualScroll ? (
-                <>
-                  <div
-                    style={{
-                      height: `${visibleRange.start * (viewMode === 'compact' ? 32 : viewMode === 'grid' ? 60 : 44)}px`,
-                    }}
-                  />
-                  {visibleCategories.map((category) => renderCategoryItem(category))}
-                  <div
-                    style={{
-                      height: `${(filteredCategories.length - visibleRange.end) * (viewMode === 'compact' ? 32 : viewMode === 'grid' ? 60 : 44)}px`,
-                    }}
-                  />
-                </>
-              ) : (
-                filteredCategories.map((category) => renderCategoryItem(category))
-              )}
-            </ul>
-          ) : (
-            <div className="category-groups">
-              {categoryGroups.map((group) => (
-                <div key={group.id} className="category-group">
+            {/* Smart Suggestions */}
+            {showSmartSuggestions && !isCollapsed && (
+              <div className="smart-suggestions">
+                <div className="suggestions-header">
+                  <span>Suggested Categories</span>
                   <button
                     type="button"
-                    className={`group-header ${group.isExpanded ? 'expanded' : 'collapsed'}`}
-                    onClick={() => handleGroupToggle(group.id)}
+                    className="close-suggestions"
+                    onClick={() => setShowSmartSuggestions(false)}
                   >
-                    <span className="group-icon">
-                      {group.isExpanded ? (
-                        <ChevronDown className="h-3 w-3" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3" />
-                      )}
-                    </span>
-                    <span className="group-name">
-                      {group.name} ({group.count})
-                    </span>
+                    <X className="h-3 w-3" />
                   </button>
-                  {group.isExpanded && (
-                    <ul className={`group-items ${viewMode === 'grid' ? 'grid-view' : ''}`}>
-                      {group.categories.map((category) => renderCategoryItem(category, true))}
-                    </ul>
-                  )}
                 </div>
-              ))}
+                <div className="suggestions-list">
+                  {smartSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="suggestion-item"
+                      onClick={() => addSmartSuggestion(suggestion)}
+                    >
+                      <Layers className="h-3 w-3" />
+                      <span>{suggestion}</span>
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Search and Controls Section (when shown) */}
+            {!isCollapsed && (showSearch || categories.length > 10) && (
+              <div className="search-controls-section">
+                <div className="search-controls">
+                  <div className="search-container">
+                    <button
+                      type="button"
+                      className="search-toggle-btn"
+                      onClick={handleSearchToggle}
+                      title={showSearch ? 'Hide search' : 'Search categories'}
+                      aria-label={showSearch ? 'Hide search' : 'Search categories'}
+                    >
+                      {showSearch ? <X className="h-3 w-3" /> : <Search className="h-3 w-3" />}
+                    </button>
+                    {showSearch && (
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        className="search-input"
+                        placeholder="Search categories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            clearSearch();
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  <div className="view-controls">
+                    <div className="view-mode-buttons">
+                      <button
+                        type="button"
+                        className={`view-mode-btn ${viewMode === 'list' ? 'active' : ''}`}
+                        onClick={() => setViewMode('list')}
+                        title="List view"
+                        aria-label="List view"
+                      >
+                        <List className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        className={`view-mode-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                        onClick={() => setViewMode('grid')}
+                        title="Grid view"
+                        aria-label="Grid view"
+                      >
+                        <Grid3X3 className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        className={`view-mode-btn ${viewMode === 'compact' ? 'active' : ''}`}
+                        onClick={() => setViewMode('compact')}
+                        title="Compact view"
+                        aria-label="Compact view"
+                      >
+                        <Filter className="h-3 w-3" />
+                      </button>
+                    </div>
+
+                    <select
+                      className="group-by-select"
+                      value={groupBy}
+                      onChange={(e) => setGroupBy(e.target.value as typeof groupBy)}
+                      title="Group categories by"
+                    >
+                      <option value="none">No Grouping</option>
+                      <option value="alphabetical">Alphabetical</option>
+                      <option value="usage">By Usage</option>
+                      <option value="recent">Recently Used</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      className={`view-mode-btn ${virtualScroll ? 'active' : ''}`}
+                      onClick={() => setVirtualScroll(!virtualScroll)}
+                      title={
+                        virtualScroll ? 'Disable virtual scrolling' : 'Enable virtual scrolling'
+                      }
+                      aria-label={
+                        virtualScroll ? 'Disable virtual scrolling' : 'Enable virtual scrolling'
+                      }
+                    >
+                      <MoreHorizontal className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Categories List */}
+            <div className="categories-list-wrapper">
+              {groupBy === 'none' ? (
+                <ul
+                  ref={categoryListRef}
+                  className={`section-items ${viewMode === 'grid' ? 'grid-view' : ''} ${virtualScroll ? 'virtual-scroll' : ''}`}
+                  style={
+                    virtualScroll
+                      ? {
+                          height: `${Math.min(filteredCategories.length * (viewMode === 'compact' ? 32 : viewMode === 'grid' ? 60 : 44), 400)}px`,
+                          overflowY: filteredCategories.length > 50 ? 'auto' : 'visible',
+                        }
+                      : {}
+                  }
+                >
+                  {virtualScroll ? (
+                    <>
+                      <div
+                        style={{
+                          height: `${visibleRange.start * (viewMode === 'compact' ? 32 : viewMode === 'grid' ? 60 : 44)}px`,
+                        }}
+                      />
+                      {visibleCategories.map((category) => renderCategoryItem(category))}
+                      <div
+                        style={{
+                          height: `${(filteredCategories.length - visibleRange.end) * (viewMode === 'compact' ? 32 : viewMode === 'grid' ? 60 : 44)}px`,
+                        }}
+                      />
+                    </>
+                  ) : (
+                    filteredCategories.map((category) => renderCategoryItem(category))
+                  )}
+                </ul>
+              ) : (
+                <div className="category-groups">
+                  {categoryGroups.map((group) => (
+                    <div key={group.id} className="category-group">
+                      <button
+                        type="button"
+                        className={`group-header ${group.isExpanded ? 'expanded' : 'collapsed'}`}
+                        onClick={() => handleGroupToggle(group.id)}
+                      >
+                        <span className="group-icon">
+                          {group.isExpanded ? (
+                            <ChevronDown className="h-3 w-3" />
+                          ) : (
+                            <ChevronRight className="h-3 w-3" />
+                          )}
+                        </span>
+                        <span className="group-name">
+                          {group.name} ({group.count})
+                        </span>
+                      </button>
+                      {group.isExpanded && (
+                        <ul className={`group-items ${viewMode === 'grid' ? 'grid-view' : ''}`}>
+                          {group.categories.map((category) => renderCategoryItem(category, true))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Scroll Indicator and Fade Effect */}
+            {showScrollIndicator && filteredCategories.length > 10 && (
+              <>
+                {/* Fade Effect */}
+                <div className="categories-fade-overlay" />
+
+                {/* Scroll Indicator */}
+                <div className="categories-scroll-indicator">
+                  <div className="scroll-indicator-content">
+                    <span className="scroll-indicator-text">Scroll for more categories</span>
+                    <div className="scroll-indicator-arrow">
+                      <ChevronDown className="h-3 w-3" />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

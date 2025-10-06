@@ -394,10 +394,12 @@ body {
 }
 
 .sidebar-grid {
-	display: grid;
-	grid-template-rows: auto auto;
+	display: flex;
+	flex-direction: column;
 	gap: 4px; /* Reduced gap between sections */
 	padding: 0 8px; /* Reduced horizontal padding */
+	height: 100%; /* Full height */
+	min-height: 0; /* Allow shrinking */
 }
 
 .sidebar-item.collapsed {
@@ -863,6 +865,21 @@ body {
 	margin-bottom: 8px; /* Reduced margin */
 }
 
+.sidebar-section:not(.categories-section) {
+	flex-shrink: 0; /* Library and Account sections don't shrink */
+}
+
+.sidebar-section.library-section {
+	flex-grow: 0; /* Library section doesn't grow */
+}
+
+.sidebar-section.categories-section {
+	flex: 1; /* Categories section takes remaining space */
+	min-height: 0; /* Allow shrinking */
+	display: flex;
+	flex-direction: column;
+}
+
 .section-items {
 	display: grid;
 	grid-template-columns: 1fr;
@@ -870,6 +887,7 @@ body {
 	list-style: none;
 	padding: 0;
 	margin: 0;
+	flex-shrink: 0; /* Don't shrink */
 }
 
 .section-items > li {
@@ -904,6 +922,7 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	flex-shrink: 0;
 }
 
 .add-category-title-btn {
@@ -1019,6 +1038,9 @@ body {
 	margin-top: auto;
 	padding-top: 16px;
 	border-top: 1px solid var(--border-subtle);
+	flex-shrink: 0; /* Account section doesn't shrink */
+	flex-grow: 0; /* Account section doesn't grow */
+	align-self: flex-end; /* Stick to bottom */
 }
 
 /* Sidebar account button */
@@ -2247,6 +2269,8 @@ textarea:focus-visible {
 	background: var(--surface-elevated);
 	border-radius: 8px;
 	border: 1px solid var(--border-subtle);
+	flex-shrink: 0; /* Don't shrink in scroll container */
+	min-height: min-content; /* Ensure it takes its natural height */
 }
 
 .search-controls {
@@ -2279,7 +2303,7 @@ textarea:focus-visible {
 
 .search-input {
 	width: 100%;
-	padding: 6px 8px 6px 32px;
+	padding: 6px 8px 6px 4px;
 	border: none;
 	outline: none;
 	background: transparent;
@@ -2502,6 +2526,151 @@ textarea:focus-visible {
 	pointer-events: none;
 }
 
+/* Categories Section Scroll Container */
+.categories-section {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0; /* Allow shrinking */
+}
+
+.categories-scroll-container {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-right: 4px; /* Space for scrollbar */
+	scroll-behavior: smooth;
+	min-height: 0; /* Allow shrinking */
+}
+
+.categories-scroll-container::-webkit-scrollbar {
+	width: 6px;
+}
+
+.categories-scroll-container::-webkit-scrollbar-track {
+	background: var(--surface-elevated);
+	border-radius: 3px;
+}
+
+.categories-scroll-container::-webkit-scrollbar-thumb {
+	background: var(--text-secondary);
+	border-radius: 3px;
+	opacity: 0.5;
+}
+
+.categories-scroll-container::-webkit-scrollbar-thumb:hover {
+	opacity: 0.8;
+}
+
+.categories-list-wrapper {
+	min-height: min-content;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	position: relative; /* For absolute positioned children */
+}
+
+/* Categories Fade Overlay and Scroll Indicator */
+.categories-fade-overlay {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 60px; /* Fade height */
+	background: linear-gradient(
+		to bottom,
+		transparent 0%,
+		var(--surface-elevated) 100%
+	);
+	pointer-events: none;
+	z-index: 10;
+	transition: opacity 0.3s ease;
+}
+
+.categories-scroll-indicator {
+	position: absolute;
+	bottom: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--surface-elevated);
+	border: 1px solid var(--border-subtle);
+	border-radius: 20px;
+	padding: 6px 12px;
+	box-shadow: var(--shadow-md);
+	z-index: 20;
+	transition: all 0.3s ease;
+	animation: scrollIndicatorPulse 2s ease-in-out infinite;
+}
+
+.scroll-indicator-content {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	color: var(--text-secondary);
+	font-weight: 500;
+}
+
+.scroll-indicator-text {
+	white-space: nowrap;
+}
+
+.scroll-indicator-arrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Pulse animation for scroll indicator */
+@keyframes scrollIndicatorPulse {
+	0%,
+	100% {
+		opacity: 0.7;
+		transform: translateX(-50%) translateY(0);
+	}
+	50% {
+		opacity: 1;
+		transform: translateX(-50%) translateY(-2px);
+	}
+}
+
+/* Responsive scroll indicator */
+@media (max-width: 768px) {
+	.categories-scroll-indicator {
+		padding: 4px 8px;
+		bottom: 6px;
+	}
+
+	.scroll-indicator-content {
+		font-size: 10px;
+		gap: 4px;
+	}
+
+	.categories-fade-overlay {
+		height: 40px;
+	}
+}
+
+@media (max-width: 600px) {
+	.categories-scroll-indicator {
+		padding: 3px 6px;
+		bottom: 4px;
+	}
+
+	.scroll-indicator-content {
+		font-size: 9px;
+		gap: 3px;
+	}
+
+	.scroll-indicator-text {
+		display: none; /* Hide text on very small screens */
+	}
+
+	.categories-fade-overlay {
+		height: 30px;
+	}
+}
+
 /* Advanced Category Management */
 .category-title-actions {
 	display: flex;
@@ -2577,6 +2746,9 @@ textarea:focus-visible {
 	min-width: 160px;
 	padding: 4px 0;
 	margin-top: 4px;
+	margin-bottom: 8px; /* Space in scroll container */
+	flex-shrink: 0;
+	min-height: min-content; /* Ensure it takes its natural height */
 }
 
 .menu-item {
@@ -2603,6 +2775,8 @@ textarea:focus-visible {
 	border-radius: 8px;
 	margin-bottom: 8px;
 	overflow: hidden;
+	flex-shrink: 0; /* Don't shrink in scroll container */
+	min-height: min-content; /* Ensure it takes its natural height */
 }
 
 .suggestions-header {
