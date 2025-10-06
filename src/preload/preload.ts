@@ -122,14 +122,14 @@ contextBridge.exposeInMainWorld('api', {
   },
   sidebar: {
     list: () => ipcRenderer.invoke('sidebar:list'),
-    create: (node) => ipcRenderer.invoke('sidebar:create', node),
-    update: (id, updates) => ipcRenderer.invoke('sidebar:update', id, updates),
-    delete: (id) => ipcRenderer.invoke('sidebar:delete', id),
-    move: (id, newParentId, newIndex) =>
+    create: (node: unknown) => ipcRenderer.invoke('sidebar:create', node),
+    update: (id: string, updates: unknown) => ipcRenderer.invoke('sidebar:update', id, updates),
+    delete: (id: string) => ipcRenderer.invoke('sidebar:delete', id),
+    move: (id: string, newParentId: string, newIndex: number) =>
       ipcRenderer.invoke('sidebar:move', id, newParentId, newIndex),
     prefs: {
       get: () => ipcRenderer.invoke('sidebar:prefs:get'),
-      set: (prefs) => ipcRenderer.invoke('sidebar:prefs:set', prefs),
+      set: (prefs: unknown) => ipcRenderer.invoke('sidebar:prefs:set', prefs),
     },
   },
 });

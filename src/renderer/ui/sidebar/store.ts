@@ -80,7 +80,7 @@ export function useSidebarStore() {
           name: string;
           parentId?: string | null;
         },
-      ) => {
+      ): Promise<string> => {
         // optimistic
         const optimisticId = `temp-${Date.now()}`;
         const now = new Date().toISOString();
@@ -100,6 +100,7 @@ export function useSidebarStore() {
           const created = await window.api.sidebar.create(partial);
           setNodes((prev) => prev.map((n) => (n.id === optimisticId ? created : n)));
           writeCache({ nodes: nodes, prefs, counts });
+          return created.id;
         } catch (e) {
           setNodes((prev) => prev.filter((n) => n.id !== optimisticId));
           throw e;

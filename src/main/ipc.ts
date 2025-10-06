@@ -52,17 +52,50 @@ ipcMain.handle('papers:add', (_e, payload: Omit<Paper, 'id' | 'addedAt' | 'updat
 type DBPaperRow = Omit<Paper, 'authors'> & { authors: string };
 
 ipcMain.handle('papers:search', (_e, query: string) => {
-  const safe = sanitizeForFts(query);
-  const rows = safe
-    ? (db
+  const trimmedQuery = query?.trim();
+  const safe = trimmedQuery ? sanitizeForFts(trimmedQuery) : null;
+  let rows: DBPaperRow[] = [];
+
+  if (safe) {
+    try {
+      // Try FTS search first
+      rows = db
         .prepare(
           `select p.* from papers p
            join papers_fts f on f.rowid = p.rowid
-           where papers_fts match ?
+           where f match ?
            order by p.addedAt desc`,
         )
-        .all(safe) as DBPaperRow[])
-    : (db.prepare(`select * from papers order by addedAt desc limit 50`).all() as DBPaperRow[]);
+        .all(safe) as DBPaperRow[];
+    } catch (error) {
+      console.error('FTS search failed:', error);
+      rows = [];
+    }
+
+    // If no results from FTS, try fallback LIKE search
+    if (rows.length === 0) {
+      const likeQuery = `%${trimmedQuery.toLowerCase()}%`;
+      try {
+        // Extract authors from JSON for better matching
+        rows = db
+          .prepare(
+            `select * from papers
+             where lower(title) like ?
+             or lower(replace(replace(replace(authors, '"', ''), '[', ''), ']', '')) like ?
+             or lower(abstract) like ?
+             order by addedAt desc limit 50`,
+          )
+          .all(likeQuery, likeQuery, likeQuery) as DBPaperRow[];
+      } catch (error) {
+        console.error('LIKE search failed:', error);
+        rows = [];
+      }
+    }
+  } else {
+    // No search query, return all papers
+    rows = db.prepare(`select * from papers order by addedAt desc limit 50`).all() as DBPaperRow[];
+  }
+
   return rows.map(
     (r: DBPaperRow): Paper => ({
       ...r,
@@ -265,8 +298,10 @@ function sanitizeForFts(input: string): string | null {
   if (!normalized) return null;
   const tokens = normalized.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return null;
-  // Quote tokens and AND them for precise matching
-  return tokens.map((t) => `"${t}"`).join(' AND ');
+
+  // Use OR matching for more flexible search results
+  // Quote each token to handle special characters and phrases
+  return tokens.map((t) => `"${t.replace(/"/g, '""')}"`).join(' OR ');
 }
 
 // --------------------------------------
@@ -348,12 +383,22 @@ ipcMain.handle(
     const id = randomUUID();
     const now = nowIso();
     const parentId: string | null = partial.parentId ?? null;
-    const orderRow = db
-      .prepare(
-        `select coalesce(max(orderIndex), -1) + 1 as nextIdx from sidebar_nodes where parentId is ?`,
-      )
-      .get(parentId) as { nextIdx: number };
-    const orderIndex = orderRow.nextIdx ?? 0;
+    let orderIndex = 0;
+    if (parentId === null) {
+      const row = db
+        .prepare(
+          `select coalesce(max(orderIndex), -1) + 1 as nextIdx from sidebar_nodes where parentId is null`,
+        )
+        .get() as { nextIdx: number } | undefined;
+      orderIndex = row?.nextIdx ?? 0;
+    } else {
+      const row = db
+        .prepare(
+          `select coalesce(max(orderIndex), -1) + 1 as nextIdx from sidebar_nodes where parentId = @parentId`,
+        )
+        .get({ parentId }) as { nextIdx: number } | undefined;
+      orderIndex = row?.nextIdx ?? 0;
+    }
     db.prepare(
       `insert into sidebar_nodes (id, parentId, type, name, iconKey, colorHex, orderIndex, createdAt, updatedAt)
        values (@id, @parentId, @type, @name, @iconKey, @colorHex, @orderIndex, @createdAt, @updatedAt)`,
@@ -414,18 +459,27 @@ ipcMain.handle('sidebar:delete', (_e, id: string) => {
 
 ipcMain.handle('sidebar:move', (_e, id: string, newParentId: string | null, newIndex: number) => {
   const now = nowIso();
-  const siblings = db
-    .prepare(`select id from sidebar_nodes where parentId is ? order by orderIndex asc`)
-    .all(newParentId) as Array<{ id: string }>;
+  let siblings: Array<{ id: string }>;
+  if (newParentId === null) {
+    siblings = db
+      .prepare(`select id from sidebar_nodes where parentId is null order by orderIndex asc`)
+      .all() as Array<{ id: string }>;
+  } else {
+    siblings = db
+      .prepare(`select id from sidebar_nodes where parentId = @parentId order by orderIndex asc`)
+      .all({ parentId: newParentId }) as Array<{ id: string }>;
+  }
   const clampedIndex = Math.max(0, Math.min(newIndex, siblings.length));
-  // shift indices
   for (let i = clampedIndex; i < siblings.length; i++) {
-    db.prepare(
-      `update sidebar_nodes set orderIndex = orderIndex + 1, updatedAt = @now where id = @id`,
-    ).run({
-      id: siblings[i].id,
-      now,
-    });
+    const sibling = siblings[i];
+    if (sibling) {
+      db.prepare(
+        `update sidebar_nodes set orderIndex = orderIndex + 1, updatedAt = @now where id = @id`,
+      ).run({
+        id: sibling.id,
+        now,
+      });
+    }
   }
   db.prepare(
     `update sidebar_nodes set parentId = @parentId, orderIndex = @orderIndex, updatedAt = @now where id = @id`,

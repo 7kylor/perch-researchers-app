@@ -2,14 +2,12 @@ import React from 'react';
 import { Settings, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 
 type ActivityBarProps = {
-  currentCategory: string;
   onSettingsClick: () => void;
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
-  currentCategory,
   onSettingsClick,
   isSidebarCollapsed,
   onSidebarToggle,
