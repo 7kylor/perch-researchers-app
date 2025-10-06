@@ -337,7 +337,9 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
 
               <div className="upload-info">
                 <p className="upload-info-text">Supported format: PDF</p>
-                <p className="upload-info-text">We'll automatically extract paper information</p>
+                <p className="upload-info-text">
+                  We&apos;ll automatically extract paper information
+                </p>
               </div>
             </div>
           )}

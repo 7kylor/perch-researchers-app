@@ -66,8 +66,6 @@ export class PDFImportManager {
         paper,
         filePath,
       };
-    } catch (error) {
-      throw error;
     } finally {
       this.activeImports.delete(importId);
     }
@@ -100,8 +98,8 @@ export class PDFImportManager {
         paper,
         filePath,
       };
-    } catch (error) {
-      throw error;
+    } finally {
+      this.activeImports.delete(importId);
     }
   }
 

@@ -86,7 +86,7 @@ ipcMain.handle('papers:search', (_e, query: string) => {
              order by addedAt desc limit 50`,
           )
           .all(likeQuery, likeQuery, likeQuery) as DBPaperRow[];
-      } catch (error) {
+      } catch {
         rows = [];
       }
     }

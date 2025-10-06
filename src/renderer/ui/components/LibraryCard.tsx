@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Edit, Trash2, FileText, Calendar } from 'lucide-react';
+import { BookOpen, Edit, Trash2, FileText } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 
 type LibraryCardProps = {
@@ -27,9 +27,9 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   venue,
   year,
   doi,
-  abstract,
-  source,
-  status,
+  _abstract,
+  _source,
+  _status,
   isNew = false,
   count,
   onClick,
@@ -56,11 +56,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   const handleRename = async () => {
     const newTitle = prompt('Enter new title:');
     if (newTitle && newTitle.trim()) {
-      try {
-        console.log('Rename paper:', id, newTitle);
-      } catch (error) {
-        console.error('Failed to rename paper:', error);
-      }
+      // TODO: Implement rename functionality
     }
     setContextMenu({ isOpen: false, x: 0, y: 0 });
   };
@@ -69,10 +65,9 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     if (window.confirm('Are you sure you want to delete this paper?')) {
       try {
         await window.api.papers.delete(id);
-        console.log('Delete paper:', id);
         onRefresh?.();
-      } catch (error) {
-        console.error('Failed to delete paper:', error);
+      } catch {
+        // Error handled silently
       }
     }
     setContextMenu({ isOpen: false, x: 0, y: 0 });

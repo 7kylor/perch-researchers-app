@@ -28,7 +28,10 @@ export class PDFMetadataExtractor {
   /**
    * Extract metadata from parsed PDF data
    */
-  private extractMetadataFromPDF(pdfData: pdfParse.Result): ExtractedMetadata {
+  private extractMetadataFromPDF(pdfData: {
+    info?: { Title?: string; Author?: string; CreationDate?: string };
+    text?: string;
+  }): ExtractedMetadata {
     const metadata: ExtractedMetadata = {};
 
     // Extract from PDF metadata
@@ -151,9 +154,8 @@ export class PDFMetadataExtractor {
 
     // Look for "Author:" or "Authors:" section
     const authorSection = text.match(/(?:Authors?|By)[:\s]+([^\n]+(?:\n[A-Z][^\n]+){0,5})/i);
-    if (authorSection) {
-      const authorText = authorSection[1];
-      const extractedAuthors = this.parseAuthors(authorText);
+    if (authorSection && authorSection[1]) {
+      const extractedAuthors = this.parseAuthors(authorSection[1]);
       if (extractedAuthors.length > 0 && extractedAuthors.length <= 20) {
         return extractedAuthors;
       }

@@ -41,11 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     startRename(id, 'New Category');
   };
 
-  const _addFolderRoot = async () => {
-    const id = await actions.create({ type: 'folder', name: 'New Folder', parentId: null });
-    startRename(id, 'New Folder');
-  };
-
   const deleteNode = async (id: string) => {
     if (confirm('Delete this category?')) {
       await actions.remove(id);
@@ -53,14 +48,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     }
   };
 
+  // Calculate total papers count
+  const totalPapers = React.useMemo(() => {
+    return counts.find((c) => c.nodeId === 'builtin:all')?.paperCount ?? 0;
+  }, [counts]);
+
+  if (prefs.sidebarCollapsed) {
+    return <nav className="library-sidebar collapsed" aria-label="Library sidebar" />;
+  }
+
   return (
-    <nav
-      className={`library-sidebar ${prefs.sidebarCollapsed ? 'collapsed' : ''}`}
-      aria-label="Library sidebar"
-    >
+    <nav className="library-sidebar" aria-label="Library sidebar">
       <div className="sidebar-grid">
+        {/* Quick Stats Header */}
+        <div className="sidebar-section stats-section">
+          <div className="sidebar-stats">
+            <div className="stat-item">
+              <BookOpen className="stat-icon" />
+              <div className="stat-content">
+                <div className="stat-value">{totalPapers}</div>
+                <div className="stat-label">Papers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Library Section */}
         <div className="sidebar-section">
-          <h3 className={`section-title ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>Library</h3>
+          <div className="section-header">
+            <h3 className="section-title">Library</h3>
+          </div>
           <ul className="section-items">
             <li>
               <button
@@ -70,12 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
                 onClick={() => onSelect('builtin:all')}
               >
                 <span className="item-icon" aria-hidden="true">
-                  <BookOpen className="h-3 w-3" />
+                  <BookOpen size={16} />
                 </span>
-                <span className={`item-text ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>
-                  All Papers
-                </span>
-                <span className={`item-count ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>
+                <span className="item-text">All Papers</span>
+                <span className="item-count">
                   {counts.find((c) => c.nodeId === 'builtin:all')?.paperCount ?? 0}
                 </span>
               </button>
@@ -88,12 +103,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
                 onClick={() => onSelect('builtin:recent')}
               >
                 <span className="item-icon" aria-hidden="true">
-                  <Clock className="h-3 w-3" />
+                  <Clock size={16} />
                 </span>
-                <span className={`item-text ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>
-                  Recent
-                </span>
-                <span className={`item-count ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>
+                <span className="item-text">Recent</span>
+                <span className="item-count">
                   {counts.find((c) => c.nodeId === 'builtin:recent')?.paperCount ?? 0}
                 </span>
               </button>
@@ -106,12 +119,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
                 onClick={() => onSelect('builtin:unfiled')}
               >
                 <span className="item-icon" aria-hidden="true">
-                  <FolderOpen className="h-3 w-3" />
+                  <FolderOpen size={16} />
                 </span>
-                <span className={`item-text ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>
-                  Unfiled
-                </span>
-                <span className={`item-count ${prefs.sidebarCollapsed ? 'hidden' : ''}`}>
+                <span className="item-text">Unfiled</span>
+                <span className="item-count">
                   {counts.find((c) => c.nodeId === 'builtin:unfiled')?.paperCount ?? 0}
                 </span>
               </button>
@@ -119,28 +130,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
           </ul>
         </div>
 
-        <div className="sidebar-section">
-          <h3 className="section-title">
-            Categories
-            {!prefs.sidebarCollapsed && (
+        {/* Categories Section */}
+        <div className="sidebar-section sidebar-section-scrollable">
+          <div className="section-header">
+            <h3 className="section-title">Categories</h3>
+            <div className="section-actions">
               <button
                 type="button"
-                className="add-category-title-btn"
-                title="Add category"
-                aria-label="Add category"
+                className="section-action-btn"
                 onClick={addLabelRoot}
+                title="Add category"
               >
-                <Plus className="h-3 w-3" />
+                <Plus size={14} />
               </button>
-            )}
-          </h3>
+            </div>
+          </div>
           <SidebarTree
             nodes={nodes}
             collapsedIds={prefs.collapsedNodeIds}
             selectedId={selectedId}
             onSelect={onSelect}
             onMove={(id, parentId, index) => actions.move(id, parentId, index)}
-            onToggleCollapse={async (id, open) => {
+            _onToggleCollapse={async (id: string, open: boolean) => {
               const set = new Set(prefs.collapsedNodeIds);
               if (!open) set.add(id);
               else set.delete(id);
@@ -155,11 +166,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
             onRequestDelete={deleteNode}
           />
         </div>
-
-        {renamingId && <div style={{ display: 'none' }} />}
       </div>
 
-      <SidebarFooter collapsed={prefs.sidebarCollapsed} />
+      <SidebarFooter collapsed={false} />
     </nav>
   );
 };

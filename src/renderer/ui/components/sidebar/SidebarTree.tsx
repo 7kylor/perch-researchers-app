@@ -204,7 +204,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
           type="button"
           className={`sidebar-item ${selectedId === node.id ? 'selected' : ''} ${isDropInside ? 'drop-into' : ''}`}
           onClick={() => onSelect(node.id)}
-          onDoubleClick={() => onRenameStart && onRenameStart(node.id, node.name)}
+          onDoubleClick={() => onRenameStart?.(node.id, node.name)}
           onMouseDown={(e) => {
             if (pressTimer.current) window.clearTimeout(pressTimer.current);
             const t = window.setTimeout(() => {
@@ -226,14 +226,13 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
           onKeyDown={(e) => handleKeyActions(e, node)}
         >
           <span className="item-icon" aria-hidden="true">
-            {isFolder ? <Folder className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
+            {isFolder ? <Folder size={16} /> : <Tag size={16} />}
           </span>
           {isRenaming ? (
             <input
               id={`sidebar-rename-input-${node.id}`}
               className="category-edit-input"
               value={renameValue}
-              autoFocus
               onFocus={(e) => e.currentTarget.select()}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
@@ -271,7 +270,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
     ? [
         {
           label: 'Rename',
-          icon: <Edit className="h-3 w-3" />,
+          icon: <Edit size={14} />,
           onClick: () => {
             if (menu.nodeId && onRenameStart)
               onRenameStart(menu.nodeId, nodes.find((n) => n.id === menu.nodeId)?.name || '');
@@ -279,7 +278,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
         },
         {
           label: 'Delete',
-          icon: <Trash2 className="h-3 w-3" />,
+          icon: <Trash2 size={14} />,
           onClick: () => {
             if (menu.nodeId && onRequestDelete) onRequestDelete(menu.nodeId);
           },

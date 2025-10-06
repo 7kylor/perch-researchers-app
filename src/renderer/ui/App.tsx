@@ -11,6 +11,8 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
 
+type SortOption = 'recent' | 'title' | 'author' | 'year';
+
 export const App: React.FC = () => {
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
   const [selectedCategory, setSelectedCategory] = React.useState('builtin:all');
@@ -18,6 +20,7 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState<SortOption>('recent');
 
   const { prefs, actions } = useSidebarStore();
   const [toast, setToast] = React.useState<{
@@ -30,7 +33,7 @@ export const App: React.FC = () => {
       setIsLoading(true);
       const papers = await window.api.papers.search('');
       setResults(papers);
-    } catch (error) {
+    } catch {
       // Failed to load papers
     } finally {
       setIsLoading(false);
@@ -43,7 +46,7 @@ export const App: React.FC = () => {
       // Always open in separate PDF reader window
       try {
         await window.api['pdf-reader']['create-window'](paper);
-      } catch (error) {
+      } catch {
         // Failed to open PDF reader window
         setToast({ message: 'Failed to open PDF reader', type: 'error' });
       }
@@ -54,8 +57,8 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
-  const handleSidebarToggle = () => {
-    actions.setSidebarCollapsed(!prefs.sidebarCollapsed);
+  const handleSidebarToggle = async () => {
+    await actions.setSidebarCollapsed(!prefs.sidebarCollapsed);
   };
 
   const handlePaperClick = (paperId: string) => {
@@ -236,7 +239,7 @@ export const App: React.FC = () => {
               paperId = await window.api.papers.add(paperData);
               setToast({ message: 'Paper added successfully!', type: 'success' });
             }
-          } catch (error) {
+          } catch {
             // If metadata extraction fails, add with basic info
             const paperData = {
               title: `Paper from ${input}`,
@@ -272,11 +275,37 @@ export const App: React.FC = () => {
     try {
       const papers = await window.api.papers.search(query);
       setResults(papers);
-    } catch (error) {
+    } catch {
       // Search failed
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Sort papers based on selected option
+  const sortedResults = React.useMemo(() => {
+    const sorted = [...results];
+
+    switch (sortBy) {
+      case 'title':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'author':
+        return sorted.sort((a, b) => {
+          const authorA = a.authors[0] || '';
+          const authorB = b.authors[0] || '';
+          return authorA.localeCompare(authorB);
+        });
+      case 'year':
+        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case 'recent':
+      default:
+        // Already sorted by addedAt in backend
+        return sorted;
+    }
+  }, [results, sortBy]);
+
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort);
   };
 
   // Load papers on selected category change
@@ -286,7 +315,7 @@ export const App: React.FC = () => {
         setIsLoading(true);
         const papers = await window.api.papers.listByCategory(selectedCategory, 50);
         setResults(papers);
-      } catch (error) {
+      } catch {
         // Failed to load papers
       } finally {
         setIsLoading(false);
@@ -329,6 +358,8 @@ export const App: React.FC = () => {
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}
               onAddItem={() => setShowSimpleAddModal(true)}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
             />
             <div className="library-content">
               {isLoading ? (
@@ -340,7 +371,7 @@ export const App: React.FC = () => {
                 />
               ) : (
                 <LibraryGrid
-                  papers={results}
+                  papers={sortedResults}
                   category={selectedCategory}
                   onPaperSelect={handlePaperClick}
                   onRefresh={refreshPapers}

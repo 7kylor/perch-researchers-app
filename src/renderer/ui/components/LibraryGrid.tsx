@@ -15,11 +15,14 @@ type Paper = {
   textHash: string;
 };
 
+type ViewMode = 'grid' | 'list' | 'compact';
+
 type LibraryGridProps = {
   papers: Paper[];
   category: string;
   onPaperSelect: (id: string) => void;
   onRefresh?: () => void;
+  viewMode?: ViewMode;
 };
 
 export const LibraryGrid: React.FC<LibraryGridProps> = ({
@@ -27,34 +30,18 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   category,
   onPaperSelect,
   onRefresh,
+  viewMode = 'grid',
 }) => {
-  const _getCategoryDisplayName = (categoryId: string) => {
-    switch (categoryId) {
-      case 'builtin:all':
-        return 'All Papers';
-      case 'builtin:recent':
-        return 'Recent';
-      case 'builtin:unfiled':
-        return 'Unfiled';
-      case 'all':
-        return 'All Papers';
-      case 'recent':
-        return 'Recent';
-      default:
-        // Try to find the category name from localStorage
-        try {
-          const saved = localStorage.getItem('categories');
-          if (saved) {
-            const categories = JSON.parse(saved) as Array<{ id: string; name: string }>;
-            const category = categories.find((c) => c.id === categoryId);
-            return category ? category.name : 'Library Items';
-          }
-        } catch {
-          // Fall back to default
-        }
-        return 'Library Items';
-    }
-  };
+  const [animatedPapers, setAnimatedPapers] = React.useState<Set<string>>(new Set());
+
+  // Animate new papers as they appear
+  React.useEffect(() => {
+    const newIds = new Set(papers.map((p) => p.id));
+    const timer = setTimeout(() => {
+      setAnimatedPapers(newIds);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [papers]);
 
   const getPaperStatus = (paper: Paper) => {
     if (paper.status === 'to_read') return 'unknown';
@@ -63,14 +50,21 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
     return 'unknown';
   };
 
+  // Calculate stagger delay for animations
+  const getStaggerDelay = (index: number) => {
+    const maxDelay = 0.5; // Maximum delay in seconds
+    const delayIncrement = 0.03;
+    return Math.min(index * delayIncrement, maxDelay);
+  };
+
   return (
-    <div className="library-grid">
+    <div className={`library-grid library-grid-${viewMode}`}>
       {papers.map((paper, index) => (
         <div
           key={paper.id}
+          className={`library-grid-item ${animatedPapers.has(paper.id) ? 'animated' : ''}`}
           style={{
-            animationDelay: `${index * 0.05}s`,
-            animationFillMode: 'both',
+            animationDelay: `${getStaggerDelay(index)}s`,
           }}
         >
           <LibraryCard
@@ -84,11 +78,11 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
             source={paper.source}
             status={getPaperStatus(paper)}
             category={category}
-            isNew={index < 5} // Mark first 5 as new
-            count={0} // TODO: Add comment/note count
+            isNew={index < 3}
+            count={0}
             onClick={onPaperSelect}
             onRefresh={onRefresh}
-            dateAdded={paper.filePath ? new Date().toISOString() : undefined} // Placeholder for date added
+            dateAdded={paper.filePath ? new Date().toISOString() : undefined}
           />
         </div>
       ))}

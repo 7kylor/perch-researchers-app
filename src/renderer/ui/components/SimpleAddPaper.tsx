@@ -63,7 +63,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
           } else {
             setDetectedMetadata(null);
           }
-        } catch (error) {
+        } catch {
           // Failed to detect metadata
           setDetectedMetadata(null);
         } finally {
@@ -113,9 +113,6 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
         setDetectedMetadata(null);
         onClose();
       }
-    } catch (error) {
-      // Failed to add paper
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +139,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
           onClose();
         }
       }
-    } catch (error) {
+    } catch {
       // Failed to upload PDF
     } finally {
       setIsLoading(false);

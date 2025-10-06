@@ -87,7 +87,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
           usageCount: cat.usageCount || 0,
         }));
         setCategories(enhancedCategories);
-      } catch (error) {
+      } catch {
         // Error loading categories from localStorage
       }
     }
