@@ -3,11 +3,20 @@ import { openDatabase } from './db';
 import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types';
 import { importByDOI, importPDF } from './ingest/importer';
-import { PDFImportManager, PDFImportProgress } from './ingest/pdf-import';
+import { PDFImportManager } from './ingest/pdf-import';
 import fs from 'node:fs';
 import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline';
 import { createRAGSystem } from './ai/rag';
 import { processPaperOCR } from './ocr/batch';
+import {
+  BUILTIN_ALL,
+  BUILTIN_RECENT,
+  BUILTIN_UNFILED,
+  type CategoryCount,
+  type SidebarListResponse,
+  type SidebarNode,
+  type SidebarPrefs,
+} from '../shared/sidebar';
 
 const db = openDatabase();
 
@@ -225,19 +234,13 @@ ipcMain.handle('ocr:process', async (_e, paperId: string, pdfPath: string) => {
 // PDF Import handlers
 const pdfImportManager = PDFImportManager.getInstance();
 
-ipcMain.handle(
-  'pdf:import-from-url',
-  async (_e, url: string, onProgress?: (progress: PDFImportProgress) => void) => {
-    return await pdfImportManager.importFromUrl(url, onProgress);
-  },
-);
+ipcMain.handle('pdf:import-from-url', async (_e, url: string) => {
+  return await pdfImportManager.importFromUrl(url);
+});
 
-ipcMain.handle(
-  'pdf:import-from-file',
-  async (_e, filePath: string, onProgress?: (progress: PDFImportProgress) => void) => {
-    return await pdfImportManager.importFromLocalFile(filePath, onProgress);
-  },
-);
+ipcMain.handle('pdf:import-from-file', async (_e, filePath: string) => {
+  return await pdfImportManager.importFromLocalFile(filePath);
+});
 
 ipcMain.handle('pdf:cancel-import', async (_e, importId: string) => {
   return pdfImportManager.cancelImport(importId);
@@ -265,3 +268,231 @@ function sanitizeForFts(input: string): string | null {
   // Quote tokens and AND them for precise matching
   return tokens.map((t) => `"${t}"`).join(' AND ');
 }
+
+// --------------------------------------
+// Sidebar IPC handlers
+// --------------------------------------
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function getSidebarNodes(): SidebarNode[] {
+  const rows = db
+    .prepare(
+      `select id, parentId, type, name, iconKey, colorHex, orderIndex, createdAt, updatedAt from sidebar_nodes order by parentId asc, orderIndex asc`,
+    )
+    .all() as SidebarNode[];
+  return rows;
+}
+
+function getSidebarPrefs(): SidebarPrefs {
+  const row = db
+    .prepare(`select payload, updatedAt from sidebar_prefs where id = 'default'`)
+    .get() as { payload: string; updatedAt: string } | undefined;
+  if (!row) {
+    const payload: SidebarPrefs = {
+      collapsedNodeIds: [],
+      sidebarCollapsed: false,
+      version: 1,
+      updatedAt: nowIso(),
+    };
+    db.prepare(
+      `insert into sidebar_prefs (id, payload, updatedAt) values ('default', @payload, @updatedAt)`,
+    ).run({
+      payload: JSON.stringify(payload),
+      updatedAt: payload.updatedAt,
+    });
+    return payload;
+  }
+  return { ...(JSON.parse(row.payload) as SidebarPrefs), updatedAt: row.updatedAt };
+}
+
+function computeCounts(): CategoryCount[] {
+  const counts: CategoryCount[] = [];
+  // Built-ins
+  const allCount = db.prepare(`select count(1) as c from papers`).get() as { c: number };
+  counts.push({ nodeId: BUILTIN_ALL, paperCount: allCount.c });
+  const recentCount = db
+    .prepare(`select count(1) as c from papers where addedAt >= date('now', '-30 days')`)
+    .get() as { c: number };
+  counts.push({ nodeId: BUILTIN_RECENT, paperCount: recentCount.c });
+  const unfiledCount = db
+    .prepare(
+      `select count(1) as c from papers p left join paper_categories pc on p.id = pc.paperId where pc.paperId is null`,
+    )
+    .get() as { c: number };
+  counts.push({ nodeId: BUILTIN_UNFILED, paperCount: unfiledCount.c });
+
+  // Labels
+  const byNode = db
+    .prepare(`select nodeId, count(1) as c from paper_categories group by nodeId`)
+    .all() as Array<{ nodeId: string; c: number }>;
+  for (const row of byNode) counts.push({ nodeId: row.nodeId, paperCount: row.c });
+  return counts;
+}
+
+ipcMain.handle('sidebar:list', (): SidebarListResponse => {
+  return { nodes: getSidebarNodes(), prefs: getSidebarPrefs(), counts: computeCounts() };
+});
+
+ipcMain.handle(
+  'sidebar:create',
+  (
+    _e,
+    partial: Partial<SidebarNode> & {
+      type: 'folder' | 'label';
+      name: string;
+      parentId?: string | null;
+    },
+  ) => {
+    const id = randomUUID();
+    const now = nowIso();
+    const parentId: string | null = partial.parentId ?? null;
+    const orderRow = db
+      .prepare(
+        `select coalesce(max(orderIndex), -1) + 1 as nextIdx from sidebar_nodes where parentId is ?`,
+      )
+      .get(parentId) as { nextIdx: number };
+    const orderIndex = orderRow.nextIdx ?? 0;
+    db.prepare(
+      `insert into sidebar_nodes (id, parentId, type, name, iconKey, colorHex, orderIndex, createdAt, updatedAt)
+       values (@id, @parentId, @type, @name, @iconKey, @colorHex, @orderIndex, @createdAt, @updatedAt)`,
+    ).run({
+      id,
+      parentId,
+      type: partial.type,
+      name: partial.name,
+      iconKey: partial.iconKey ?? null,
+      colorHex: partial.colorHex ?? null,
+      orderIndex,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return db
+      .prepare(
+        `select id, parentId, type, name, iconKey, colorHex, orderIndex, createdAt, updatedAt from sidebar_nodes where id = ?`,
+      )
+      .get(id) as SidebarNode;
+  },
+);
+
+ipcMain.handle(
+  'sidebar:update',
+  (_e, id: string, updates: Partial<Pick<SidebarNode, 'name' | 'iconKey' | 'colorHex'>>) => {
+    const fields: string[] = [];
+    const values: Record<string, unknown> = { id, updatedAt: nowIso() };
+    if (updates.name !== undefined) {
+      fields.push('name = @name');
+      values['name'] = updates.name;
+    }
+    if (updates.iconKey !== undefined) {
+      fields.push('iconKey = @iconKey');
+      values['iconKey'] = updates.iconKey;
+    }
+    if (updates.colorHex !== undefined) {
+      fields.push('colorHex = @colorHex');
+      values['colorHex'] = updates.colorHex;
+    }
+    fields.push('updatedAt = @updatedAt');
+    if (fields.length > 0) {
+      db.prepare(`update sidebar_nodes set ${fields.join(', ')} where id = @id`).run(values);
+    }
+  },
+);
+
+ipcMain.handle('sidebar:delete', (_e, id: string) => {
+  function deleteRecursive(nodeId: string): void {
+    const childIds = db
+      .prepare(`select id from sidebar_nodes where parentId = ?`)
+      .all(nodeId) as Array<{ id: string }>;
+    for (const c of childIds) deleteRecursive(c.id);
+    db.prepare(`delete from paper_categories where nodeId = ?`).run(nodeId);
+    db.prepare(`delete from sidebar_nodes where id = ?`).run(nodeId);
+  }
+  deleteRecursive(id);
+});
+
+ipcMain.handle('sidebar:move', (_e, id: string, newParentId: string | null, newIndex: number) => {
+  const now = nowIso();
+  const siblings = db
+    .prepare(`select id from sidebar_nodes where parentId is ? order by orderIndex asc`)
+    .all(newParentId) as Array<{ id: string }>;
+  const clampedIndex = Math.max(0, Math.min(newIndex, siblings.length));
+  // shift indices
+  for (let i = clampedIndex; i < siblings.length; i++) {
+    db.prepare(
+      `update sidebar_nodes set orderIndex = orderIndex + 1, updatedAt = @now where id = @id`,
+    ).run({
+      id: siblings[i].id,
+      now,
+    });
+  }
+  db.prepare(
+    `update sidebar_nodes set parentId = @parentId, orderIndex = @orderIndex, updatedAt = @now where id = @id`,
+  ).run({ id, parentId: newParentId, orderIndex: clampedIndex, now });
+});
+
+ipcMain.handle('sidebar:prefs:get', () => getSidebarPrefs());
+ipcMain.handle('sidebar:prefs:set', (_e, prefs: SidebarPrefs) => {
+  db.prepare(
+    `insert into sidebar_prefs (id, payload, updatedAt) values ('default', @payload, @updatedAt)
+     on conflict(id) do update set payload = excluded.payload, updatedAt = excluded.updatedAt`,
+  ).run({ payload: JSON.stringify(prefs), updatedAt: prefs.updatedAt });
+});
+
+// --------------------------------------
+// Paper listing by category
+// --------------------------------------
+function getDescendantLabelNodeIds(rootId: string): string[] {
+  // BFS through sidebar_nodes, collecting labels under root
+  const labels: string[] = [];
+  const queue: string[] = [rootId];
+  while (queue.length > 0) {
+    const current = queue.shift() as string;
+    const rows = db
+      .prepare(`select id, type from sidebar_nodes where parentId is ?`)
+      .all(current) as Array<{ id: string; type: 'folder' | 'label' }>;
+    for (const r of rows) {
+      if (r.type === 'label') labels.push(r.id);
+      if (r.type === 'folder') queue.push(r.id);
+    }
+  }
+  return labels;
+}
+
+ipcMain.handle('papers:listByCategory', (_e, nodeId: string, limit = 50) => {
+  let rows: DBPaperRow[] = [];
+  if (nodeId === BUILTIN_ALL) {
+    rows = db
+      .prepare(`select * from papers order by addedAt desc limit ?`)
+      .all(limit) as DBPaperRow[];
+  } else if (nodeId === BUILTIN_RECENT) {
+    rows = db
+      .prepare(
+        `select * from papers where addedAt >= date('now', '-30 days') order by addedAt desc limit ?`,
+      )
+      .all(limit) as DBPaperRow[];
+  } else if (nodeId === BUILTIN_UNFILED) {
+    rows = db
+      .prepare(
+        `select p.* from papers p left join paper_categories pc on p.id = pc.paperId where pc.paperId is null order by p.addedAt desc limit ?`,
+      )
+      .all(limit) as DBPaperRow[];
+  } else {
+    const node = db.prepare(`select id, type from sidebar_nodes where id = ?`).get(nodeId) as
+      | { id: string; type: 'folder' | 'label' }
+      | undefined;
+    if (!node) return [];
+    let labelIds: string[] = [];
+    if (node.type === 'label') labelIds = [node.id];
+    else labelIds = getDescendantLabelNodeIds(node.id);
+    if (labelIds.length === 0) return [];
+    const placeholders = labelIds.map(() => '?').join(',');
+    rows = db
+      .prepare(
+        `select distinct p.* from papers p join paper_categories pc on p.id = pc.paperId where pc.nodeId in (${placeholders}) order by p.addedAt desc limit ?`,
+      )
+      .all(...labelIds, limit) as DBPaperRow[];
+  }
+  return rows.map((r) => ({ ...r, authors: JSON.parse(r.authors) }) as Paper);
+});

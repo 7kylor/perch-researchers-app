@@ -61,6 +61,38 @@ export function openDatabase(): Database.Database {
       dim integer not null,
       createdAt text not null
     );
+
+    -- Sidebar: hierarchical nodes (folders, labels)
+    create table if not exists sidebar_nodes (
+      id text primary key,
+      parentId text,
+      type text not null,
+      name text not null,
+      iconKey text,
+      colorHex text,
+      orderIndex integer not null,
+      createdAt text not null,
+      updatedAt text not null
+    );
+    create index if not exists idx_sidebar_nodes_parent on sidebar_nodes(parentId);
+    create index if not exists idx_sidebar_nodes_order on sidebar_nodes(parentId, orderIndex);
+
+    -- Mapping papers to label nodes
+    create table if not exists paper_categories (
+      paperId text not null,
+      nodeId text not null,
+      createdAt text not null,
+      primary key (paperId, nodeId)
+    );
+    create index if not exists idx_paper_categories_node on paper_categories(nodeId);
+    create index if not exists idx_paper_categories_paper on paper_categories(paperId);
+
+    -- Sidebar preferences (singleton row: id = 'default')
+    create table if not exists sidebar_prefs (
+      id text primary key,
+      payload text not null,
+      updatedAt text not null
+    );
   `);
   return db as unknown as Database.Database;
 }

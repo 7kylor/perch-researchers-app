@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Search,
-  Plus,
-  Settings,
-  X,
-  CheckSquare,
-  Square,
-  Trash2,
-  PanelLeftClose,
-} from 'lucide-react';
+import { Search, Plus, Settings, X } from 'lucide-react';
 
 type LibraryHeaderProps = {
   currentCategory: string;
@@ -31,19 +22,13 @@ export const LibraryHeader: React.FC<LibraryHeaderProps> = ({
         return 'All Papers';
       case 'recent':
         return 'Recent';
-      case 'ai-models':
-        return 'AI Models';
-      case 'ml':
-        return 'ML';
-      case 'segmentation':
-        return 'Segmentation';
       default:
         // Try to find the category name from localStorage
         try {
           const saved = localStorage.getItem('categories');
           if (saved) {
-            const categories = JSON.parse(saved);
-            const category = categories.find((c: any) => c.id === categoryId);
+            const categories = JSON.parse(saved) as Array<{ id: string; name: string }>;
+            const category = categories.find((c) => c.id === categoryId);
             return category ? category.name : 'Library';
           }
         } catch {

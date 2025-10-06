@@ -46,9 +46,11 @@ export class PDFReaderWindowManager {
     // Load the PDF reader HTML
     const isDev = process.env['VITE_DEV_SERVER_URL'];
     if (isDev) {
+      // In development, load from the dev server at the root level
       window.loadURL(`${process.env['VITE_DEV_SERVER_URL']}/pdf-reader.html`);
       window.webContents.openDevTools({ mode: 'detach' });
     } else {
+      // In production, load from the built files
       window.loadFile(path.join(__dirname, '../renderer/pdf-reader.html'));
     }
 

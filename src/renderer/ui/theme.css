@@ -849,6 +849,14 @@ body {
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 1px; /* Minimal gap between items */
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.section-items > li {
+	margin: 0;
+	padding: 0;
 }
 
 .section-title {
@@ -862,6 +870,29 @@ body {
 	font-family:
 		"SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI",
 		"Roboto", "Helvetica Neue", Arial, sans-serif;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.add-category-title-btn {
+	background: none;
+	border: none;
+	color: var(--text-secondary);
+	cursor: pointer;
+	padding: 2px 4px;
+	border-radius: 3px;
+	transition: all 0.15s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0.7;
+}
+
+.add-category-title-btn:hover {
+	background: var(--card-hover);
+	color: var(--primary);
+	opacity: 1;
 }
 
 .sidebar-item {
@@ -923,6 +954,11 @@ body {
 	font-weight: 500;
 }
 
+.sidebar-item:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+
 .item-icon {
 	width: 16px; /* Smaller icon size */
 	height: 16px;
@@ -948,20 +984,34 @@ body {
 	font-weight: 500;
 }
 
-.add-category {
-	color: var(--text-secondary);
-	font-size: 12px;
-}
-
-.add-category:hover {
-	color: var(--primary);
-	background: var(--card-hover);
-}
-
 .sidebar-footer {
 	margin-top: auto;
 	padding-top: 16px;
 	border-top: 1px solid var(--border-subtle);
+}
+
+/* Sidebar account button */
+.sidebar-account-btn {
+	gap: 8px;
+	padding: 8px 12px;
+	border-radius: 6px;
+}
+
+.sidebar-account-btn:hover {
+	background: var(--card-hover);
+}
+
+.sidebar-avatar {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: var(--primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	color: white;
+	font-weight: 600;
 }
 
 /* Library Header */
@@ -2893,13 +2943,4 @@ textarea:focus-visible {
 	--sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
-@theme inline {
-	--color-sidebar: var(--sidebar);
-	--color-sidebar-foreground: var(--sidebar-foreground);
-	--color-sidebar-primary: var(--sidebar-primary);
-	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-	--color-sidebar-accent: var(--sidebar-accent);
-	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-	--color-sidebar-border: var(--sidebar-border);
-	--color-sidebar-ring: var(--sidebar-ring);
-}
+/* Removed unsupported @theme at-rule */

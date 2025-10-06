@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { LibraryCard } from './LibraryCard';
 
 type Paper = {
@@ -30,23 +30,23 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
 }) => {
   const getCategoryDisplayName = (categoryId: string) => {
     switch (categoryId) {
+      case 'builtin:all':
+        return 'All Papers';
+      case 'builtin:recent':
+        return 'Recent';
+      case 'builtin:unfiled':
+        return 'Unfiled';
       case 'all':
         return 'All Papers';
       case 'recent':
         return 'Recent';
-      case 'ai-models':
-        return 'AI Models';
-      case 'ml':
-        return 'ML';
-      case 'segmentation':
-        return 'Segmentation';
       default:
         // Try to find the category name from localStorage
         try {
           const saved = localStorage.getItem('categories');
           if (saved) {
-            const categories = JSON.parse(saved);
-            const category = categories.find((c: any) => c.id === categoryId);
+            const categories = JSON.parse(saved) as Array<{ id: string; name: string }>;
+            const category = categories.find((c) => c.id === categoryId);
             return category ? category.name : 'Library Items';
           }
         } catch {
@@ -54,16 +54,6 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
         }
         return 'Library Items';
     }
-  };
-
-  const getPaperIdentifier = (paper: Paper) => {
-    if (paper.doi) {
-      return paper.doi;
-    }
-    if (paper.filePath) {
-      return paper.filePath.split('/').pop() || paper.id;
-    }
-    return paper.id.slice(0, 12);
   };
 
   const getPaperStatus = (paper: Paper) => {

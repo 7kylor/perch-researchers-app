@@ -1,5 +1,5 @@
 import React from 'react';
-import { LibrarySidebar } from './components/LibrarySidebar';
+import { Sidebar as NewSidebar } from './components/sidebar/Sidebar';
 import { ActivityBar } from './components/ActivityBar';
 import { LibraryControls } from './components/LibraryControls';
 import { LibraryGrid } from './components/LibraryGrid';
@@ -7,17 +7,12 @@ import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { EmptyState } from './components/EmptyState';
 import { SimpleAddPaper } from './components/SimpleAddPaper';
 import { Toast } from './components/Toast';
-import { PaperReader } from './components/PaperReader';
 import { SettingsPanel } from './components/SettingsPanel';
 import { ThemeProvider } from './components/ThemeProvider';
 
 export const App: React.FC = () => {
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
-  const [currentPaper, setCurrentPaper] = React.useState<import('../../shared/types').Paper | null>(
-    null,
-  );
-  const [selectedCategory, setSelectedCategory] = React.useState('all');
-  const [viewMode, setViewMode] = React.useState<'library' | 'reader'>('library');
+  const [selectedCategory, setSelectedCategory] = React.useState('builtin:all');
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
@@ -32,26 +27,14 @@ export const App: React.FC = () => {
   const openPaper = React.useCallback(async (id: string) => {
     const paper = await window.api.papers.get(id);
     if (paper) {
-      // Check if paper has a PDF file
-      if (paper.filePath) {
-        // Open in separate PDF reader window
-        try {
-          await window.api['pdf-reader']['create-window'](paper);
-        } catch (error) {
-          console.error('Failed to open PDF reader window:', error);
-          setToast({ message: 'Failed to open PDF reader', type: 'error' });
-        }
-      } else {
-        // No PDF file - open in main window reader (fallback)
-        setCurrentPaper(paper);
-        setViewMode('reader');
+      // Always open in separate PDF reader window
+      try {
+        await window.api['pdf-reader']['create-window'](paper);
+      } catch (error) {
+        console.error('Failed to open PDF reader window:', error);
+        setToast({ message: 'Failed to open PDF reader', type: 'error' });
       }
     }
-  }, []);
-
-  const closeReader = React.useCallback(() => {
-    setCurrentPaper(null);
-    setViewMode('library');
   }, []);
 
   const handleSettingsClick = () => {
@@ -72,7 +55,7 @@ export const App: React.FC = () => {
 
       if (type === 'pdf') {
         // Handle local PDF file upload
-        const result = await window.api.pdf['import-from-file'](input);
+        const result = await window.api.pdf['import-from-file'](input.trim());
         paperId = await window.api.papers.add(result.paper);
         setToast({ message: 'PDF uploaded successfully!', type: 'success' });
       } else {
@@ -100,10 +83,10 @@ export const App: React.FC = () => {
         } else if (input.includes('.pdf') || input.startsWith('http')) {
           // It's a PDF URL - try to import it directly
           try {
-            const result = await window.api.pdf['import-from-url'](input);
+            const result = await window.api.pdf['import-from-url'](input.trim());
             paperId = await window.api.papers.add(result.paper);
             setToast({ message: 'PDF downloaded and imported successfully!', type: 'success' });
-          } catch (pdfError) {
+          } catch {
             // If PDF import fails, add as regular URL
             const paperData = {
               title: `Paper from ${input}`,
@@ -165,12 +148,12 @@ export const App: React.FC = () => {
     }
   };
 
-  // Load papers on mount
+  // Load papers on selected category change
   React.useEffect(() => {
-    const loadPapers = async () => {
+    const loadByCategory = async () => {
       try {
         setIsLoading(true);
-        const papers = await window.api.papers.search('*');
+        const papers = await window.api.papers.listByCategory(selectedCategory, 50);
         setResults(papers);
       } catch (error) {
         console.error('Failed to load papers:', error);
@@ -178,8 +161,8 @@ export const App: React.FC = () => {
         setIsLoading(false);
       }
     };
-    loadPapers();
-  }, []);
+    void loadByCategory();
+  }, [selectedCategory]);
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -188,7 +171,6 @@ export const App: React.FC = () => {
       if (e.key === 'Escape') {
         if (showSimpleAddModal) setShowSimpleAddModal(false);
         if (showSettings) setShowSettings(false);
-        if (viewMode === 'reader') closeReader();
       }
       // Cmd/Ctrl + , to open settings
       if ((e.metaKey || e.ctrlKey) && e.key === ',') {
@@ -199,24 +181,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSimpleAddModal, showSettings, viewMode]);
-
-  if (viewMode === 'reader') {
-    return (
-      <div className="app-root">
-        <header className="topbar">
-          <div className="title">Perch</div>
-          <div className="spacer" />
-          <button type="button" className="btn" onClick={closeReader}>
-            ← Back to Library
-          </button>
-        </header>
-        <main className="reader-layout">
-          {currentPaper && <PaperReader paper={currentPaper} isOpen={true} onClose={closeReader} />}
-        </main>
-      </div>
-    );
-  }
+  }, [showSimpleAddModal, showSettings]);
 
   return (
     <ThemeProvider>
@@ -228,11 +193,7 @@ export const App: React.FC = () => {
           onSidebarToggle={handleSidebarToggle}
         />
         <div className="library-layout">
-          <LibrarySidebar
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-            isCollapsed={isSidebarCollapsed}
-          />
+          <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
           <div className="library-main">
             <LibraryControls
               searchQuery={searchQuery}
