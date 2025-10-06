@@ -5,6 +5,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import type { Paper } from '../../shared/types';
 import https from 'node:https';
 import http from 'node:http';
+import { URLPaperDetector } from './url-paper-detector';
 
 export interface PDFImportProgress {
   stage: 'downloading' | 'processing' | 'complete' | 'error';
@@ -22,12 +23,17 @@ export interface PDFImportResult {
 export class PDFImportManager {
   private static instance: PDFImportManager;
   private activeImports = new Map<string, AbortController>();
+  private urlPaperDetector: URLPaperDetector;
 
   static getInstance(): PDFImportManager {
     if (!PDFImportManager.instance) {
       PDFImportManager.instance = new PDFImportManager();
     }
     return PDFImportManager.instance;
+  }
+
+  private constructor() {
+    this.urlPaperDetector = new URLPaperDetector();
   }
 
   async importFromUrl(url: string): Promise<PDFImportResult> {
@@ -163,8 +169,8 @@ export class PDFImportManager {
           return;
         }
 
-        const contentLength = parseInt(response.headers['content-length'] || '0');
-        let downloadedBytes = 0;
+        const _contentLength = parseInt(response.headers['content-length'] || '0');
+        let _downloadedBytes = 0;
 
         const chunks: Buffer[] = [];
 
@@ -176,7 +182,7 @@ export class PDFImportManager {
           }
 
           chunks.push(chunk);
-          downloadedBytes += chunk.length;
+          _downloadedBytes += chunk.length;
 
           // Progress tracking removed - will be handled differently if needed
         });
@@ -241,14 +247,33 @@ export class PDFImportManager {
     // Copy to managed storage if not already there
     const managedPath = await this.moveToManagedStorage(filePath);
 
+    // Try to extract metadata from URL if provided
+    let metadata = null;
+    if (originalUrl) {
+      try {
+        metadata = await this.urlPaperDetector.detectFromUrl(originalUrl);
+      } catch {
+        // Continue with basic metadata extraction
+      }
+    }
+
+    // Use extracted metadata or fall back to basic extraction
+    const title = metadata?.title || basename;
+    const authors = metadata?.authors || [];
+    const venue = metadata?.venue;
+    const year = metadata?.year;
+    const doi = metadata?.doi || (originalUrl ? this.extractDoiFromUrl(originalUrl) : undefined);
+    const source = metadata?.source || (originalUrl ? 'url' : 'pdf');
+    const abstract = metadata?.abstract;
+
     return {
-      title: basename,
-      authors: [],
-      venue: undefined,
-      year: undefined,
-      doi: originalUrl ? this.extractDoiFromUrl(originalUrl) : undefined,
-      source: originalUrl ? 'url' : 'pdf',
-      abstract: undefined,
+      title,
+      authors,
+      venue,
+      year,
+      doi,
+      source,
+      abstract,
       status: 'to_read',
       filePath: managedPath,
       textHash,

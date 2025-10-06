@@ -1,7 +1,7 @@
 export interface AIProvider {
   name: string;
-  summarize(text: string, context?: string): Promise<string>;
-  answerQuestion(question: string, context: string): Promise<string>;
+  summarize(text: string, _context?: string): Promise<string>;
+  answerQuestion(question: string, _context: string): Promise<string>;
   generateEmbeddings(texts: string[]): Promise<number[][]>;
 }
 
@@ -13,16 +13,16 @@ export class OpenAIProvider implements AIProvider {
     private model = 'gpt-3.5-turbo',
   ) {}
 
-  async summarize(text: string, context?: string): Promise<string> {
+  async summarize(text: string, _context?: string): Promise<string> {
     // In a real implementation, this would call OpenAI API
     // For now, return a simple summary
     return `Summary of: ${text.substring(0, 100)}...`;
   }
 
-  async answerQuestion(question: string, context: string): Promise<string> {
+  async answerQuestion(question: string, _context: string): Promise<string> {
     // In a real implementation, this would call OpenAI API with RAG
     // For now, return a simple answer
-    return `Based on the context, the answer to "${question}" appears to be related to: ${context.substring(0, 100)}...`;
+    return `Based on the context, the answer to "${question}" appears to be related to: ${_context.substring(0, 100)}...`;
   }
 
   async generateEmbeddings(texts: string[]): Promise<number[][]> {
@@ -49,14 +49,14 @@ export class OpenAIProvider implements AIProvider {
 export class LocalProvider implements AIProvider {
   name = 'local';
 
-  async summarize(text: string, context?: string): Promise<string> {
+  async summarize(text: string, _context?: string): Promise<string> {
     // Simple local summarization
     const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
     const summary = sentences.slice(0, 3).join('. ');
     return summary.length > 0 ? summary + '.' : 'No content to summarize.';
   }
 
-  async answerQuestion(question: string, context: string): Promise<string> {
+  async answerQuestion(question: string, _context: string): Promise<string> {
     // Simple local Q&A
     const lowerQuestion = question.toLowerCase();
     if (

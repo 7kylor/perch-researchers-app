@@ -88,7 +88,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         }));
         setCategories(enhancedCategories);
       } catch (error) {
-        console.error('Error loading categories from localStorage:', error);
+        // Error loading categories from localStorage
       }
     }
   }, []);
@@ -914,7 +914,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
           type="button"
           className={`sidebar-item sidebar-account-btn ${isCollapsed ? 'collapsed' : ''}`}
           onClick={() => {
-            console.log('Account clicked - open modal');
+            // Account clicked - open modal
           }}
         >
           <div className="sidebar-avatar" aria-hidden="true">

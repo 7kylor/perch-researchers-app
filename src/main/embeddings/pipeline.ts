@@ -107,7 +107,7 @@ export async function processPaperForEmbeddings(paperId: string, text: string): 
 
 export async function searchSimilarPapers(
   query: string,
-  limit = 10,
+  _limit = 10,
 ): Promise<
   Array<{
     paperId: string;

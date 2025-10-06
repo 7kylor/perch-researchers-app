@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types';
 import { importByDOI, importPDF } from './ingest/importer';
 import { PDFImportManager } from './ingest/pdf-import';
+import { URLPaperDetector } from './ingest/url-paper-detector';
 import fs from 'node:fs';
 import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline';
 import { createRAGSystem } from './ai/rag';
@@ -67,8 +68,7 @@ ipcMain.handle('papers:search', (_e, query: string) => {
            order by p.addedAt desc`,
         )
         .all(safe) as DBPaperRow[];
-    } catch (error) {
-      console.error('FTS search failed:', error);
+    } catch {
       rows = [];
     }
 
@@ -87,7 +87,6 @@ ipcMain.handle('papers:search', (_e, query: string) => {
           )
           .all(likeQuery, likeQuery, likeQuery) as DBPaperRow[];
       } catch (error) {
-        console.error('LIKE search failed:', error);
         rows = [];
       }
     }
@@ -266,6 +265,7 @@ ipcMain.handle('ocr:process', async (_e, paperId: string, pdfPath: string) => {
 
 // PDF Import handlers
 const pdfImportManager = PDFImportManager.getInstance();
+const urlPaperDetector = new URLPaperDetector();
 
 ipcMain.handle('pdf:import-from-url', async (_e, url: string) => {
   return await pdfImportManager.importFromUrl(url);
@@ -281,6 +281,15 @@ ipcMain.handle('pdf:cancel-import', async (_e, importId: string) => {
 
 ipcMain.handle('pdf:get-active-imports', () => {
   return pdfImportManager.getActiveImports();
+});
+
+// URL Paper Detection handlers
+ipcMain.handle('url:detect-paper', async (_e, url: string) => {
+  return await urlPaperDetector.detectFromUrl(url);
+});
+
+ipcMain.handle('url:detect-arxiv-id', async (_e, arxivId: string) => {
+  return await urlPaperDetector.detectFromArxivId(arxivId);
 });
 
 // Dialog handlers

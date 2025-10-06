@@ -41,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     startRename(id, 'New Category');
   };
 
-  const addFolderRoot = async () => {
+  const _addFolderRoot = async () => {
     const id = await actions.create({ type: 'folder', name: 'New Folder', parentId: null });
     startRename(id, 'New Folder');
   };

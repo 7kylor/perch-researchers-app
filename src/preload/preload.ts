@@ -34,6 +34,30 @@ export interface PreloadAPI {
     'cancel-import': (importId: string) => Promise<boolean>;
     'get-active-imports': () => Promise<string[]>;
   };
+  url: {
+    'detect-paper': (url: string) => Promise<{
+      title: string;
+      authors: string[];
+      venue?: string;
+      year?: number;
+      doi?: string;
+      abstract?: string;
+      source: string;
+      filePath?: string;
+      originalUrl?: string;
+    } | null>;
+    'detect-arxiv-id': (arxivId: string) => Promise<{
+      title: string;
+      authors: string[];
+      venue?: string;
+      year?: number;
+      doi?: string;
+      abstract?: string;
+      source: string;
+      filePath?: string;
+      originalUrl?: string;
+    } | null>;
+  };
   'pdf-reader': {
     'create-window': (paper: Paper) => Promise<string>;
     'close-window': (windowId?: string) => Promise<boolean>;
@@ -101,6 +125,10 @@ contextBridge.exposeInMainWorld('api', {
     'import-from-file': (filePath: string) => ipcRenderer.invoke('pdf:import-from-file', filePath),
     'cancel-import': (importId: string) => ipcRenderer.invoke('pdf:cancel-import', importId),
     'get-active-imports': () => ipcRenderer.invoke('pdf:get-active-imports'),
+  },
+  url: {
+    'detect-paper': (url: string) => ipcRenderer.invoke('url:detect-paper', url),
+    'detect-arxiv-id': (arxivId: string) => ipcRenderer.invoke('url:detect-arxiv-id', arxivId),
   },
   'pdf-reader': {
     'create-window': (paper: Paper) => ipcRenderer.invoke('pdf-reader:create-window', paper),

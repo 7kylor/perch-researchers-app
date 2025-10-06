@@ -1,6 +1,4 @@
 import { createWorker, Worker } from 'tesseract.js';
-import fs from 'node:fs';
-import path from 'node:path';
 
 export interface OCRResult {
   text: string;
@@ -27,15 +25,14 @@ export class OCRProcessor {
     try {
       // For now, we'll process the first page as a demo
       // In a real implementation, this would process all pages
-      const { data } = await this.worker!.recognize(pdfPath);
+      const { data } = await this.worker!.recognize(pdfPath); // eslint-disable-line @typescript-eslint/no-non-null-assertion
 
       results.push({
         text: data.text,
         confidence: data.confidence,
         page: 1,
       });
-    } catch (error) {
-      console.error('OCR processing failed:', error);
+    } catch {
       results.push({
         text: 'OCR processing failed',
         confidence: 0,

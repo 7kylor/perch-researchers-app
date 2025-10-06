@@ -141,7 +141,7 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
                     <FileText className="inline h-5 w-5 mr-2" />
                     No PDF Available
                   </h3>
-                  <p>This paper doesn't have a PDF file attached.</p>
+                  <p>This paper doesn&apos;t have a PDF file attached.</p>
                 </div>
               )}
             </div>

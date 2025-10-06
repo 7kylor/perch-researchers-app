@@ -39,7 +39,7 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Initialize PDF managers
   const pdfReaderManager = PDFReaderWindowManager.getInstance();
-  const pdfImportManager = PDFImportManager.getInstance();
+  const _pdfImportManager = PDFImportManager.getInstance();
 
   // Setup IPC handlers
   pdfReaderManager.setupIPCHandlers();

@@ -23,7 +23,7 @@ function readCache(): StoreSnapshot | null {
     const raw = localStorage.getItem('sidebarCache');
     if (!raw) return null;
     return JSON.parse(raw) as StoreSnapshot;
-  } catch (_) {
+  } catch {
     return null;
   }
 }

@@ -73,6 +73,36 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
               </div>
               <div className="setting-info">Grid view (List view removed)</div>
             </div>
+            <div className="setting-item">
+              <button
+                type="button"
+                className="clear-library-btn"
+                onClick={async () => {
+                  if (
+                    window.confirm(
+                      'Are you sure you want to clear all papers? This cannot be undone.',
+                    )
+                  ) {
+                    try {
+                      // Get all papers and delete them
+                      const papers = await window.api.papers.search('');
+                      for (const paper of papers) {
+                        await window.api.papers.delete(paper.id);
+                      }
+                      alert('Library cleared! Add new papers to test enhanced metadata.');
+                    } catch (error) {
+                      console.error('Failed to clear library:', error);
+                      alert('Failed to clear library. Please try again.');
+                    }
+                  }
+                }}
+              >
+                Clear Library (Testing)
+              </button>
+              <div className="setting-info" style={{ marginTop: '8px', fontSize: '12px' }}>
+                Remove all papers to test enhanced metadata extraction
+              </div>
+            </div>
           </div>
 
           <div className="settings-section">

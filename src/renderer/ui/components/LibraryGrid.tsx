@@ -28,7 +28,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   onPaperSelect,
   onRefresh,
 }) => {
-  const getCategoryDisplayName = (categoryId: string) => {
+  const _getCategoryDisplayName = (categoryId: string) => {
     switch (categoryId) {
       case 'builtin:all':
         return 'All Papers';
@@ -77,7 +77,11 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
             id={paper.id}
             title={paper.title}
             authors={paper.authors}
+            venue={paper.venue}
             year={paper.year}
+            doi={paper.doi}
+            abstract={paper.abstract}
+            source={paper.source}
             status={getPaperStatus(paper)}
             category={category}
             isNew={index < 5} // Mark first 5 as new

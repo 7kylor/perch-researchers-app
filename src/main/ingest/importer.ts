@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { app } from 'electron';
-import { randomUUID, createHash } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import type { Paper } from '../../shared/types';
 import { fetchCrossrefByDOI } from './crossref';
 

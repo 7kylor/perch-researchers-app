@@ -8,7 +8,7 @@ type SidebarTreeProps = {
   selectedId: string;
   collapsedIds: string[];
   onSelect: (id: string) => void;
-  onToggleCollapse: (id: string, open: boolean) => void | Promise<void>;
+  _onToggleCollapse: (id: string, open: boolean) => void | Promise<void>;
   onMove?: (id: string, newParentId: string | null, newIndex: number) => void | Promise<void>;
   renamingId?: string | null;
   renameValue?: string;
@@ -33,7 +33,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
   selectedId,
   collapsedIds,
   onSelect,
-  onToggleCollapse,
+  _onToggleCollapse,
   onMove,
   renamingId,
   renameValue = '',
@@ -237,11 +237,15 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
               onFocus={(e) => e.currentTarget.select()}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
-              onChange={(e) => onRenameChange && onRenameChange(e.target.value)}
-              onBlur={() => onRenameCommit && onRenameCommit()}
+              onChange={(e) => onRenameChange?.(e.target.value)}
+              onBlur={() => onRenameCommit?.()}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') onRenameCommit && onRenameCommit();
-                if (e.key === 'Escape') onRenameCancel && onRenameCancel();
+                if (e.key === 'Enter') {
+                  onRenameCommit?.();
+                }
+                if (e.key === 'Escape') {
+                  onRenameCancel?.();
+                }
                 e.stopPropagation();
               }}
             />

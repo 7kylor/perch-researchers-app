@@ -73,12 +73,6 @@ export class PDFReaderWindowManager {
       return { action: 'deny' };
     });
 
-    // Prevent new window creation
-    window.webContents.on('new-window' as any, (event: any, navigationUrl: string) => {
-      event.preventDefault();
-      shell.openExternal(navigationUrl);
-    });
-
     this.windows.set(windowId, window);
     return windowId;
   }
@@ -138,7 +132,21 @@ export class PDFReaderWindowManager {
       // Import here to avoid circular dependency
       const { openDatabase } = await import('./db.js');
       const db = openDatabase();
-      const row = db.prepare(`select * from papers where id = ?`).get(paperId) as any;
+      const row = db.prepare(`select * from papers where id = ?`).get(paperId) as {
+        id: string;
+        title: string;
+        authors: string;
+        venue?: string;
+        year?: number;
+        doi?: string;
+        source?: string;
+        abstract?: string;
+        status: string;
+        filePath?: string;
+        textHash: string;
+        addedAt: string;
+        updatedAt: string;
+      };
       return row?.filePath || null;
     });
 

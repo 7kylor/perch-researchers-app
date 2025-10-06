@@ -25,6 +25,18 @@ export const App: React.FC = () => {
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
+  const refreshPapers = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const papers = await window.api.papers.search('');
+      setResults(papers);
+    } catch (error) {
+      // Failed to load papers
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const openPaper = React.useCallback(async (id: string) => {
     const paper = await window.api.papers.get(id);
     if (paper) {
@@ -32,7 +44,7 @@ export const App: React.FC = () => {
       try {
         await window.api['pdf-reader']['create-window'](paper);
       } catch (error) {
-        console.error('Failed to open PDF reader window:', error);
+        // Failed to open PDF reader window
         setToast({ message: 'Failed to open PDF reader', type: 'error' });
       }
     }
@@ -59,34 +71,96 @@ export const App: React.FC = () => {
         const result = await window.api.pdf['import-from-file'](input.trim());
         paperId = await window.api.papers.add(result.paper);
         setToast({ message: 'PDF uploaded successfully!', type: 'success' });
+        await refreshPapers(); // Refresh the library to show the new paper
       } else {
-        // Handle URL input - could be DOI, ArXiv ID, or PDF URL
-        if (input.startsWith('10.') || input.includes('doi.org')) {
+        // Handle URL input - ORDER MATTERS: check specific patterns before generic ones
+        // Check arXiv FIRST before checking for .pdf (since arXiv URLs often contain .pdf)
+        if (input.includes('arxiv.org') || /^\d+\.\d+$/.test(input.trim())) {
+          // It's an ArXiv ID or URL - try to get rich metadata
+          try {
+            let metadata = null;
+            if (/^\d+\.\d+$/.test(input.trim())) {
+              // It's an arXiv ID
+              metadata = await window.api.url['detect-arxiv-id'](input.trim());
+            } else {
+              // It's an arXiv URL
+              metadata = await window.api.url['detect-paper'](input.trim());
+            }
+
+            if (metadata) {
+              const paperData: Omit<
+                import('../../shared/types').Paper,
+                'id' | 'addedAt' | 'updatedAt'
+              > = {
+                title: metadata.title,
+                authors: metadata.authors,
+                venue: metadata.venue,
+                year: metadata.year,
+                doi: metadata.doi,
+                source: metadata.source as
+                  | 'url'
+                  | 'arxiv'
+                  | 'pubmed'
+                  | 'crossref'
+                  | 'semanticscholar'
+                  | 'pdf',
+                abstract: metadata.abstract,
+                status: 'to_read' as const,
+                filePath: metadata.filePath,
+                textHash: input,
+              };
+              paperId = await window.api.papers.add(paperData);
+              setToast({
+                message: 'Paper with rich metadata added successfully!',
+                type: 'success',
+              });
+            } else {
+              // Fallback to basic metadata
+              const paperData = {
+                title: `Paper from ${input}`,
+                authors: [],
+                venue: undefined,
+                year: undefined,
+                doi: undefined,
+                source: 'url' as const,
+                abstract: undefined,
+                status: 'to_read' as const,
+                filePath: undefined,
+                textHash: input,
+              };
+              paperId = await window.api.papers.add(paperData);
+              setToast({ message: 'Paper added successfully!', type: 'success' });
+            }
+          } catch {
+            // If metadata extraction fails, add with basic info
+            const paperData = {
+              title: `Paper from ${input}`,
+              authors: [],
+              venue: undefined,
+              year: undefined,
+              doi: undefined,
+              source: 'url' as const,
+              abstract: undefined,
+              status: 'to_read' as const,
+              filePath: undefined,
+              textHash: input,
+            };
+            paperId = await window.api.papers.add(paperData);
+            setToast({ message: 'Paper added successfully!', type: 'success' });
+          }
+          await refreshPapers(); // Refresh the library to show the new paper
+        } else if (input.startsWith('10.') || input.includes('doi.org')) {
           // It's a DOI
           paperId = await window.api.ingest.doi(input);
           setToast({ message: 'Paper imported from DOI successfully!', type: 'success' });
-        } else if (input.includes('arxiv.org') || /^\d+\.\d+$/.test(input.trim())) {
-          // It's an ArXiv ID or similar
-          const paperData = {
-            title: `Paper from ${input}`,
-            authors: [],
-            venue: undefined,
-            year: undefined,
-            doi: undefined,
-            source: 'url' as const,
-            abstract: undefined,
-            status: 'to_read' as const,
-            filePath: undefined,
-            textHash: input,
-          };
-          paperId = await window.api.papers.add(paperData);
-          setToast({ message: 'Paper added successfully!', type: 'success' });
+          await refreshPapers(); // Refresh the library to show the new paper
         } else if (input.includes('.pdf') || input.startsWith('http')) {
           // It's a PDF URL - try to import it directly
           try {
             const result = await window.api.pdf['import-from-url'](input.trim());
             paperId = await window.api.papers.add(result.paper);
             setToast({ message: 'PDF downloaded and imported successfully!', type: 'success' });
+            await refreshPapers(); // Refresh the library to show the new paper
           } catch {
             // If PDF import fails, add as regular URL
             const paperData = {
@@ -103,33 +177,81 @@ export const App: React.FC = () => {
             };
             paperId = await window.api.papers.add(paperData);
             setToast({ message: 'URL added successfully!', type: 'success' });
+            await refreshPapers(); // Refresh the library to show the new paper
           }
         } else {
-          // Regular URL
-          const paperData = {
-            title: `Paper from ${input}`,
-            authors: [],
-            venue: undefined,
-            year: undefined,
-            doi: undefined,
-            source: 'url' as const,
-            abstract: undefined,
-            status: 'to_read' as const,
-            filePath: undefined,
-            textHash: input,
-          };
-          paperId = await window.api.papers.add(paperData);
-          setToast({ message: 'Paper added successfully!', type: 'success' });
+          // Regular URL - try to extract metadata if possible
+          try {
+            const metadata = await window.api.url['detect-paper'](input.trim());
+
+            if (metadata) {
+              const paperData: Omit<
+                import('../../shared/types').Paper,
+                'id' | 'addedAt' | 'updatedAt'
+              > = {
+                title: metadata.title,
+                authors: metadata.authors,
+                venue: metadata.venue,
+                year: metadata.year,
+                doi: metadata.doi,
+                source: metadata.source as
+                  | 'url'
+                  | 'arxiv'
+                  | 'pubmed'
+                  | 'crossref'
+                  | 'semanticscholar'
+                  | 'pdf',
+                abstract: metadata.abstract,
+                status: 'to_read' as const,
+                filePath: metadata.filePath,
+                textHash: input,
+              };
+              paperId = await window.api.papers.add(paperData);
+              setToast({
+                message: 'Paper with rich metadata added successfully!',
+                type: 'success',
+              });
+            } else {
+              // Fallback to basic metadata
+              const paperData = {
+                title: `Paper from ${input}`,
+                authors: [],
+                venue: undefined,
+                year: undefined,
+                doi: undefined,
+                source: 'url' as const,
+                abstract: undefined,
+                status: 'to_read' as const,
+                filePath: undefined,
+                textHash: input,
+              };
+              paperId = await window.api.papers.add(paperData);
+              setToast({ message: 'Paper added successfully!', type: 'success' });
+            }
+          } catch (error) {
+            // If metadata extraction fails, add with basic info
+            const paperData = {
+              title: `Paper from ${input}`,
+              authors: [],
+              venue: undefined,
+              year: undefined,
+              doi: undefined,
+              source: 'url' as const,
+              abstract: undefined,
+              status: 'to_read' as const,
+              filePath: undefined,
+              textHash: input,
+            };
+            paperId = await window.api.papers.add(paperData);
+            setToast({ message: 'Paper added successfully!', type: 'success' });
+          }
+          await refreshPapers(); // Refresh the library to show the new paper
         }
       }
 
-      // Refresh the papers list
-      const papers = await window.api.papers.search(searchQuery);
-      setResults(papers);
-
       return paperId;
     } catch (error) {
-      console.error('Failed to add paper:', error);
+      // Failed to add paper
       setToast({ message: 'Failed to add paper. Please try again.', type: 'error' });
       throw error;
     }
@@ -143,7 +265,7 @@ export const App: React.FC = () => {
       const papers = await window.api.papers.search(query);
       setResults(papers);
     } catch (error) {
-      console.error('Search failed:', error);
+      // Search failed
     } finally {
       setIsLoading(false);
     }
@@ -157,7 +279,7 @@ export const App: React.FC = () => {
         const papers = await window.api.papers.listByCategory(selectedCategory, 50);
         setResults(papers);
       } catch (error) {
-        console.error('Failed to load papers:', error);
+        // Failed to load papers
       } finally {
         setIsLoading(false);
       }
@@ -213,21 +335,7 @@ export const App: React.FC = () => {
                   papers={results}
                   category={selectedCategory}
                   onPaperSelect={handlePaperClick}
-                  onRefresh={() => {
-                    // Refresh the papers list
-                    const loadPapers = async () => {
-                      try {
-                        setIsLoading(true);
-                        const papers = await window.api.papers.search('');
-                        setResults(papers);
-                      } catch (error) {
-                        console.error('Failed to load papers:', error);
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    };
-                    loadPapers();
-                  }}
+                  onRefresh={refreshPapers}
                 />
               )}
             </div>

@@ -10,7 +10,7 @@
     "types": ["node"],
     "noEmit": false
   },
-  "include": ["src/main/**/*", "src/preload/**/*", "src/shared/**/*"],
+  "include": ["src/main/**/*", "src/preload/**/*", "src/shared/**/*", "arxiv.d.ts", "arxiv-api.d.ts"],
   "exclude": ["node_modules"]
 }
 

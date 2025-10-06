@@ -1,5 +1,5 @@
 import React from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Check } from 'lucide-react';
 
 type SimpleAddPaperProps = {
   isOpen: boolean;
@@ -7,9 +7,21 @@ type SimpleAddPaperProps = {
   onAdd: (input: string, type: 'url' | 'pdf') => void;
 };
 
+interface DetectedMetadata {
+  title: string;
+  authors: string[];
+  venue?: string;
+  year?: number;
+  doi?: string;
+  abstract?: string;
+  source: string;
+}
+
 export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose, onAdd }) => {
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
+  const [detectedMetadata, setDetectedMetadata] = React.useState<DetectedMetadata | null>(null);
+  const [isDetecting, setIsDetecting] = React.useState(false);
   const inputId = React.useId();
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -19,6 +31,55 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
       modalRef.current.focus();
     }
   }, [isOpen]);
+
+  // Detect metadata when input changes
+  React.useEffect(() => {
+    const detectMetadata = async () => {
+      if (!input.trim()) {
+        setDetectedMetadata(null);
+        return;
+      }
+
+      // Check if input looks like a URL or arXiv ID
+      const isUrlLike =
+        input.startsWith('http') ||
+        input.startsWith('www') ||
+        input.includes('.com') ||
+        input.includes('.org');
+      const isArxivId = /^\d+\.\d+$/.test(input.trim()); // Simple arXiv ID pattern
+
+      if (isUrlLike || isArxivId) {
+        setIsDetecting(true);
+        try {
+          let metadata = null;
+          if (isArxivId) {
+            metadata = await window.api.url['detect-arxiv-id'](input.trim());
+          } else {
+            metadata = await window.api.url['detect-paper'](input.trim());
+          }
+
+          if (metadata) {
+            setDetectedMetadata(metadata);
+          } else {
+            setDetectedMetadata(null);
+          }
+        } catch (error) {
+          // Failed to detect metadata
+          setDetectedMetadata(null);
+        } finally {
+          setIsDetecting(false);
+        }
+      } else {
+        setDetectedMetadata(null);
+        setIsDetecting(false);
+      }
+    };
+
+    // Debounce the detection
+    const timeoutId = setTimeout(detectMetadata, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [input]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,32 +98,23 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
 
       if (isUrl || isDoi) {
         // Check if it looks like a PDF URL
-        const isPdfUrl = input.includes('.pdf') || input.includes('pdf');
+        const _isPdfUrl = input.includes('.pdf') || input.includes('pdf');
 
-        if (isPdfUrl) {
-          // Import PDF from URL
-          try {
-            await window.api.pdf['import-from-url'](input.trim());
-            setInput('');
-            onClose();
-          } catch (error) {
-            console.error('Failed to import PDF:', error);
-            throw error;
-          }
-        } else {
-          // Regular URL/DOI import
-          await onAdd(input.trim(), 'url');
-          setInput('');
-          onClose();
-        }
+        // For all URL types (including PDF URLs), call the parent's onAdd function
+        // The parent component (App.tsx) has the proper logic to handle different URL types
+        await onAdd(input.trim(), 'url');
+        setInput('');
+        setDetectedMetadata(null);
+        onClose();
       } else {
         // Assume it's a local file path or we'll handle it as text
         await onAdd(input.trim(), 'url');
         setInput('');
+        setDetectedMetadata(null);
         onClose();
       }
     } catch (error) {
-      console.error('Failed to add paper:', error);
+      // Failed to add paper
       throw error;
     } finally {
       setIsLoading(false);
@@ -91,7 +143,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
         }
       }
     } catch (error) {
-      console.error('Failed to upload PDF:', error);
+      // Failed to upload PDF
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +185,100 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
             z-index: 1000;
             backdrop-filter: blur(4px);
             cursor: default;
+          }
+
+          .metadata-status {
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .metadata-status.detecting {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+          }
+
+          .metadata-preview {
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+          }
+
+          .metadata-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            color: #2e7d32;
+          }
+
+          .status-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+          }
+
+          .status-icon.success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+          }
+
+          .metadata-content {
+            font-size: 14px;
+          }
+
+          .metadata-title {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.3;
+          }
+
+          .metadata-authors,
+          .metadata-venue,
+          .metadata-year,
+          .metadata-doi {
+            margin: 4px 0;
+            color: #666;
+            line-height: 1.4;
+          }
+
+          .metadata-abstract {
+            margin-top: 8px;
+          }
+
+          .metadata-abstract summary {
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 4px;
+          }
+
+          .metadata-abstract p {
+            margin: 8px 0 0 0;
+            color: #666;
+            line-height: 1.4;
+            font-size: 13px;
+          }
+
+          .metadata-source {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 12px;
+            color: #999;
           }
 
         `}</style>
@@ -194,6 +340,54 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
               placeholder="https://arxiv.org/abs/1234.5678 or 10.1000/example or 1234.5678"
               disabled={isLoading}
             />
+            {isDetecting && (
+              <div className="metadata-status detecting">
+                <div className="status-icon">⟳</div>
+                <span>Detecting paper information...</span>
+              </div>
+            )}
+            {detectedMetadata && !isDetecting && (
+              <div className="metadata-preview">
+                <div className="metadata-header">
+                  <div className="status-icon success">
+                    <Check size={16} />
+                  </div>
+                  <span>Paper detected!</span>
+                </div>
+                <div className="metadata-content">
+                  <h4 className="metadata-title">{detectedMetadata.title}</h4>
+                  {detectedMetadata.authors.length > 0 && (
+                    <p className="metadata-authors">
+                      <strong>Authors:</strong> {detectedMetadata.authors.join(', ')}
+                    </p>
+                  )}
+                  {detectedMetadata.venue && (
+                    <p className="metadata-venue">
+                      <strong>Venue:</strong> {detectedMetadata.venue}
+                    </p>
+                  )}
+                  {detectedMetadata.year && (
+                    <p className="metadata-year">
+                      <strong>Year:</strong> {detectedMetadata.year}
+                    </p>
+                  )}
+                  {detectedMetadata.doi && (
+                    <p className="metadata-doi">
+                      <strong>DOI:</strong> {detectedMetadata.doi}
+                    </p>
+                  )}
+                  {detectedMetadata.abstract && (
+                    <details className="metadata-abstract">
+                      <summary>Abstract</summary>
+                      <p>{detectedMetadata.abstract}</p>
+                    </details>
+                  )}
+                  <div className="metadata-source">
+                    <strong>Source:</strong> {detectedMetadata.source}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="modal-footer">

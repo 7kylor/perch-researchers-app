@@ -18,7 +18,6 @@ module.exports = [
         ecmaFeatures: {
           jsx: true,
         },
-        project: ['./tsconfig.json', './tsconfig.base.json'],
       },
       globals: {
         // Browser globals
@@ -43,6 +42,7 @@ module.exports = [
         URLSearchParams: 'readonly',
         // Electron globals
         electron: 'readonly',
+        Electron: 'readonly',
         // DOM globals
         HTMLElement: 'readonly',
         HTMLDivElement: 'readonly',
@@ -59,6 +59,16 @@ module.exports = [
         Blob: 'readonly',
         File: 'readonly',
         FileReader: 'readonly',
+        // Browser dialog functions
+        prompt: 'readonly',
+        confirm: 'readonly',
+        alert: 'readonly',
+        // Node.js globals
+        AbortController: 'readonly',
+        AbortSignal: 'readonly',
+        // Custom globals
+        ArxivAPI: 'readonly',
+        arxivApi: 'readonly',
         // Node.js modules that are available in preload scripts
         path: 'readonly',
         fs: 'readonly',
@@ -112,7 +122,6 @@ module.exports = [
       'import/resolver': {
         typescript: {
           alwaysTryTypes: true,
-          project: ['./tsconfig.json', './tsconfig.base.json'],
         },
         node: {
           extensions: ['.js', '.jsx', '.ts', '.tsx'],

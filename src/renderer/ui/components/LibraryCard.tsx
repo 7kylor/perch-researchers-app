@@ -10,6 +10,7 @@ type LibraryCardProps = {
   year?: number;
   doi?: string;
   abstract?: string;
+  source?: string;
   status: string;
   category: string;
   isNew?: boolean;
@@ -23,7 +24,11 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   id,
   title,
   authors,
+  venue,
   year,
+  doi,
+  abstract,
+  source,
   status,
   isNew = false,
   count,
@@ -121,21 +126,41 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
             {/* Title Badge */}
             <div className="book-title-badge">{year || 'Unknown'}</div>
 
-            {/* Main Title/Number */}
+            {/* Main Title */}
             <div className="book-main-title">
-              {title.length > 60 ? `${title.substring(0, 60)}...` : title}
+              {title.length > 50 ? `${title.substring(0, 50)}...` : title}
             </div>
 
-            {/* Status */}
-            <div className="book-status">{isNew ? 'New' : formatDate(dateAdded) || 'Unknown'}</div>
-
-            {/* Notes Count */}
-            {count > 0 && (
-              <div className="book-notes">
-                <FileText size={12} />
-                <span>{count}</span>
+            {/* Authors */}
+            {authors.length > 0 && (
+              <div className="book-authors-card">
+                {authors.slice(0, 2).join(', ')}
+                {authors.length > 2 && ` +${authors.length - 2}`}
               </div>
             )}
+
+            {/* Venue */}
+            {venue && <div className="book-venue-card">{venue}</div>}
+
+            {/* DOI */}
+            {doi && (
+              <div className="book-doi-card">
+                DOI: {doi.length > 25 ? `${doi.substring(0, 25)}...` : doi}
+              </div>
+            )}
+
+            {/* Status and Notes */}
+            <div className="book-bottom-info">
+              <div className="book-status">
+                {isNew ? 'New' : formatDate(dateAdded) || 'Unknown'}
+              </div>
+              {count > 0 && (
+                <div className="book-notes">
+                  <FileText size={10} />
+                  <span>{count}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Book Pages Effect on Hover */}
@@ -145,16 +170,6 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
             <div className="page page-3"></div>
           </div>
         </div>
-
-        {/* Authors Info (visible on hover) */}
-        {isHovered && authors.length > 0 && (
-          <div className="book-authors-info">
-            <div className="authors-list">
-              {authors.slice(0, 2).join(', ')}
-              {authors.length > 2 && ` +${authors.length - 2} more`}
-            </div>
-          </div>
-        )}
       </div>
 
       <ContextMenu

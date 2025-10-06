@@ -1,6 +1,5 @@
 import { openDatabase } from '../db';
 import { createAIProvider, type AIProvider } from './providers';
-import { chunkText, generateEmbeddings } from '../embeddings/pipeline';
 
 const db = openDatabase();
 
@@ -65,7 +64,7 @@ export class RAGSystem {
     }>;
 
     const queryEmbedding = await this.aiProvider.generateEmbeddings([query]);
-    const queryVector = queryEmbedding[0];
+    const _queryVector = queryEmbedding[0];
 
     // For now, return papers with simple text similarity
     return papers
