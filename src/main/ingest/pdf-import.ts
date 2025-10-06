@@ -6,6 +6,7 @@ import type { Paper } from '../../shared/types';
 import https from 'node:https';
 import http from 'node:http';
 import { URLPaperDetector } from './url-paper-detector';
+import { PDFMetadataExtractor } from './pdf-metadata-extractor';
 
 export interface PDFImportProgress {
   stage: 'downloading' | 'processing' | 'complete' | 'error';
@@ -24,6 +25,7 @@ export class PDFImportManager {
   private static instance: PDFImportManager;
   private activeImports = new Map<string, AbortController>();
   private urlPaperDetector: URLPaperDetector;
+  private pdfMetadataExtractor: PDFMetadataExtractor;
 
   static getInstance(): PDFImportManager {
     if (!PDFImportManager.instance) {
@@ -34,6 +36,7 @@ export class PDFImportManager {
 
   private constructor() {
     this.urlPaperDetector = new URLPaperDetector();
+    this.pdfMetadataExtractor = new PDFMetadataExtractor();
   }
 
   async importFromUrl(url: string): Promise<PDFImportResult> {
@@ -253,18 +256,31 @@ export class PDFImportManager {
       try {
         metadata = await this.urlPaperDetector.detectFromUrl(originalUrl);
       } catch {
-        // Continue with basic metadata extraction
+        // Continue with PDF extraction
       }
     }
 
-    // Use extracted metadata or fall back to basic extraction
-    const title = metadata?.title || basename;
-    const authors = metadata?.authors || [];
+    // If no URL metadata, try extracting from PDF content
+    let pdfMetadata = null;
+    if (!metadata || !metadata.title) {
+      try {
+        pdfMetadata = await this.pdfMetadataExtractor.extractFromFile(managedPath);
+      } catch {
+        // Continue with filename
+      }
+    }
+
+    // Merge metadata from multiple sources (URL > PDF > filename)
+    const title = metadata?.title || pdfMetadata?.title || basename;
+    const authors = metadata?.authors || pdfMetadata?.authors || [];
     const venue = metadata?.venue;
-    const year = metadata?.year;
-    const doi = metadata?.doi || (originalUrl ? this.extractDoiFromUrl(originalUrl) : undefined);
+    const year = metadata?.year || pdfMetadata?.year;
+    const doi =
+      metadata?.doi ||
+      pdfMetadata?.doi ||
+      (originalUrl ? this.extractDoiFromUrl(originalUrl) : undefined);
     const source = metadata?.source || (originalUrl ? 'url' : 'pdf');
-    const abstract = metadata?.abstract;
+    const abstract = metadata?.abstract || pdfMetadata?.abstract;
 
     return {
       title,

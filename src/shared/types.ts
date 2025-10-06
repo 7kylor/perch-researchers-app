@@ -9,7 +9,17 @@ export interface Paper {
   venue?: string;
   year?: number;
   doi?: string;
-  source?: 'url' | 'arxiv' | 'pubmed' | 'crossref' | 'semanticscholar' | 'pdf';
+  source?:
+    | 'url'
+    | 'arxiv'
+    | 'pubmed'
+    | 'crossref'
+    | 'semanticscholar'
+    | 'ieee'
+    | 'sciencedirect'
+    | 'jstor'
+    | 'googlescholar'
+    | 'pdf';
   abstract?: string;
   status: Status;
   filePath?: string; // absolute path to stored PDF

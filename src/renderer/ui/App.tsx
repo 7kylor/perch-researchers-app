@@ -5,7 +5,7 @@ import { LibraryControls } from './components/LibraryControls';
 import { LibraryGrid } from './components/LibraryGrid';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { EmptyState } from './components/EmptyState';
-import { SimpleAddPaper } from './components/SimpleAddPaper';
+import { EnhancedAddPaper } from './components/EnhancedAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -103,6 +103,10 @@ export const App: React.FC = () => {
                   | 'pubmed'
                   | 'crossref'
                   | 'semanticscholar'
+                  | 'ieee'
+                  | 'sciencedirect'
+                  | 'jstor'
+                  | 'googlescholar'
                   | 'pdf',
                 abstract: metadata.abstract,
                 status: 'to_read' as const,
@@ -200,6 +204,10 @@ export const App: React.FC = () => {
                   | 'pubmed'
                   | 'crossref'
                   | 'semanticscholar'
+                  | 'ieee'
+                  | 'sciencedirect'
+                  | 'jstor'
+                  | 'googlescholar'
                   | 'pdf',
                 abstract: metadata.abstract,
                 status: 'to_read' as const,
@@ -342,7 +350,7 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        <SimpleAddPaper
+        <EnhancedAddPaper
           isOpen={showSimpleAddModal}
           onClose={() => setShowSimpleAddModal(false)}
           onAdd={handleSimpleAddPaper}

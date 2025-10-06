@@ -16,7 +16,17 @@ export interface PaperMetadata {
   year?: number;
   doi?: string;
   abstract?: string;
-  source: 'url' | 'arxiv' | 'pubmed' | 'crossref' | 'semanticscholar' | 'pdf';
+  source:
+    | 'url'
+    | 'arxiv'
+    | 'pubmed'
+    | 'crossref'
+    | 'semanticscholar'
+    | 'ieee'
+    | 'sciencedirect'
+    | 'jstor'
+    | 'googlescholar'
+    | 'pdf';
   originalUrl?: string;
   filePath?: string;
 }
@@ -31,12 +41,44 @@ export class URLPaperDetector {
       // Normalize URL
       const normalizedUrl = this.normalizeUrl(url);
 
-      // Check if it's an arXiv URL
+      // Check academic sources in priority order (specific to generic)
+
+      // arXiv - Open access preprints
       if (this.isArxivUrl(normalizedUrl)) {
         return await this.extractFromArxiv(normalizedUrl);
       }
 
-      // Check if it's a DOI URL
+      // PubMed - Medical and biological sciences
+      if (this.isPubMedUrl(normalizedUrl)) {
+        return await this.extractFromPubMed(normalizedUrl);
+      }
+
+      // Semantic Scholar - AI-powered paper search
+      if (this.isSemanticScholarUrl(normalizedUrl)) {
+        return await this.extractFromSemanticScholar(normalizedUrl);
+      }
+
+      // IEEE Xplore - Engineering and CS
+      if (this.isIEEEUrl(normalizedUrl)) {
+        return await this.extractFromIEEE(normalizedUrl);
+      }
+
+      // ScienceDirect - Elsevier platform
+      if (this.isScienceDirectUrl(normalizedUrl)) {
+        return await this.extractFromScienceDirect(normalizedUrl);
+      }
+
+      // JSTOR - Multidisciplinary archives
+      if (this.isJSTORUrl(normalizedUrl)) {
+        return await this.extractFromJSTOR(normalizedUrl);
+      }
+
+      // Google Scholar - Broad coverage
+      if (this.isGoogleScholarUrl(normalizedUrl)) {
+        return await this.extractFromGoogleScholar(normalizedUrl);
+      }
+
+      // DOI - Direct DOI link
       if (this.isDoiUrl(normalizedUrl)) {
         return await this.extractFromDoi(normalizedUrl);
       }
@@ -210,6 +252,169 @@ export class URLPaperDetector {
       source: 'url',
       originalUrl: url,
     };
+  }
+
+  // ============================================================================
+  // URL Detection Methods
+  // ============================================================================
+
+  private isPubMedUrl(url: string): boolean {
+    return url.includes('pubmed.ncbi.nlm.nih.gov') || url.includes('ncbi.nlm.nih.gov/pubmed');
+  }
+
+  private isSemanticScholarUrl(url: string): boolean {
+    return url.includes('semanticscholar.org');
+  }
+
+  private isIEEEUrl(url: string): boolean {
+    return url.includes('ieeexplore.ieee.org');
+  }
+
+  private isScienceDirectUrl(url: string): boolean {
+    return url.includes('sciencedirect.com');
+  }
+
+  private isJSTORUrl(url: string): boolean {
+    return url.includes('jstor.org');
+  }
+
+  private isGoogleScholarUrl(url: string): boolean {
+    return url.includes('scholar.google');
+  }
+
+  // ============================================================================
+  // Extraction Methods for Each Source
+  // ============================================================================
+
+  private async extractFromPubMed(url: string): Promise<PaperMetadata | null> {
+    try {
+      // Extract PMID from URL
+      const pmidMatch = url.match(/pubmed\/(\d+)/);
+      if (!pmidMatch) return null;
+
+      const pmid = pmidMatch[1];
+
+      // PubMed provides a simple API to get article data
+      // For now, return structured metadata with PMID
+      // In the future, could call PubMed E-utilities API
+      return {
+        title: `PubMed Article ${pmid}`,
+        authors: [],
+        venue: 'PubMed',
+        source: 'pubmed',
+        originalUrl: url,
+        doi: undefined, // Could be extracted via API
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractFromSemanticScholar(url: string): Promise<PaperMetadata | null> {
+    try {
+      // Extract paper ID from Semantic Scholar URL
+      // Format: semanticscholar.org/paper/{title-slug}/{paperId}
+      const paperIdMatch = url.match(/paper\/[^/]+\/([a-f0-9]+)/);
+      if (!paperIdMatch) return null;
+
+      const paperId = paperIdMatch[1];
+
+      // Semantic Scholar has a public API
+      // For now, return structured metadata
+      return {
+        title: `Semantic Scholar Paper ${paperId}`,
+        authors: [],
+        venue: 'Semantic Scholar',
+        source: 'semanticscholar',
+        originalUrl: url,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractFromIEEE(url: string): Promise<PaperMetadata | null> {
+    try {
+      // Extract document number from IEEE Xplore URL
+      // Format: ieeexplore.ieee.org/document/{documentNumber}
+      const docMatch = url.match(/document\/(\d+)/);
+      if (!docMatch) return null;
+
+      const documentNumber = docMatch[1];
+
+      return {
+        title: `IEEE Document ${documentNumber}`,
+        authors: [],
+        venue: 'IEEE Xplore',
+        source: 'ieee',
+        originalUrl: url,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractFromScienceDirect(url: string): Promise<PaperMetadata | null> {
+    try {
+      // Extract article PII from ScienceDirect URL
+      // Format: sciencedirect.com/science/article/pii/{PII}
+      const piiMatch = url.match(/article\/pii\/([A-Z0-9]+)/);
+      if (!piiMatch) return null;
+
+      const pii = piiMatch[1];
+
+      return {
+        title: `ScienceDirect Article ${pii}`,
+        authors: [],
+        venue: 'ScienceDirect',
+        source: 'sciencedirect',
+        originalUrl: url,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractFromJSTOR(url: string): Promise<PaperMetadata | null> {
+    try {
+      // Extract stable ID from JSTOR URL
+      // Format: jstor.org/stable/{stableId}
+      const stableMatch = url.match(/stable\/(\d+)/);
+      if (!stableMatch) return null;
+
+      const stableId = stableMatch[1];
+
+      return {
+        title: `JSTOR Article ${stableId}`,
+        authors: [],
+        venue: 'JSTOR',
+        source: 'jstor',
+        originalUrl: url,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractFromGoogleScholar(url: string): Promise<PaperMetadata | null> {
+    try {
+      // Google Scholar URLs contain cluster IDs
+      // Format: scholar.google.com/scholar?cluster={clusterId}
+      const clusterMatch = url.match(/cluster=(\d+)/);
+      if (!clusterMatch) return null;
+
+      const clusterId = clusterMatch[1];
+
+      return {
+        title: `Google Scholar Paper ${clusterId}`,
+        authors: [],
+        venue: 'Google Scholar',
+        source: 'googlescholar',
+        originalUrl: url,
+      };
+    } catch {
+      return null;
+    }
   }
 
   async detectFromArxivId(arxivId: string): Promise<PaperMetadata | null> {
