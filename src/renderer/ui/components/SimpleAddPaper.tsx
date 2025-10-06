@@ -159,9 +159,20 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
               <Upload size={48} />
             </div>
             <p className="drop-text">Click to browse for PDF files</p>
-            <button type="button" className="file-label" onClick={handleFileUpload}>
+            <div
+              role="button"
+              tabIndex={0}
+              className="file-label"
+              onClick={handleFileUpload}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleFileUpload();
+                }
+              }}
+            >
               Choose PDF File
-            </button>
+            </div>
           </div>
         </button>
 
