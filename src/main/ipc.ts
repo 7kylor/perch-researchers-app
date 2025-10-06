@@ -77,6 +77,14 @@ ipcMain.handle('papers:get', (_e, id: string) => {
   return { ...row, authors: JSON.parse(row.authors) } as Paper;
 });
 
+ipcMain.handle('papers:delete', (_e, id: string) => {
+  // First delete all annotations for this paper
+  db.prepare(`delete from annotations where paperId = ?`).run(id);
+  // Then delete the paper
+  db.prepare(`delete from papers where id = ?`).run(id);
+  return true;
+});
+
 ipcMain.handle('file:read', async (_e, absPath: string) => {
   return fs.promises.readFile(absPath);
 });

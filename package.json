@@ -1,7 +1,7 @@
 {
-  "name": "researchers-app",
+  "name": "perch-app",
   "version": "1.0.0",
-  "description": "Local-first Electron app for researchers (papers, annotations, AI)",
+  "description": "Local-first Electron app for knowledge management (papers, annotations, AI)",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "concurrently -k \"npm:tsc:watch\" \"vite --port 5173 --strictPort\" \"wait-on tcp:5173 dist/main/index.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
@@ -59,10 +59,16 @@
     }
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "better-sqlite3": "^12.4.1",
     "drizzle-orm": "^0.44.6",
     "electron": "^31.7.7",
     "lucide-react": "^0.544.0",
+    "next-themes": "^0.4.6",
     "onnxruntime-node": "^1.23.0",
     "pdfjs-dist": "^5.4.149",
     "react": "^19.2.0",

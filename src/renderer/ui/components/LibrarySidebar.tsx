@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Clock, Edit, Trash2, Cpu, TrendingUp, Shapes } from 'lucide-react';
+import { BookOpen, Clock, Settings, Edit, Trash2, Brain, TrendingUp, Layers } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 
 type Category = {
@@ -13,16 +13,23 @@ type Category = {
 type LibrarySidebarProps = {
   selectedCategory: string;
   onCategorySelect: (categoryId: string) => void;
+  isCollapsed: boolean;
 };
 
 const categories: Category[] = [
-  { id: 'ai-models', name: 'AI Models', count: 40, icon: <Cpu size={16} />, color: '#3b82f6' },
-  { id: 'ml', name: 'ML', count: 23, icon: <TrendingUp size={16} />, color: '#6b7280' },
+  {
+    id: 'ai-models',
+    name: 'AI Models',
+    count: 40,
+    icon: <Brain className="h-4 w-4" />,
+    color: '#3b82f6',
+  },
+  { id: 'ml', name: 'ML', count: 23, icon: <TrendingUp className="h-4 w-4" />, color: '#6b7280' },
   {
     id: 'segmentation',
     name: 'Segmentation',
     count: 15,
-    icon: <Shapes size={16} />,
+    icon: <Layers className="h-4 w-4" />,
     color: '#9ca3af',
   },
 ];
@@ -30,6 +37,7 @@ const categories: Category[] = [
 export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   selectedCategory,
   onCategorySelect,
+  isCollapsed,
 }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     isOpen: boolean;
@@ -51,7 +59,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
 
   const handleCategoryRename = (categoryId: string) => {
     const newName = prompt('Enter new category name:');
-    if (newName && newName.trim()) {
+    if (newName?.trim()) {
       console.log('Rename category:', categoryId, newName);
       // TODO: Implement category rename in database
     }
@@ -70,63 +78,57 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
     ? [
         {
           label: 'Rename',
-          icon: <Edit size={16} />,
-          onClick: () => handleCategoryRename(contextMenu.categoryId!),
+          icon: <Edit className="h-4 w-4" />,
+          onClick: () => handleCategoryRename(contextMenu.categoryId as string),
         },
         {
           label: 'Delete',
-          icon: <Trash2 size={16} />,
-          onClick: () => handleCategoryDelete(contextMenu.categoryId!),
+          icon: <Trash2 className="h-4 w-4" />,
+          onClick: () => handleCategoryDelete(contextMenu.categoryId as string),
           danger: true,
         },
       ]
     : [];
+
   return (
-    <aside className="library-sidebar">
+    <aside className={`library-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-section">
-        <h3 className="section-title">Library</h3>
+        <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Library</h3>
         <button
           type="button"
           className={`sidebar-item ${selectedCategory === 'all' ? 'selected' : ''}`}
           onClick={() => onCategorySelect('all')}
-          onDoubleClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Open context menu for "All Papers" (though it doesn't have actions, we can show it)
-            handleCategoryLongPress(e, 'all');
-          }}
         >
           <span className="item-icon">
-            <BookOpen size={18} />
+            <BookOpen className="h-4 w-4" />
           </span>
-          <span className="item-text">All Papers</span>
+          <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>All Papers</span>
         </button>
         <button
           type="button"
           className={`sidebar-item ${selectedCategory === 'recent' ? 'selected' : ''}`}
           onClick={() => onCategorySelect('recent')}
-          onDoubleClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Open context menu for "Recent" (though it doesn't have actions, we can show it)
-            handleCategoryLongPress(e, 'recent');
-          }}
         >
           <span className="item-icon">
-            <Clock size={18} />
+            <Clock className="h-4 w-4" />
           </span>
-          <span className="item-text">Recent</span>
+          <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>Recent</span>
         </button>
       </div>
 
       <div className="sidebar-section">
-        <h3 className="section-title">Categories</h3>
+        <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Categories</h3>
         {categories.map((category) => (
           <button
             key={category.id}
             type="button"
             className={`sidebar-item ${selectedCategory === category.id ? 'selected' : ''}`}
             onClick={() => onCategorySelect(category.id)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleCategoryLongPress(e, category.id);
+            }}
             onMouseDown={(e) => {
               const timer = setTimeout(() => {
                 handleCategoryLongPress(e, category.id);
@@ -141,12 +143,32 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             }}
           >
             <span className="item-icon" style={{ backgroundColor: category.color }}>
-              {category.icon}
+              {typeof category.icon === 'string' ? category.icon : category.icon}
             </span>
-            <span className="item-text">{category.name}</span>
-            <span className="item-count">{category.count}</span>
+            <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>{category.name}</span>
+            <span className={`item-count ${isCollapsed ? 'hidden' : ''}`}>{category.count}</span>
           </button>
         ))}
+        <button
+          type="button"
+          className={`sidebar-item add-category ${isCollapsed ? 'collapsed' : ''}`}
+          onClick={() => {}}
+        >
+          <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>New category +</span>
+        </button>
+      </div>
+
+      <div className={`sidebar-footer ${isCollapsed ? 'collapsed' : ''}`}>
+        <button
+          type="button"
+          className={`sidebar-item ${isCollapsed ? 'collapsed' : ''}`}
+          onClick={() => {}}
+        >
+          <span className="item-icon">
+            <Settings className="h-4 w-4" />
+          </span>
+          <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>Settings</span>
+        </button>
       </div>
 
       <ContextMenu

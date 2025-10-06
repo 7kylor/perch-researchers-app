@@ -20,6 +20,17 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ category, onAddItem }) =
       case 'segmentation':
         return 'segmentation papers';
       default:
+        // Try to find the category name from localStorage
+        try {
+          const saved = localStorage.getItem('categories');
+          if (saved) {
+            const categories = JSON.parse(saved);
+            const category = categories.find((c: any) => c.id === categoryId);
+            return category ? `${category.name.toLowerCase()} papers` : 'papers';
+          }
+        } catch {
+          // Fall back to default
+        }
         return 'papers';
     }
   };

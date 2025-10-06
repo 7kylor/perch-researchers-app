@@ -48,7 +48,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
     setIsLoading(true);
     try {
       // Convert file to path-like string for the backend
-      const filePath = file.path || file.name;
+      const filePath = (file as any).path || file.name;
       await onAdd(filePath, 'pdf');
       onClose();
     } catch (error) {

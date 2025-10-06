@@ -1,6 +1,7 @@
 import React from 'react';
 import { LibrarySidebar } from './components/LibrarySidebar';
-import { LibraryHeader } from './components/LibraryHeader';
+import { ActivityBar } from './components/ActivityBar';
+import { LibraryControls } from './components/LibraryControls';
 import { LibraryGrid } from './components/LibraryGrid';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { EmptyState } from './components/EmptyState';
@@ -25,7 +26,11 @@ function useSystemTheme(): 'light' | 'dark' {
 export const App: React.FC = () => {
   const theme = useSystemTheme();
   React.useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, [theme]);
 
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
@@ -39,8 +44,7 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
-  const [selectedPapers, setSelectedPapers] = React.useState<Set<string>>(new Set());
-  const [isSelectionMode, setIsSelectionMode] = React.useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [toast, setToast] = React.useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -65,65 +69,12 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
-  const toggleSelectionMode = () => {
-    setIsSelectionMode(!isSelectionMode);
-    setSelectedPapers(new Set());
-  };
-
-  const togglePaperSelection = (paperId: string) => {
-    const newSelected = new Set(selectedPapers);
-    if (newSelected.has(paperId)) {
-      newSelected.delete(paperId);
-    } else {
-      newSelected.add(paperId);
-    }
-    setSelectedPapers(newSelected);
-
-    // Exit selection mode if no papers are selected
-    if (newSelected.size === 0) {
-      setIsSelectionMode(false);
-    }
-  };
-
-  const selectAllPapers = () => {
-    if (selectedPapers.size === results.length) {
-      setSelectedPapers(new Set());
-    } else {
-      setSelectedPapers(new Set(results.map((p) => p.id)));
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedPapers.size === 0) return;
-
-    if (window.confirm(`Are you sure you want to delete ${selectedPapers.size} selected papers?`)) {
-      try {
-        const deletePromises = Array.from(selectedPapers).map((id) => window.api.papers.delete(id));
-        await Promise.all(deletePromises);
-
-        // Refresh the papers list
-        const papers = await window.api.papers.search(searchQuery || '*');
-        setResults(papers);
-
-        setToast({
-          message: `${selectedPapers.size} papers deleted successfully!`,
-          type: 'success',
-        });
-        setSelectedPapers(new Set());
-        setIsSelectionMode(false);
-      } catch (error) {
-        console.error('Failed to delete papers:', error);
-        setToast({ message: 'Failed to delete some papers. Please try again.', type: 'error' });
-      }
-    }
+  const handleSidebarToggle = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   const handlePaperClick = (paperId: string) => {
-    if (isSelectionMode) {
-      togglePaperSelection(paperId);
-    } else {
-      openPaper(paperId);
-    }
+    openPaper(paperId);
   };
 
   const handleSimpleAddPaper = async (input: string, type: 'url' | 'pdf') => {
@@ -221,14 +172,14 @@ export const App: React.FC = () => {
     return (
       <div className="app-root">
         <header className="topbar">
-          <div className="title">Researchers</div>
+          <div className="title">Perch</div>
           <div className="spacer" />
           <button type="button" className="btn" onClick={closeReader}>
             ← Back to Library
           </button>
         </header>
         <main className="reader-layout">
-          <PaperReader paper={currentPaper} isOpen={true} onClose={closeReader} />
+          {currentPaper && <PaperReader paper={currentPaper} isOpen={true} onClose={closeReader} />}
         </main>
       </div>
     );
@@ -236,23 +187,23 @@ export const App: React.FC = () => {
 
   return (
     <div className="app-root">
+      <ActivityBar
+        currentCategory={selectedCategory}
+        onSettingsClick={handleSettingsClick}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onSidebarToggle={handleSidebarToggle}
+      />
       <div className="library-layout">
         <LibrarySidebar
           selectedCategory={selectedCategory}
           onCategorySelect={setSelectedCategory}
+          isCollapsed={isSidebarCollapsed}
         />
         <div className="library-main">
-          <LibraryHeader
-            currentCategory={selectedCategory}
-            onAddItem={() => setShowSimpleAddModal(true)}
-            onSettingsClick={handleSettingsClick}
-            onToggleSelection={toggleSelectionMode}
-            isSelectionMode={isSelectionMode}
-            selectedCount={selectedPapers.size}
-            onSelectAll={selectAllPapers}
-            onBulkDelete={handleBulkDelete}
+          <LibraryControls
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
+            onAddItem={() => setShowSimpleAddModal(true)}
           />
           <div className="library-content">
             {isLoading ? (
@@ -267,9 +218,21 @@ export const App: React.FC = () => {
                 papers={results}
                 category={selectedCategory}
                 onPaperSelect={handlePaperClick}
-                selectedPapers={selectedPapers}
-                isSelectionMode={isSelectionMode}
-                onToggleSelection={togglePaperSelection}
+                onRefresh={() => {
+                  // Refresh the papers list
+                  const loadPapers = async () => {
+                    try {
+                      setIsLoading(true);
+                      const papers = await window.api.papers.search('*');
+                      setResults(papers);
+                    } catch (error) {
+                      console.error('Failed to load papers:', error);
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  };
+                  loadPapers();
+                }}
               />
             )}
           </div>

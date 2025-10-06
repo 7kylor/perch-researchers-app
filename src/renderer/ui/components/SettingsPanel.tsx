@@ -15,9 +15,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light';
-      document.documentElement.dataset.theme = systemTheme;
+      if (systemTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } else if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
     } else {
-      document.documentElement.dataset.theme = newTheme;
+      document.documentElement.classList.remove('dark');
     }
     // Save to localStorage
     localStorage.setItem('theme', newTheme);
@@ -84,7 +90,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
             <h3>About</h3>
             <div className="setting-item">
               <label>Version</label>
-              <div className="setting-info">Researchers App v1.0.0</div>
+              <div className="setting-info">Perch App v1.0.0</div>
             </div>
           </div>
         </div>

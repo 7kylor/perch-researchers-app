@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Maximize, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize, X, FileText } from 'lucide-react';
 
 type Paper = {
   id: string;
@@ -117,7 +117,10 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
                 <div className="pdf-page">
                   {/* This would be replaced with actual PDF rendering */}
                   <div className="pdf-placeholder">
-                    <h3>📄 PDF Content</h3>
+                    <h3>
+                      <FileText className="inline h-5 w-5 mr-2" />
+                      PDF Content
+                    </h3>
                     <p>
                       Page {currentPage} of {totalPages}
                     </p>
@@ -129,7 +132,10 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
                 </div>
               ) : (
                 <div className="pdf-placeholder">
-                  <h3>📄 No PDF Available</h3>
+                  <h3>
+                    <FileText className="inline h-5 w-5 mr-2" />
+                    No PDF Available
+                  </h3>
                   <p>This paper doesn't have a PDF file attached.</p>
                 </div>
               )}

@@ -1,5 +1,14 @@
 import React from 'react';
-import { BookOpen, Edit, Trash2, FileText, CheckCircle, Clock, Circle, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  Edit,
+  Trash2,
+  FileText,
+  CheckCircle,
+  Clock,
+  Circle,
+  Sparkles,
+} from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 
 type LibraryCardProps = {
@@ -15,9 +24,7 @@ type LibraryCardProps = {
   isNew?: boolean;
   count: number;
   onClick: (id: string) => void;
-  isSelected?: boolean;
-  isSelectionMode?: boolean;
-  onToggleSelection?: (id: string) => void;
+  onRefresh?: () => void;
 };
 
 // Removed unused cardColors array since we're using CSS variables now
@@ -35,9 +42,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   isNew = false,
   count,
   onClick,
-  isSelected = false,
-  isSelectionMode = false,
-  onToggleSelection,
+  onRefresh,
 }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     isOpen: boolean;
@@ -65,19 +70,31 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     });
   };
 
-  const handleRename = () => {
+  const handleRename = async () => {
     const newTitle = prompt('Enter new title:');
     if (newTitle && newTitle.trim()) {
-      console.log('Rename paper:', id, newTitle);
-      // TODO: Implement paper rename in database
+      try {
+        // TODO: Implement paper rename in database
+        // For now, we'll just show a toast
+        console.log('Rename paper:', id, newTitle);
+        // You would call: await window.api.papers.update(id, { title: newTitle.trim() });
+      } catch (error) {
+        console.error('Failed to rename paper:', error);
+      }
     }
     setContextMenu({ isOpen: false, x: 0, y: 0 });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this paper?')) {
-      console.log('Delete paper:', id);
-      // TODO: Implement paper deletion in database
+      try {
+        await window.api.papers.delete(id);
+        console.log('Delete paper:', id);
+        // Refresh the paper list in parent component
+        onRefresh?.();
+      } catch (error) {
+        console.error('Failed to delete paper:', error);
+      }
     }
     setContextMenu({ isOpen: false, x: 0, y: 0 });
   };
@@ -101,23 +118,40 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     },
   ];
 
+  const getStatusIcon = () => {
+    switch (status) {
+      case 'read':
+        return <CheckCircle className="h-3 w-3" />;
+      case 'reading':
+        return <Clock className="h-3 w-3" />;
+      default:
+        return <Circle className="h-3 w-3" />;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case 'read':
+        return 'Read';
+      case 'reading':
+        return 'Reading';
+      default:
+        return 'To Read';
+    }
+  };
+
   return (
     <>
-      <div className={`library-card ${isSelected ? 'selected' : ''}`}>
-        {isSelectionMode && (
-          <div className="selection-overlay">
-            <input
-              type="checkbox"
-              checked={isSelected}
-              onChange={() => onToggleSelection?.(id)}
-              className="selection-checkbox"
-            />
-          </div>
-        )}
+      <div className="library-card">
         <button
           type="button"
           className="library-card-content"
           onClick={() => onClick(id)}
+          onDoubleClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleLongPress(e);
+          }}
           onContextMenu={handleRightClick}
           onMouseDown={(e) => {
             // Long press detection
