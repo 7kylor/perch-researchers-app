@@ -77,16 +77,13 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
             id={paper.id}
             title={paper.title}
             authors={paper.authors}
-            venue={paper.venue}
             year={paper.year}
-            doi={paper.doi}
-            abstract={paper.abstract}
             status={getPaperStatus(paper)}
-            category={getCategoryDisplayName(category)}
             isNew={index < 5} // Mark first 5 as new
             count={0} // TODO: Add comment/note count
             onClick={onPaperSelect}
             onRefresh={onRefresh}
+            dateAdded={paper.filePath ? new Date().toISOString() : undefined} // Placeholder for date added
           />
         </div>
       ))}

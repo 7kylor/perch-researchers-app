@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  BookOpen,
-  Edit,
-  Trash2,
-  FileText,
-  CheckCircle,
-  Clock,
-  Circle,
-  Sparkles,
-} from 'lucide-react';
+import { BookOpen, Edit, Trash2, FileText, Calendar } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 
 type LibraryCardProps = {
@@ -25,40 +16,27 @@ type LibraryCardProps = {
   count: number;
   onClick: (id: string) => void;
   onRefresh?: () => void;
+  dateAdded?: string;
 };
-
-// Removed unused cardColors array since we're using CSS variables now
 
 export const LibraryCard: React.FC<LibraryCardProps> = ({
   id,
   title,
   authors,
-  venue,
   year,
-  doi,
-  abstract,
   status,
-  category,
   isNew = false,
   count,
   onClick,
   onRefresh,
+  dateAdded,
 }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     isOpen: boolean;
     x: number;
     y: number;
   }>({ isOpen: false, x: 0, y: 0 });
-
-  const handleLongPress = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({
-      isOpen: true,
-      x: e.clientX,
-      y: e.clientY,
-    });
-  };
+  const [isHovered, setIsHovered] = React.useState(false);
 
   const handleRightClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,10 +52,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     const newTitle = prompt('Enter new title:');
     if (newTitle && newTitle.trim()) {
       try {
-        // TODO: Implement paper rename in database
-        // For now, we'll just show a toast
         console.log('Rename paper:', id, newTitle);
-        // You would call: await window.api.papers.update(id, { title: newTitle.trim() });
       } catch (error) {
         console.error('Failed to rename paper:', error);
       }
@@ -90,7 +65,6 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
       try {
         await window.api.papers.delete(id);
         console.log('Delete paper:', id);
-        // Refresh the paper list in parent component
         onRefresh?.();
       } catch (error) {
         console.error('Failed to delete paper:', error);
@@ -118,112 +92,69 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     },
   ];
 
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'read':
-        return <CheckCircle className="h-3 w-3" />;
-      case 'reading':
-        return <Clock className="h-3 w-3" />;
-      default:
-        return <Circle className="h-3 w-3" />;
-    }
-  };
-
-  const getStatusText = () => {
-    switch (status) {
-      case 'read':
-        return 'Read';
-      case 'reading':
-        return 'Reading';
-      default:
-        return 'To Read';
-    }
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
   return (
     <>
-      <div className="library-card">
-        <button
-          type="button"
-          className="library-card-content"
-          onClick={() => onClick(id)}
-          onDoubleClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleLongPress(e);
-          }}
-          onContextMenu={handleRightClick}
-          onMouseDown={(e) => {
-            // Long press detection
-            const timer = setTimeout(() => {
-              handleLongPress(e);
-            }, 500);
+      <div
+        className={`book-card ${isHovered ? 'hovered' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => onClick(id)}
+        onContextMenu={handleRightClick}
+      >
+        {/* Book Cover */}
+        <div className="book-cover">
+          {/* Book Spine */}
+          <div className="book-spine"></div>
 
-            const handleMouseUp = () => {
-              clearTimeout(timer);
-              document.removeEventListener('mouseup', handleMouseUp);
-            };
+          {/* Front Cover Content */}
+          <div className="book-front">
+            {/* Title Badge */}
+            <div className="book-title-badge">{year || 'Unknown'}</div>
 
-            document.addEventListener('mouseup', handleMouseUp);
-          }}
-        >
-          <div className="card-tag">
-            {isNew && (
-              <span className="new-badge">
-                <Sparkles size={12} />
-                NEW
-              </span>
-            )}
-            {category}
-          </div>
-          <div className="card-content">
-            <div className="card-title">{title}</div>
-            {authors.length > 0 && (
-              <div className="card-authors">
-                {authors.slice(0, 2).join(', ')}
-                {authors.length > 2 && ` +${authors.length - 2}`}
-              </div>
-            )}
-            {(venue || year) && (
-              <div className="card-venue">
-                {venue && <span>{venue}</span>}
-                {venue && year && <span> • </span>}
-                {year && <span>{year}</span>}
-              </div>
-            )}
-            {abstract && (
-              <div className="card-abstract">
-                {abstract.length > 120 ? `${abstract.substring(0, 120)}...` : abstract}
-              </div>
-            )}
-          </div>
-          <div className="card-footer">
-            <div className="card-status-badge">
-              {status === 'read' ? (
-                <>
-                  <CheckCircle size={12} />
-                  <span>Read</span>
-                </>
-              ) : status === 'reading' ? (
-                <>
-                  <Clock size={12} />
-                  <span>Reading</span>
-                </>
-              ) : (
-                <>
-                  <Circle size={12} />
-                  <span>To Read</span>
-                </>
-              )}
+            {/* Main Title/Number */}
+            <div className="book-main-title">
+              {title.length > 60 ? `${title.substring(0, 60)}...` : title}
             </div>
-            <div className="card-meta">
-              <span className="card-icon">
-                <FileText size={16} />
-              </span>
-              <span className="card-count">{count}</span>
+
+            {/* Status */}
+            <div className="book-status">{isNew ? 'New' : formatDate(dateAdded) || 'Unknown'}</div>
+
+            {/* Notes Count */}
+            {count > 0 && (
+              <div className="book-notes">
+                <FileText size={12} />
+                <span>{count}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Book Pages Effect on Hover */}
+          <div className="book-pages">
+            <div className="page page-1"></div>
+            <div className="page page-2"></div>
+            <div className="page page-3"></div>
+          </div>
+        </div>
+
+        {/* Authors Info (visible on hover) */}
+        {isHovered && authors.length > 0 && (
+          <div className="book-authors-info">
+            <div className="authors-list">
+              {authors.slice(0, 2).join(', ')}
+              {authors.length > 2 && ` +${authors.length - 2} more`}
             </div>
           </div>
-        </button>
+        )}
       </div>
 
       <ContextMenu
