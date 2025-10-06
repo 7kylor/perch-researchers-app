@@ -202,15 +202,12 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
   };
 
   return (
-    <div className="sidebar-section">
-      <h3 className="section-title">Categories</h3>
-      <ul
-        className="section-items"
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => handleDropOnList(e, null)}
-      >
-        {tree.map((n) => renderNode(n))}
-      </ul>
-    </div>
+    <ul
+      className="section-items"
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => handleDropOnList(e, null)}
+    >
+      {tree.map((n) => renderNode(n))}
+    </ul>
   );
 };

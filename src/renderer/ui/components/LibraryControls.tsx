@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, Search } from 'lucide-react';
+import type React from 'react';
+import { Plus, Search, X } from 'lucide-react';
 
 type LibraryControlsProps = {
   searchQuery: string;

@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
 
       {renamingId && (
         <input
-          id="sidebar-rename-input"
+          id={`sidebar-rename-input-${renamingId}`}
           className="category-edit-input"
           value={renameValue}
           onChange={(e) => setRenameValue(e.target.value)}
