@@ -1,5 +1,4 @@
-/* Inter Font Family */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+/* Huwiya Font Family - Using system fonts as fallback */
 
 :root {
 	--bg: #ffffff;
@@ -61,7 +60,7 @@ body {
 	background: var(--bg);
 	color: var(--text);
 	font-family:
-		"Inter", "SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI",
+		"SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI",
 		"Roboto", "Helvetica Neue", Arial, sans-serif;
 	font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 	font-variant-numeric: tabular-nums;
@@ -370,17 +369,17 @@ body {
 	justify-content: center;
 }
 
-/* Library Sidebar */
+/* Library Sidebar - Grid Design System */
 .library-sidebar {
 	background: var(--sidebar-bg);
 	width: 200px;
 	height: 100%;
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-rows: 1fr auto;
 	flex-shrink: 0; /* Prevent shrinking */
 	min-width: 0; /* Allow shrinking if needed */
 	position: relative;
-	padding: 16px 0; /* Add top and bottom padding */
+	padding: 8px 0; /* Reduced padding */
 	transition:
 		height 0.2s ease,
 		width 0.3s ease;
@@ -392,15 +391,22 @@ body {
 	overflow: hidden;
 }
 
+.sidebar-grid {
+	display: grid;
+	grid-template-rows: auto auto;
+	gap: 4px; /* Reduced gap between sections */
+	padding: 0 8px; /* Reduced horizontal padding */
+}
+
 .sidebar-item.collapsed {
 	justify-content: center;
-	padding: 8px;
-	min-height: 36px;
+	padding: 6px; /* Reduced padding */
+	min-height: 32px; /* Reduced height */
 }
 
 .sidebar-footer.collapsed {
 	margin-top: auto;
-	padding-top: 16px;
+	padding-top: 8px; /* Reduced padding */
 	border-top: 1px solid var(--border-subtle);
 }
 
@@ -762,19 +768,25 @@ body {
 @media (max-width: 900px) {
 	.library-sidebar {
 		width: 180px;
+		padding: 6px 0; /* Reduced padding */
 	}
 
 	.library-sidebar.collapsed {
 		width: 0;
 		padding: 0;
 		overflow: hidden;
+	}
+
+	.sidebar-grid {
+		gap: 3px; /* Reduced gap */
+		padding: 0 6px; /* Reduced padding */
 	}
 }
 
 @media (max-width: 768px) {
 	.library-sidebar {
 		width: 160px;
-		padding: 10px 0;
+		padding: 6px 0; /* Reduced padding */
 	}
 
 	.library-sidebar.collapsed {
@@ -783,21 +795,26 @@ body {
 		overflow: hidden;
 	}
 
-	.sidebar-content {
-		padding: 6px;
-		padding-top: 16px;
+	.sidebar-grid {
+		gap: 2px; /* Reduced gap */
+		padding: 0 4px; /* Reduced padding */
 	}
 
-	.folder-header {
-		padding: 6px 6px;
-		font-size: 12px;
+	.sidebar-item {
+		padding: 3px 4px; /* Reduced padding */
+		font-size: 11px; /* Smaller font */
+	}
+
+	.section-title {
+		font-size: 9px; /* Smaller font */
+		padding: 0 6px; /* Reduced padding */
 	}
 }
 
 @media (max-width: 600px) {
 	.library-sidebar {
 		width: 140px;
-		padding: 8px 0;
+		padding: 4px 0; /* Reduced padding */
 	}
 
 	.library-sidebar.collapsed {
@@ -806,65 +823,63 @@ body {
 		overflow: hidden;
 	}
 
-	.sidebar-content {
-		padding: 6px;
-		padding-top: 16px;
-	}
-
-	.folder-header {
-		padding: 4px 4px;
-		font-size: 11px;
-	}
-
-	.folder-content {
-		padding-left: 12px;
+	.sidebar-grid {
+		gap: 2px; /* Reduced gap */
+		padding: 0 4px; /* Reduced padding */
 	}
 
 	.sidebar-item {
-		padding: 6px 8px;
-		margin: 1px 4px;
-		font-size: 11px;
+		padding: 2px 3px; /* Reduced padding */
+		font-size: 10px; /* Smaller font */
+		gap: 4px; /* Reduced gap */
 	}
 
-	.item-icon {
-		width: 18px;
-		height: 18px;
-		font-size: 11px;
+	.section-title {
+		font-size: 8px; /* Smaller font */
+		padding: 0 4px; /* Reduced padding */
+		margin-bottom: 2px; /* Reduced margin */
 	}
 }
 
 .sidebar-section {
-	margin-bottom: 20px;
+	margin-bottom: 8px; /* Reduced margin */
+}
+
+.section-items {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1px; /* Minimal gap between items */
 }
 
 .section-title {
 	color: var(--text-secondary);
-	font-size: 11px;
+	font-size: 10px; /* Smaller font size */
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.8px;
-	margin: 0 0 8px 0;
-	padding: 0 16px;
+	margin: 0 0 4px 0; /* Reduced margin */
+	padding: 0 8px; /* Reduced padding */
 	font-family:
-		"Inter", "SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI",
+		"SF Pro Display", "-apple-system", "BlinkMacSystemFont", "Segoe UI",
 		"Roboto", "Helvetica Neue", Arial, sans-serif;
 }
 
 .sidebar-item {
-	display: flex;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
 	align-items: center;
-	gap: 10px;
-	padding: 6px 16px;
-	margin: 1px 8px;
+	gap: 6px; /* Reduced gap */
+	padding: 4px 6px; /* Reduced padding */
+	margin: 0; /* Remove margin for grid layout */
 	cursor: pointer;
 	transition: all 0.15s ease;
 	color: var(--text);
-	font-size: 13px;
+	font-size: 12px; /* Smaller font size */
 	font-weight: 400;
 	background: none;
 	border: none;
-	border-radius: 6px;
-	width: calc(100% - 16px);
+	border-radius: 4px; /* Smaller border radius */
+	width: 100%;
 	text-align: left;
 	position: relative;
 	font-family:
@@ -909,25 +924,27 @@ body {
 }
 
 .item-icon {
-	width: 24px;
-	height: 24px;
-	border-radius: 6px;
+	width: 16px; /* Smaller icon size */
+	height: 16px;
+	border-radius: 3px; /* Smaller border radius */
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 14px;
+	font-size: 10px; /* Smaller font size */
 	flex-shrink: 0;
 	color: var(--text);
 	background: transparent;
 }
 
 .item-text {
-	flex: 1;
+	justify-self: start; /* Grid positioning */
+	font-size: 11px; /* Smaller font size */
 }
 
 .item-count {
+	justify-self: end; /* Grid positioning */
 	color: var(--text-secondary);
-	font-size: 11px;
+	font-size: 9px; /* Smaller font size */
 	font-weight: 500;
 }
 

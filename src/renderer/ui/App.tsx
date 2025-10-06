@@ -32,8 +32,20 @@ export const App: React.FC = () => {
   const openPaper = React.useCallback(async (id: string) => {
     const paper = await window.api.papers.get(id);
     if (paper) {
-      setCurrentPaper(paper);
-      setViewMode('reader');
+      // Check if paper has a PDF file
+      if (paper.filePath) {
+        // Open in separate PDF reader window
+        try {
+          await window.api['pdf-reader']['create-window'](paper);
+        } catch (error) {
+          console.error('Failed to open PDF reader window:', error);
+          setToast({ message: 'Failed to open PDF reader', type: 'error' });
+        }
+      } else {
+        // No PDF file - open in main window reader (fallback)
+        setCurrentPaper(paper);
+        setViewMode('reader');
+      }
     }
   }, []);
 
@@ -59,13 +71,57 @@ export const App: React.FC = () => {
       let paperId: string;
 
       if (type === 'pdf') {
-        paperId = await window.api.ingest.pdf(input);
+        // Handle local PDF file upload
+        const result = await window.api.pdf['import-from-file'](input);
+        paperId = await window.api.papers.add(result.paper);
         setToast({ message: 'PDF uploaded successfully!', type: 'success' });
       } else {
-        if (input.startsWith('10.')) {
+        // Handle URL input - could be DOI, ArXiv ID, or PDF URL
+        if (input.startsWith('10.') || input.includes('doi.org')) {
+          // It's a DOI
           paperId = await window.api.ingest.doi(input);
           setToast({ message: 'Paper imported from DOI successfully!', type: 'success' });
+        } else if (input.includes('arxiv.org') || /^\d+\.\d+$/.test(input.trim())) {
+          // It's an ArXiv ID or similar
+          const paperData = {
+            title: `Paper from ${input}`,
+            authors: [],
+            venue: undefined,
+            year: undefined,
+            doi: undefined,
+            source: 'url' as const,
+            abstract: undefined,
+            status: 'to_read' as const,
+            filePath: undefined,
+            textHash: input,
+          };
+          paperId = await window.api.papers.add(paperData);
+          setToast({ message: 'Paper added successfully!', type: 'success' });
+        } else if (input.includes('.pdf') || input.startsWith('http')) {
+          // It's a PDF URL - try to import it directly
+          try {
+            const result = await window.api.pdf['import-from-url'](input);
+            paperId = await window.api.papers.add(result.paper);
+            setToast({ message: 'PDF downloaded and imported successfully!', type: 'success' });
+          } catch (pdfError) {
+            // If PDF import fails, add as regular URL
+            const paperData = {
+              title: `Paper from ${input}`,
+              authors: [],
+              venue: undefined,
+              year: undefined,
+              doi: undefined,
+              source: 'url' as const,
+              abstract: undefined,
+              status: 'to_read' as const,
+              filePath: undefined,
+              textHash: input,
+            };
+            paperId = await window.api.papers.add(paperData);
+            setToast({ message: 'URL added successfully!', type: 'success' });
+          }
         } else {
+          // Regular URL
           const paperData = {
             title: `Paper from ${input}`,
             authors: [],

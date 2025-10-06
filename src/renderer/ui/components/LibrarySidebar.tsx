@@ -21,15 +21,15 @@ const categories: Category[] = [
     id: 'ai-models',
     name: 'AI Models',
     count: 40,
-    icon: <Brain className="h-4 w-4" />,
+    icon: <Brain className="h-3 w-3" />,
     color: '#3b82f6',
   },
-  { id: 'ml', name: 'ML', count: 23, icon: <TrendingUp className="h-4 w-4" />, color: '#6b7280' },
+  { id: 'ml', name: 'ML', count: 23, icon: <TrendingUp className="h-3 w-3" />, color: '#6b7280' },
   {
     id: 'segmentation',
     name: 'Segmentation',
     count: 15,
-    icon: <Layers className="h-4 w-4" />,
+    icon: <Layers className="h-3 w-3" />,
     color: '#9ca3af',
   },
 ];
@@ -78,12 +78,12 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
     ? [
         {
           label: 'Rename',
-          icon: <Edit className="h-4 w-4" />,
+          icon: <Edit className="h-3 w-3" />,
           onClick: () => handleCategoryRename(contextMenu.categoryId as string),
         },
         {
           label: 'Delete',
-          icon: <Trash2 className="h-4 w-4" />,
+          icon: <Trash2 className="h-3 w-3" />,
           onClick: () => handleCategoryDelete(contextMenu.categoryId as string),
           danger: true,
         },
@@ -92,17 +92,17 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
 
   return (
     <aside className={`library-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-content">
-        <div className="sidebar-tree">
-          {/* Library Section */}
-          <div className="sidebar-section">
-            <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Library</h3>
+      <div className="sidebar-grid">
+        {/* Library Section */}
+        <div className="sidebar-section">
+          <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Library</h3>
+          <div className="section-items">
             <button
               type="button"
               className={`sidebar-item ${selectedCategory === 'all' ? 'selected' : ''}`}
               onClick={() => onCategorySelect('all')}
             >
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="h-3 w-3" />
               <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>All Papers</span>
             </button>
             <button
@@ -110,14 +110,16 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
               className={`sidebar-item ${selectedCategory === 'recent' ? 'selected' : ''}`}
               onClick={() => onCategorySelect('recent')}
             >
-              <Clock className="h-4 w-4" />
+              <Clock className="h-3 w-3" />
               <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>Recent</span>
             </button>
           </div>
+        </div>
 
-          {/* Categories Section */}
-          <div className="sidebar-section">
-            <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Categories</h3>
+        {/* Categories Section */}
+        <div className="sidebar-section">
+          <h3 className={`section-title ${isCollapsed ? 'hidden' : ''}`}>Categories</h3>
+          <div className="section-items">
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -156,7 +158,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
               className={`sidebar-item add-category ${isCollapsed ? 'collapsed' : ''}`}
               onClick={() => {}}
             >
-              <Layers className="h-4 w-4" />
+              <Layers className="h-3 w-3" />
               <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>New category +</span>
             </button>
           </div>

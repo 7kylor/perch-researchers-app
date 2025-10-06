@@ -3,6 +3,7 @@ import { openDatabase } from './db';
 import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types';
 import { importByDOI, importPDF } from './ingest/importer';
+import { PDFImportManager, PDFImportProgress } from './ingest/pdf-import';
 import fs from 'node:fs';
 import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline';
 import { createRAGSystem } from './ai/rag';
@@ -219,6 +220,37 @@ ipcMain.handle('ai:usage', () => {
 
 ipcMain.handle('ocr:process', async (_e, paperId: string, pdfPath: string) => {
   return await processPaperOCR(paperId, pdfPath);
+});
+
+// PDF Import handlers
+const pdfImportManager = PDFImportManager.getInstance();
+
+ipcMain.handle(
+  'pdf:import-from-url',
+  async (_e, url: string, onProgress?: (progress: PDFImportProgress) => void) => {
+    return await pdfImportManager.importFromUrl(url, onProgress);
+  },
+);
+
+ipcMain.handle(
+  'pdf:import-from-file',
+  async (_e, filePath: string, onProgress?: (progress: PDFImportProgress) => void) => {
+    return await pdfImportManager.importFromLocalFile(filePath, onProgress);
+  },
+);
+
+ipcMain.handle('pdf:cancel-import', async (_e, importId: string) => {
+  return pdfImportManager.cancelImport(importId);
+});
+
+ipcMain.handle('pdf:get-active-imports', () => {
+  return pdfImportManager.getActiveImports();
+});
+
+// Dialog handlers
+ipcMain.handle('dialog:showOpenDialog', async (_e, options: Electron.OpenDialogOptions) => {
+  const { dialog } = await import('electron');
+  return await dialog.showOpenDialog(options);
 });
 
 function sanitizeForFts(input: string): string | null {
