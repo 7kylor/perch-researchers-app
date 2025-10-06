@@ -52,17 +52,50 @@ ipcMain.handle('papers:add', (_e, payload: Omit<Paper, 'id' | 'addedAt' | 'updat
 type DBPaperRow = Omit<Paper, 'authors'> & { authors: string };
 
 ipcMain.handle('papers:search', (_e, query: string) => {
-  const safe = sanitizeForFts(query);
-  const rows = safe
-    ? (db
+  const trimmedQuery = query?.trim();
+  const safe = trimmedQuery ? sanitizeForFts(trimmedQuery) : null;
+  let rows: DBPaperRow[] = [];
+
+  if (safe) {
+    try {
+      // Try FTS search first
+      rows = db
         .prepare(
           `select p.* from papers p
            join papers_fts f on f.rowid = p.rowid
            where f match ?
            order by p.addedAt desc`,
         )
-        .all(safe) as DBPaperRow[])
-    : (db.prepare(`select * from papers order by addedAt desc limit 50`).all() as DBPaperRow[]);
+        .all(safe) as DBPaperRow[];
+    } catch (error) {
+      console.error('FTS search failed:', error);
+      rows = [];
+    }
+
+    // If no results from FTS, try fallback LIKE search
+    if (rows.length === 0) {
+      const likeQuery = `%${trimmedQuery.toLowerCase()}%`;
+      try {
+        // Extract authors from JSON for better matching
+        rows = db
+          .prepare(
+            `select * from papers
+             where lower(title) like ?
+             or lower(replace(replace(replace(authors, '"', ''), '[', ''), ']', '')) like ?
+             or lower(abstract) like ?
+             order by addedAt desc limit 50`,
+          )
+          .all(likeQuery, likeQuery, likeQuery) as DBPaperRow[];
+      } catch (error) {
+        console.error('LIKE search failed:', error);
+        rows = [];
+      }
+    }
+  } else {
+    // No search query, return all papers
+    rows = db.prepare(`select * from papers order by addedAt desc limit 50`).all() as DBPaperRow[];
+  }
+
   return rows.map(
     (r: DBPaperRow): Paper => ({
       ...r,
@@ -265,8 +298,10 @@ function sanitizeForFts(input: string): string | null {
   if (!normalized) return null;
   const tokens = normalized.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return null;
-  // Quote tokens and AND them for precise matching
-  return tokens.map((t) => `"${t}"`).join(' AND ');
+
+  // Use OR matching for more flexible search results
+  // Quote each token to handle special characters and phrases
+  return tokens.map((t) => `"${t.replace(/"/g, '""')}"`).join(' OR ');
 }
 
 // --------------------------------------

@@ -9,6 +9,7 @@ import { SimpleAddPaper } from './components/SimpleAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
 import { ThemeProvider } from './components/ThemeProvider';
+import { useSidebarStore } from './sidebar/store';
 
 export const App: React.FC = () => {
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
@@ -18,7 +19,7 @@ export const App: React.FC = () => {
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
+  const { prefs, actions } = useSidebarStore();
   const [toast, setToast] = React.useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -42,7 +43,7 @@ export const App: React.FC = () => {
   };
 
   const handleSidebarToggle = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
+    actions.setSidebarCollapsed(!prefs.sidebarCollapsed);
   };
 
   const handlePaperClick = (paperId: string) => {
@@ -123,7 +124,7 @@ export const App: React.FC = () => {
       }
 
       // Refresh the papers list
-      const papers = await window.api.papers.search(searchQuery || '*');
+      const papers = await window.api.papers.search(searchQuery);
       setResults(papers);
 
       return paperId;
@@ -139,7 +140,7 @@ export const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const papers = await window.api.papers.search(query || '*');
+      const papers = await window.api.papers.search(query);
       setResults(papers);
     } catch (error) {
       console.error('Search failed:', error);
@@ -187,14 +188,13 @@ export const App: React.FC = () => {
     <ThemeProvider>
       <div className="app-root">
         <ActivityBar
-          currentCategory={selectedCategory}
           onSettingsClick={handleSettingsClick}
-          isSidebarCollapsed={isSidebarCollapsed}
+          isSidebarCollapsed={prefs.sidebarCollapsed}
           onSidebarToggle={handleSidebarToggle}
         />
-        <div className="library-layout">
+        <div className={`library-layout ${prefs.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
-          <div className="library-main">
+          <div className={`library-main ${prefs.sidebarCollapsed ? 'expanded' : ''}`}>
             <LibraryControls
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}
@@ -218,7 +218,7 @@ export const App: React.FC = () => {
                     const loadPapers = async () => {
                       try {
                         setIsLoading(true);
-                        const papers = await window.api.papers.search('*');
+                        const papers = await window.api.papers.search('');
                         setResults(papers);
                       } catch (error) {
                         console.error('Failed to load papers:', error);

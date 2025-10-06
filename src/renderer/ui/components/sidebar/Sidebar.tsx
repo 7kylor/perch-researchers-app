@@ -18,7 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     setRenamingId(id);
     setRenameValue(name);
     setTimeout(() => {
-      const el = document.getElementById('sidebar-rename-input');
+      const el = document.getElementById(`sidebar-rename-input-${id}`);
       if (el) (el as HTMLInputElement).focus();
     }, 0);
   };
@@ -31,6 +31,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     setRenameValue('');
   };
 
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue('');
+  };
+
   const addLabelRoot = async () => {
     const id = await actions.create({ type: 'label', name: 'New Category', parentId: null });
     startRename(id, 'New Category');
@@ -39,6 +44,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   const addFolderRoot = async () => {
     const id = await actions.create({ type: 'folder', name: 'New Folder', parentId: null });
     startRename(id, 'New Folder');
+  };
+
+  const deleteNode = async (id: string) => {
+    if (confirm('Delete this category?')) {
+      await actions.remove(id);
+      if (selectedId === id) onSelect('builtin:all');
+    }
   };
 
   return (
@@ -134,6 +146,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
               else set.delete(id);
               await actions.setCollapsedNodeIds(Array.from(set));
             }}
+            renamingId={renamingId}
+            renameValue={renameValue}
+            onRenameChange={setRenameValue}
+            onRenameCommit={commitRename}
+            onRenameCancel={cancelRename}
+            onRenameStart={startRename}
+            onRequestDelete={deleteNode}
           />
         </div>
 
@@ -141,23 +160,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
       </div>
 
       <SidebarFooter collapsed={prefs.sidebarCollapsed} />
-
-      {renamingId && (
-        <input
-          id={`sidebar-rename-input-${renamingId}`}
-          className="category-edit-input"
-          value={renameValue}
-          onChange={(e) => setRenameValue(e.target.value)}
-          onBlur={commitRename}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commitRename();
-            if (e.key === 'Escape') {
-              setRenamingId(null);
-              setRenameValue('');
-            }
-          }}
-        />
-      )}
     </nav>
   );
 };

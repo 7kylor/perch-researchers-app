@@ -377,18 +377,20 @@ body {
 	display: grid;
 	grid-template-rows: 1fr auto;
 	flex-shrink: 0; /* Prevent shrinking */
-	min-width: 0; /* Allow shrinking if needed */
+	min-width: 200px; /* Fixed width when visible */
 	position: relative;
 	padding: 8px 0; /* Reduced padding */
-	transition:
-		height 0.2s ease,
-		width 0.3s ease;
+	transition: all 0.3s ease;
 }
 
 .library-sidebar.collapsed {
 	width: 0;
+	min-width: 0;
 	padding: 0;
 	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+	visibility: hidden;
 }
 
 .sidebar-grid {
@@ -777,8 +779,12 @@ body {
 
 	.library-sidebar.collapsed {
 		width: 0;
+		min-width: 0;
 		padding: 0;
 		overflow: hidden;
+		opacity: 0;
+		pointer-events: none;
+		visibility: hidden;
 	}
 
 	.sidebar-grid {
@@ -795,8 +801,12 @@ body {
 
 	.library-sidebar.collapsed {
 		width: 0;
+		min-width: 0;
 		padding: 0;
 		overflow: hidden;
+		opacity: 0;
+		pointer-events: none;
+		visibility: hidden;
 	}
 
 	.sidebar-grid {
@@ -823,8 +833,12 @@ body {
 
 	.library-sidebar.collapsed {
 		width: 0;
+		min-width: 0;
 		padding: 0;
 		overflow: hidden;
+		opacity: 0;
+		pointer-events: none;
+		visibility: hidden;
 	}
 
 	.sidebar-grid {
@@ -1538,6 +1552,12 @@ body {
 	background: var(--bg);
 	min-width: 0; /* Prevent flex item from growing beyond container */
 	overflow: hidden; /* Prevent any overflow */
+	transition: all 0.3s ease;
+	width: calc(100% - 200px); /* Default width accounting for sidebar */
+}
+
+.library-sidebar.collapsed + .library-main {
+	width: 100%; /* Full width when sidebar is collapsed */
 }
 
 /* Responsive activity bar */
@@ -1560,6 +1580,14 @@ body {
 		font-size: 13px;
 		max-width: 300px;
 	}
+
+	.library-main {
+		width: calc(100% - 180px); /* Adjusted for smaller sidebar */
+	}
+
+	.library-sidebar.collapsed + .library-main {
+		width: 100%;
+	}
 }
 
 @media (max-width: 768px) {
@@ -1581,6 +1609,14 @@ body {
 	.activity-title {
 		font-size: 12px;
 		max-width: 250px;
+	}
+
+	.library-main {
+		width: calc(100% - 160px); /* Adjusted for smaller sidebar */
+	}
+
+	.library-sidebar.collapsed + .library-main {
+		width: 100%;
 	}
 }
 
@@ -1605,6 +1641,14 @@ body {
 	.activity-title {
 		font-size: 11px;
 		max-width: 200px;
+	}
+
+	.library-main {
+		width: calc(100% - 140px); /* Adjusted for smaller sidebar */
+	}
+
+	.library-sidebar.collapsed + .library-main {
+		width: 100%;
 	}
 }
 
@@ -1732,8 +1776,8 @@ textarea:focus-visible {
 
 /* Loading Skeleton */
 .loading-skeleton {
-	background: var(--surface-secondary) !important;
-	color: transparent !important;
+	background: var(--surface-secondary);
+	color: transparent;
 	position: relative;
 	overflow: hidden;
 }

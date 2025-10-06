@@ -39,17 +39,23 @@ export function openDatabase(): Database.Database {
       createdAt text not null
     );
     create virtual table if not exists papers_fts using fts5(
-      title, abstract, content='papers', content_rowid='rowid'
+      title, authors, abstract, content='papers', content_rowid='rowid'
     );
+    -- Rebuild FTS table to include authors column for existing data
+    insert into papers_fts(papers_fts) values('rebuild');
     create trigger if not exists papers_fts_ai after insert on papers begin
-      insert into papers_fts(rowid, title, abstract) values (new.rowid, new.title, new.abstract);
+      insert into papers_fts(rowid, title, authors, abstract)
+      values (new.rowid, new.title, coalesce(replace(replace(replace(new.authors, '"', ''), '[', ''), ']', ''), ''), new.abstract);
     end;
     create trigger if not exists papers_fts_ad after delete on papers begin
-      insert into papers_fts(papers_fts, rowid, title, abstract) values ('delete', old.rowid, old.title, old.abstract);
+      insert into papers_fts(papers_fts, rowid, title, authors, abstract)
+      values ('delete', old.rowid, old.title, coalesce(replace(replace(replace(old.authors, '"', ''), '[', ''), ']', ''), ''), old.abstract);
     end;
     create trigger if not exists papers_fts_au after update on papers begin
-      insert into papers_fts(papers_fts, rowid, title, abstract) values ('delete', old.rowid, old.title, old.abstract);
-      insert into papers_fts(rowid, title, abstract) values (new.rowid, new.title, new.abstract);
+      insert into papers_fts(papers_fts, rowid, title, authors, abstract)
+      values ('delete', old.rowid, old.title, coalesce(replace(replace(replace(old.authors, '"', ''), '[', ''), ']', ''), ''), old.abstract);
+      insert into papers_fts(rowid, title, authors, abstract)
+      values (new.rowid, new.title, coalesce(replace(replace(replace(new.authors, '"', ''), '[', ''), ']', ''), ''), new.abstract);
     end;
 
     create table if not exists embeddings (
