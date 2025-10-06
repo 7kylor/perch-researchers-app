@@ -13,19 +13,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ category, onAddItem }) =
         return 'papers';
       case 'recent':
         return 'recent papers';
-      case 'ai-models':
-        return 'AI models';
-      case 'ml':
-        return 'ML papers';
-      case 'segmentation':
-        return 'segmentation papers';
       default:
         // Try to find the category name from localStorage
         try {
           const saved = localStorage.getItem('categories');
           if (saved) {
-            const categories = JSON.parse(saved);
-            const category = categories.find((c: any) => c.id === categoryId);
+            const categories = JSON.parse(saved) as Array<{ id: string; name: string }>;
+            const category = categories.find((c) => c.id === categoryId);
             return category ? `${category.name.toLowerCase()} papers` : 'papers';
           }
         } catch {

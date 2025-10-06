@@ -61,28 +61,33 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
   return (
     <div className={`paper-reader-overlay ${isFullscreen ? 'fullscreen' : ''}`}>
       <div className="paper-reader">
-        {/* Header */}
-        <div className="reader-header">
-          <div className="reader-title">
-            <h2>{paper.title}</h2>
-            <p className="reader-meta">
-              {paper.authors.join(', ')} • {paper.venue} • {paper.year}
-            </p>
+        {/* Header - Using Activity Bar style */}
+        <header className="activity-bar">
+          {/* Left section - Empty for paper reader */}
+          <div className="activity-left"></div>
+
+          {/* Center section - Paper title */}
+          <div className="activity-center">
+            <h1 className="activity-title" title={paper.title}>
+              {paper.title.length > 50 ? `${paper.title.substring(0, 50)}...` : paper.title}
+            </h1>
           </div>
-          <div className="reader-controls">
+
+          {/* Right section - Controls */}
+          <div className="activity-right">
             <button
               type="button"
-              className="reader-btn"
+              className="activity-compact-btn"
               onClick={() => setIsFullscreen(!isFullscreen)}
               title="Toggle Fullscreen"
             >
-              <Maximize size={18} />
+              <Maximize className="h-3 w-3" />
             </button>
-            <button type="button" className="reader-btn" onClick={onClose} title="Close">
-              <X size={18} />
+            <button type="button" className="activity-compact-btn" onClick={onClose} title="Close">
+              <X className="h-3 w-3" />
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Content */}
         <div className="reader-content">

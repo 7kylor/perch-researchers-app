@@ -13,10 +13,17 @@ export default defineConfig({
   build: {
     outDir: 'dist/renderer',
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'src/renderer/index.html'),
+        'pdf-reader': path.resolve(__dirname, 'pdf-reader.html'),
+      },
+    },
   },
   server: {
     port: 5173,
     strictPort: true,
     host: true,
   },
+  publicDir: 'public',
 });

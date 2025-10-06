@@ -36,3 +36,28 @@ export const embeddings = sqliteTable('embeddings', {
   dim: integer('dim').notNull(),
   createdAt: text('createdAt').notNull(),
 });
+
+// Sidebar schemas
+export const sidebarNodes = sqliteTable('sidebar_nodes', {
+  id: text('id').primaryKey().notNull(),
+  parentId: text('parentId'),
+  type: text('type').notNull(), // 'folder' | 'label'
+  name: text('name').notNull(),
+  iconKey: text('iconKey'),
+  colorHex: text('colorHex'),
+  orderIndex: integer('orderIndex').notNull(),
+  createdAt: text('createdAt').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
+export const paperCategories = sqliteTable('paper_categories', {
+  paperId: text('paperId').notNull(),
+  nodeId: text('nodeId').notNull(),
+  createdAt: text('createdAt').notNull(),
+});
+
+export const sidebarPrefs = sqliteTable('sidebar_prefs', {
+  id: text('id').primaryKey().notNull(), // singleton: 'default'
+  payload: text('payload').notNull(), // JSON of SidebarPrefs
+  updatedAt: text('updatedAt').notNull(),
+});

@@ -1,4 +1,5 @@
-import { Paper } from '../shared/types';
+import type { Paper } from '../shared/types';
+import type { SidebarListResponse, SidebarNode, SidebarPrefs } from '../shared/sidebar';
 import type { OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 
 export interface PDFImportProgress {
@@ -21,20 +22,15 @@ export interface PreloadAPI {
     update: (id: string, updates: Partial<Paper>) => Promise<void>;
     delete: (id: string) => Promise<void>;
     search: (query: string) => Promise<Paper[]>;
+    listByCategory: (nodeId: string, limit?: number) => Promise<Paper[]>;
   };
   ingest: {
     pdf: (filePath: string) => Promise<string>;
     doi: (doi: string) => Promise<string>;
   };
   pdf: {
-    'import-from-url': (
-      url: string,
-      onProgress?: (progress: PDFImportProgress) => void,
-    ) => Promise<PDFImportResult>;
-    'import-from-file': (
-      filePath: string,
-      onProgress?: (progress: PDFImportProgress) => void,
-    ) => Promise<PDFImportResult>;
+    'import-from-url': (url: string) => Promise<PDFImportResult>;
+    'import-from-file': (filePath: string) => Promise<PDFImportResult>;
     'cancel-import': (importId: string) => Promise<boolean>;
     'get-active-imports': () => Promise<string[]>;
   };
@@ -53,6 +49,26 @@ export interface PreloadAPI {
     showOpenDialog: (options?: OpenDialogOptions) => Promise<OpenDialogReturnValue>;
   };
   on: (channel: string, listener: (...args: unknown[]) => void) => void;
+  sidebar: {
+    list: () => Promise<SidebarListResponse>;
+    create: (
+      node: Partial<SidebarNode> & {
+        type: 'folder' | 'label';
+        name: string;
+        parentId?: string | null;
+      },
+    ) => Promise<SidebarNode>;
+    update: (
+      id: string,
+      updates: Partial<Pick<SidebarNode, 'name' | 'iconKey' | 'colorHex'>>,
+    ) => Promise<void>;
+    delete: (id: string) => Promise<void>;
+    move: (id: string, newParentId: string | null, newIndex: number) => Promise<void>;
+    prefs: {
+      get: () => Promise<SidebarPrefs>;
+      set: (prefs: SidebarPrefs) => Promise<void>;
+    };
+  };
 }
 
 declare global {
@@ -73,16 +89,16 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('papers:update', id, updates),
     delete: (id: string) => ipcRenderer.invoke('papers:delete', id),
     search: (query: string) => ipcRenderer.invoke('papers:search', query),
+    listByCategory: (nodeId: string, limit?: number) =>
+      ipcRenderer.invoke('papers:listByCategory', nodeId, limit),
   },
   ingest: {
     pdf: (filePath: string) => ipcRenderer.invoke('import:pdf', filePath),
     doi: (doi: string) => ipcRenderer.invoke('import:doi', doi),
   },
   pdf: {
-    'import-from-url': (url: string, onProgress?: (progress: PDFImportProgress) => void) =>
-      ipcRenderer.invoke('pdf:import-from-url', url, onProgress),
-    'import-from-file': (filePath: string, onProgress?: (progress: PDFImportProgress) => void) =>
-      ipcRenderer.invoke('pdf:import-from-file', filePath, onProgress),
+    'import-from-url': (url: string) => ipcRenderer.invoke('pdf:import-from-url', url),
+    'import-from-file': (filePath: string) => ipcRenderer.invoke('pdf:import-from-file', filePath),
     'cancel-import': (importId: string) => ipcRenderer.invoke('pdf:cancel-import', importId),
     'get-active-imports': () => ipcRenderer.invoke('pdf:get-active-imports'),
   },
@@ -103,5 +119,17 @@ contextBridge.exposeInMainWorld('api', {
   },
   on: (channel: string, listener: (...args: unknown[]) => void) => {
     ipcRenderer.on(channel, listener);
+  },
+  sidebar: {
+    list: () => ipcRenderer.invoke('sidebar:list'),
+    create: (node) => ipcRenderer.invoke('sidebar:create', node),
+    update: (id, updates) => ipcRenderer.invoke('sidebar:update', id, updates),
+    delete: (id) => ipcRenderer.invoke('sidebar:delete', id),
+    move: (id, newParentId, newIndex) =>
+      ipcRenderer.invoke('sidebar:move', id, newParentId, newIndex),
+    prefs: {
+      get: () => ipcRenderer.invoke('sidebar:prefs:get'),
+      set: (prefs) => ipcRenderer.invoke('sidebar:prefs:set', prefs),
+    },
   },
 });

@@ -30,10 +30,7 @@ export class PDFImportManager {
     return PDFImportManager.instance;
   }
 
-  async importFromUrl(
-    url: string,
-    onProgress?: (progress: PDFImportProgress) => void,
-  ): Promise<PDFImportResult> {
+  async importFromUrl(url: string): Promise<PDFImportResult> {
     const importId = randomUUID();
     const abortController = new AbortController();
     this.activeImports.set(importId, abortController);
@@ -49,30 +46,11 @@ export class PDFImportManager {
         throw new Error('URL does not point to a PDF file');
       }
 
-      onProgress?.({
-        stage: 'downloading',
-        progress: 0,
-        message: 'Starting download...',
-      });
-
       // Download the PDF
-      const filePath = await this.downloadPdf(url, onProgress, abortController.signal);
-
-      onProgress?.({
-        stage: 'processing',
-        progress: 90,
-        message: 'Processing PDF...',
-      });
+      const filePath = await this.downloadPdf(url, abortController.signal);
 
       // Process the PDF file
       const paper = await this.processPdfFile(filePath, url);
-
-      onProgress?.({
-        stage: 'complete',
-        progress: 100,
-        message: 'PDF imported successfully',
-        filePath,
-      });
 
       return {
         id: importId,
@@ -80,30 +58,16 @@ export class PDFImportManager {
         filePath,
       };
     } catch (error) {
-      onProgress?.({
-        stage: 'error',
-        progress: 0,
-        message: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
       throw error;
     } finally {
       this.activeImports.delete(importId);
     }
   }
 
-  async importFromLocalFile(
-    filePath: string,
-    onProgress?: (progress: PDFImportProgress) => void,
-  ): Promise<PDFImportResult> {
+  async importFromLocalFile(filePath: string): Promise<PDFImportResult> {
     const importId = randomUUID();
 
     try {
-      onProgress?.({
-        stage: 'processing',
-        progress: 50,
-        message: 'Processing local file...',
-      });
-
       // Validate file exists and is a PDF
       if (!fs.existsSync(filePath)) {
         throw new Error('File does not exist');
@@ -120,20 +84,7 @@ export class PDFImportManager {
         throw new Error('File is not a valid PDF');
       }
 
-      onProgress?.({
-        stage: 'processing',
-        progress: 90,
-        message: 'Finalizing...',
-      });
-
       const paper = await this.processPdfFile(filePath);
-
-      onProgress?.({
-        stage: 'complete',
-        progress: 100,
-        message: 'PDF imported successfully',
-        filePath,
-      });
 
       return {
         id: importId,
@@ -141,11 +92,6 @@ export class PDFImportManager {
         filePath,
       };
     } catch (error) {
-      onProgress?.({
-        stage: 'error',
-        progress: 0,
-        message: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
       throw error;
     }
   }
@@ -191,11 +137,7 @@ export class PDFImportManager {
     ); // -
   }
 
-  private async downloadPdf(
-    url: string,
-    onProgress?: (progress: PDFImportProgress) => void,
-    signal?: AbortSignal,
-  ): Promise<string> {
+  private async downloadPdf(url: string, signal?: AbortSignal): Promise<string> {
     return new Promise((resolve, reject) => {
       const urlObj = new URL(url);
       const isHttps = urlObj.protocol === 'https:';
@@ -236,14 +178,7 @@ export class PDFImportManager {
           chunks.push(chunk);
           downloadedBytes += chunk.length;
 
-          if (contentLength > 0) {
-            const progress = Math.round((downloadedBytes / contentLength) * 100);
-            onProgress?.({
-              stage: 'downloading',
-              progress,
-              message: `Downloading... ${Math.round(downloadedBytes / 1024)}KB / ${Math.round(contentLength / 1024)}KB`,
-            });
-          }
+          // Progress tracking removed - will be handled differently if needed
         });
 
         response.on('end', async () => {

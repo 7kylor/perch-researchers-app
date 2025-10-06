@@ -11,10 +11,54 @@
       padding: 0;
     }
 
+    :root {
+      --bg: #ffffff;
+      --surface: #f8f9fa;
+      --surface-secondary: #e9ecef;
+      --surface-elevated: #dee2e6;
+      --text: #000000;
+      --text-secondary: #495057;
+      --muted: #6c757d;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #dee2e6;
+      --border-subtle: #e9ecef;
+      --ring: #3b82f6;
+      --sidebar-bg: #f1f3f4;
+      --card-hover: rgba(59, 130, 246, 0.05);
+      --card-hover-strong: rgba(59, 130, 246, 0.1);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #000000;
+      --surface: #1a1a1a;
+      --surface-secondary: #2a2a2a;
+      --surface-elevated: #333333;
+      --text: #ffffff;
+      --text-secondary: #cccccc;
+      --muted: #888888;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #404040;
+      --border-subtle: #2a2a2a;
+      --ring: #3b82f6;
+      --sidebar-bg: #111111;
+      --card-hover: rgba(59, 130, 246, 0.1);
+      --card-hover-strong: rgba(59, 130, 246, 0.2);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
     body {
       font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0f0f0f;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       overflow: hidden;
     }
 
@@ -25,8 +69,8 @@
     }
 
     .header {
-      background: #1a1a1a;
-      border-bottom: 1px solid #333;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
       padding: 16px 24px;
       display: flex;
       align-items: center;
@@ -43,7 +87,7 @@
     .paper-title {
       font-size: 18px;
       font-weight: 600;
-      color: #ffffff;
+      color: var(--text);
       margin: 0;
       max-width: 400px;
       overflow: hidden;
@@ -53,20 +97,19 @@
 
     .paper-meta {
       font-size: 14px;
-      color: #888;
+      color: var(--text-secondary);
       margin: 0;
     }
 
     .controls {
       display: flex;
       align-items: center;
-      gap: 16px;
     }
 
     .control-btn {
-      background: #2a2a2a;
-      border: 1px solid #444;
-      color: #e0e0e0;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--text);
       border-radius: 6px;
       padding: 8px 12px;
       cursor: pointer;
@@ -78,8 +121,8 @@
     }
 
     .control-btn:hover {
-      background: #3a3a3a;
-      border-color: #555;
+      background: var(--surface-elevated);
+      border-color: var(--border);
     }
 
     .control-btn:disabled {
@@ -87,68 +130,21 @@
       cursor: not-allowed;
     }
 
-    .page-info {
-      color: #ccc;
-      font-size: 14px;
-      min-width: 80px;
-      text-align: center;
-    }
 
-    .zoom-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .zoom-btn {
-      background: #2a2a2a;
-      border: 1px solid #444;
-      color: #e0e0e0;
-      border-radius: 4px;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .zoom-btn:hover {
-      background: #3a3a3a;
-      border-color: #555;
-    }
-
-    .zoom-level {
-      color: #ccc;
-      font-size: 14px;
-      min-width: 60px;
-      text-align: center;
-    }
 
     .main-content {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background: #0f0f0f;
+      background: var(--bg);
     }
 
-    .toolbar {
-      background: #1a1a1a;
-      border-bottom: 1px solid #333;
-      padding: 12px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-    }
 
     .viewer-container {
       flex: 1;
       position: relative;
       overflow: auto;
-      background: #0f0f0f;
+      background: var(--bg);
     }
 
     .pdf-viewer {
@@ -173,15 +169,15 @@
       align-items: center;
       justify-content: center;
       height: 400px;
-      color: #888;
+      color: var(--text-secondary);
       gap: 16px;
     }
 
     .spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid #333;
-      border-top: 3px solid #007acc;
+      border: 3px solid var(--border);
+      border-top: 3px solid var(--primary);
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -197,7 +193,7 @@
       align-items: center;
       justify-content: center;
       height: 400px;
-      color: #ff6b6b;
+      color: #ef4444;
       gap: 16px;
       text-align: center;
       padding: 40px;
@@ -214,7 +210,7 @@
       align-items: center;
       justify-content: center;
       height: 400px;
-      color: #888;
+      color: var(--text-secondary);
       gap: 16px;
       text-align: center;
       padding: 40px;
@@ -225,11 +221,11 @@
     }
 
     .status-bar {
-      background: #1a1a1a;
-      border-top: 1px solid #333;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
       padding: 8px 24px;
       font-size: 12px;
-      color: #888;
+      color: var(--text-secondary);
       text-align: center;
     }
 
@@ -273,32 +269,12 @@
         <p class="paper-meta" id="paper-meta">Loading...</p>
       </div>
       <div class="controls">
-        <div class="zoom-controls">
-          <button class="zoom-btn" id="zoom-out">-</button>
-          <span class="zoom-level" id="zoom-level">100%</span>
-          <button class="zoom-btn" id="zoom-in">+</button>
-        </div>
-        <button class="control-btn" id="fit-width">
-          <span>Fit Width</span>
-        </button>
-        <button class="control-btn" id="fit-page">
-          <span>Fit Page</span>
-        </button>
         <button class="control-btn" id="close-reader">
           <span>Close</span>
         </button>
       </div>
     </header>
 
-    <div class="toolbar">
-      <button class="control-btn" id="prev-page" disabled>
-        <span>← Previous</span>
-      </button>
-      <span class="page-info" id="page-info">1 / 1</span>
-      <button class="control-btn" id="next-page" disabled>
-        <span>Next →</span>
-      </button>
-    </div>
 
     <div class="main-content">
       <div class="viewer-container" id="viewer-container">
@@ -350,37 +326,6 @@
       }
 
       setupEventListeners() {
-        // Navigation buttons
-        document.getElementById('prev-page').addEventListener('click', () => {
-          if (this.currentPage > 1) {
-            this.goToPage(this.currentPage - 1);
-          }
-        });
-
-        document.getElementById('next-page').addEventListener('click', () => {
-          if (this.currentPage < this.totalPages) {
-            this.goToPage(this.currentPage + 1);
-          }
-        });
-
-        // Zoom controls
-        document.getElementById('zoom-out').addEventListener('click', () => {
-          this.zoom(0.8);
-        });
-
-        document.getElementById('zoom-in').addEventListener('click', () => {
-          this.zoom(1.2);
-        });
-
-        // Fit controls
-        document.getElementById('fit-width').addEventListener('click', () => {
-          this.fitToWidth();
-        });
-
-        document.getElementById('fit-page').addEventListener('click', () => {
-          this.fitToPage();
-        });
-
         // Close button
         document.getElementById('close-reader').addEventListener('click', () => {
           window.api['pdf-reader:close-window']();
@@ -405,23 +350,6 @@
             case 'End':
               this.goToPage(this.totalPages);
               break;
-            case '-':
-              this.zoom(0.8);
-              break;
-            case '+':
-            case '=':
-              this.zoom(1.2);
-              break;
-            case '0':
-              this.scale = 1.0;
-              this.renderCurrentPage();
-              break;
-            case 'f':
-              this.fitToWidth();
-              break;
-            case 'p':
-              this.fitToPage();
-              break;
             case 'Escape':
               window.api['pdf-reader:close-window']();
               break;
@@ -444,6 +372,41 @@
           this.updatePaperInfo();
           await this.loadPDF();
         });
+
+        // Get initial theme from localStorage (shared with main app)
+        this.applyThemeFromStorage();
+
+        // Listen for storage changes (when main app changes theme)
+        window.addEventListener('storage', (e) => {
+          if (e.key === 'theme') {
+            this.applyThemeFromStorage();
+          }
+        });
+      }
+
+      applyTheme(theme) {
+        if (theme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+        }
+      }
+
+      applyThemeFromStorage() {
+        try {
+          const savedTheme = localStorage.getItem('theme');
+          if (savedTheme === 'dark') {
+            this.applyTheme('dark');
+          } else if (savedTheme === 'light') {
+            this.applyTheme('light');
+          } else {
+            // Default to light or system preference
+            this.applyTheme('light');
+          }
+        } catch (error) {
+          console.warn('Could not read theme from storage:', error);
+          this.applyTheme('light');
+        }
       }
 
       updatePaperInfo() {
@@ -462,14 +425,14 @@
           const filePath = await window.api['pdf-reader:get-file-path'](this.currentPaper.id);
 
           if (!filePath) {
-            this.showError('No PDF file found for this paper');
+            this.showNoPDF();
             return;
           }
 
           // Check if file exists
           const exists = await window.api['pdf-reader:file-exists'](filePath);
           if (!exists) {
-            this.showError('PDF file not found on disk');
+            this.showNoPDF();
             return;
           }
 
@@ -483,7 +446,6 @@
           this.totalPages = this.pdfDocument.numPages;
           this.currentPage = 1;
 
-          this.updatePageInfo();
           await this.renderCurrentPage();
 
         } catch (error) {
@@ -543,7 +505,6 @@
 
           viewer.appendChild(canvas);
 
-          this.updateZoomLevel();
           this.hideLoading();
 
         } catch (error) {
@@ -560,51 +521,10 @@
         }
 
         this.currentPage = pageNumber;
-        this.updatePageInfo();
         await this.renderCurrentPage();
       }
 
-      zoom(factor) {
-        this.scale = Math.max(0.5, Math.min(3.0, this.scale * factor));
-        this.renderCurrentPage();
-      }
 
-      fitToWidth() {
-        if (!this.pdfDocument) return;
-
-        const container = document.getElementById('viewer-container');
-        const containerWidth = container.clientWidth - 40;
-
-        // We'll implement this by adjusting the scale on next render
-        this.scale = 1.0; // Reset to base scale
-        this.renderCurrentPage();
-      }
-
-      fitToPage() {
-        if (!this.pdfDocument) return;
-
-        const container = document.getElementById('viewer-container');
-        const containerWidth = container.clientWidth - 40;
-        const containerHeight = container.clientHeight - 100; // Account for toolbar
-
-        // We'll implement this by adjusting the scale on next render
-        this.scale = 1.0; // Reset to base scale
-        this.renderCurrentPage();
-      }
-
-      updatePageInfo() {
-        document.getElementById('page-info').textContent = `${this.currentPage} / ${this.totalPages}`;
-
-        const prevBtn = document.getElementById('prev-page');
-        const nextBtn = document.getElementById('next-page');
-
-        prevBtn.disabled = this.currentPage <= 1;
-        nextBtn.disabled = this.currentPage >= this.totalPages;
-      }
-
-      updateZoomLevel() {
-        document.getElementById('zoom-level').textContent = `${Math.round(this.scale * 100)}%`;
-      }
 
       showLoading(message = 'Loading...') {
         document.getElementById('loading').querySelector('p').textContent = message;
