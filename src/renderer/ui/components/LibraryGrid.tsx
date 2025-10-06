@@ -79,6 +79,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
             authors={paper.authors}
             year={paper.year}
             status={getPaperStatus(paper)}
+            category={category}
             isNew={index < 5} // Mark first 5 as new
             count={0} // TODO: Add comment/note count
             onClick={onPaperSelect}

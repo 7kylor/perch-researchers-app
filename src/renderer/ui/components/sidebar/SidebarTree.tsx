@@ -118,7 +118,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
       const idx = siblingsAll.findIndex((n) => n.id === node.id);
       for (let i = idx - 1; i >= 0; i--) {
         const candidate = siblingsAll[i];
-        if (candidate.type === 'folder') {
+        if (candidate && candidate.type === 'folder') {
           const endIndex = getSiblings(candidate.id).length;
           onMove(node.id, candidate.id, endIndex);
           return;

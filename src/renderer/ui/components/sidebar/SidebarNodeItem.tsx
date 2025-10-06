@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { SidebarNode } from '../../../shared/sidebar';
+import type { SidebarNode } from '../../../../shared/sidebar';
 
 type SidebarNodeItemProps = {
   node: SidebarNode;

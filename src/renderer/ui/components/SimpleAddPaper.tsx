@@ -85,8 +85,10 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
 
       if (!result.canceled && result.filePaths.length > 0) {
         const filePath = result.filePaths[0];
-        await onAdd(filePath, 'pdf');
-        onClose();
+        if (filePath) {
+          await onAdd(filePath, 'pdf');
+          onClose();
+        }
       }
     } catch (error) {
       console.error('Failed to upload PDF:', error);
