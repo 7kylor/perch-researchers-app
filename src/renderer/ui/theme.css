@@ -725,6 +725,10 @@ body {
 	margin: 2px 0;
 }
 
+.section-title .add-category-title-btn {
+	margin-left: auto;
+}
+
 .category-edit-input:focus {
 	outline: none;
 	border-color: var(--primary);
@@ -857,6 +861,19 @@ body {
 .section-items > li {
 	margin: 0;
 	padding: 0;
+}
+
+/* Drag-and-drop visual indicators */
+.drop-indicator {
+	height: 2px;
+	background: var(--primary);
+	border-radius: 1px;
+	margin: 2px 4px;
+}
+
+.sidebar-item.drop-into {
+	outline: 2px dashed var(--primary);
+	outline-offset: 2px;
 }
 
 .section-title {
