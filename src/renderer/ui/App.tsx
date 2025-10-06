@@ -9,32 +9,10 @@ import { SimpleAddPaper } from './components/SimpleAddPaper';
 import { Toast } from './components/Toast';
 import { PaperReader } from './components/PaperReader';
 import { SettingsPanel } from './components/SettingsPanel';
-
-function useSystemTheme(): 'light' | 'dark' {
-  const [theme, setTheme] = React.useState<'light' | 'dark'>(
-    window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
-  );
-  React.useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => setTheme(mq.matches ? 'dark' : 'light');
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return theme;
-}
+import { ThemeProvider } from './components/ThemeProvider';
 
 export const App: React.FC = () => {
-  const theme = useSystemTheme();
-  React.useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
-  const [openId, setOpenId] = React.useState<string | null>(null);
   const [currentPaper, setCurrentPaper] = React.useState<import('../../shared/types').Paper | null>(
     null,
   );
@@ -44,26 +22,25 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [toast, setToast] = React.useState<{
     message: string;
     type: 'success' | 'error' | 'info';
   } | null>(null);
 
-  const openPaper = async (id: string) => {
+  const openPaper = React.useCallback(async (id: string) => {
     const paper = await window.api.papers.get(id);
     if (paper) {
       setCurrentPaper(paper);
-      setOpenId(id);
       setViewMode('reader');
     }
-  };
+  }, []);
 
-  const closeReader = () => {
-    setOpenId(null);
+  const closeReader = React.useCallback(() => {
     setCurrentPaper(null);
     setViewMode('library');
-  };
+  }, []);
 
   const handleSettingsClick = () => {
     setShowSettings(true);
@@ -186,75 +163,77 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="app-root">
-      <ActivityBar
-        currentCategory={selectedCategory}
-        onSettingsClick={handleSettingsClick}
-        isSidebarCollapsed={isSidebarCollapsed}
-        onSidebarToggle={handleSidebarToggle}
-      />
-      <div className="library-layout">
-        <LibrarySidebar
-          selectedCategory={selectedCategory}
-          onCategorySelect={setSelectedCategory}
-          isCollapsed={isSidebarCollapsed}
+    <ThemeProvider>
+      <div className="app-root">
+        <ActivityBar
+          currentCategory={selectedCategory}
+          onSettingsClick={handleSettingsClick}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onSidebarToggle={handleSidebarToggle}
         />
-        <div className="library-main">
-          <LibraryControls
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            onAddItem={() => setShowSimpleAddModal(true)}
+        <div className="library-layout">
+          <LibrarySidebar
+            selectedCategory={selectedCategory}
+            onCategorySelect={setSelectedCategory}
+            isCollapsed={isSidebarCollapsed}
           />
-          <div className="library-content">
-            {isLoading ? (
-              <LoadingSkeleton count={9} />
-            ) : results.length === 0 ? (
-              <EmptyState
-                category={selectedCategory}
-                onAddItem={() => setShowSimpleAddModal(true)}
-              />
-            ) : (
-              <LibraryGrid
-                papers={results}
-                category={selectedCategory}
-                onPaperSelect={handlePaperClick}
-                onRefresh={() => {
-                  // Refresh the papers list
-                  const loadPapers = async () => {
-                    try {
-                      setIsLoading(true);
-                      const papers = await window.api.papers.search('*');
-                      setResults(papers);
-                    } catch (error) {
-                      console.error('Failed to load papers:', error);
-                    } finally {
-                      setIsLoading(false);
-                    }
-                  };
-                  loadPapers();
-                }}
-              />
-            )}
+          <div className="library-main">
+            <LibraryControls
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              onAddItem={() => setShowSimpleAddModal(true)}
+            />
+            <div className="library-content">
+              {isLoading ? (
+                <LoadingSkeleton count={9} />
+              ) : results.length === 0 ? (
+                <EmptyState
+                  category={selectedCategory}
+                  onAddItem={() => setShowSimpleAddModal(true)}
+                />
+              ) : (
+                <LibraryGrid
+                  papers={results}
+                  category={selectedCategory}
+                  onPaperSelect={handlePaperClick}
+                  onRefresh={() => {
+                    // Refresh the papers list
+                    const loadPapers = async () => {
+                      try {
+                        setIsLoading(true);
+                        const papers = await window.api.papers.search('*');
+                        setResults(papers);
+                      } catch (error) {
+                        console.error('Failed to load papers:', error);
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    };
+                    loadPapers();
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <SimpleAddPaper
-        isOpen={showSimpleAddModal}
-        onClose={() => setShowSimpleAddModal(false)}
-        onAdd={handleSimpleAddPaper}
-      />
-
-      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
-
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          isVisible={true}
-          onClose={() => setToast(null)}
+        <SimpleAddPaper
+          isOpen={showSimpleAddModal}
+          onClose={() => setShowSimpleAddModal(false)}
+          onAdd={handleSimpleAddPaper}
         />
-      )}
-    </div>
+
+        {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            isVisible={true}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
+    </ThemeProvider>
   );
 };

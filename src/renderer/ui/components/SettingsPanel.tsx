@@ -1,42 +1,13 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { useTheme } from './ThemeProvider';
 
 type SettingsPanelProps = {
   onClose: () => void;
 };
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
-  const [theme, setTheme] = React.useState<'light' | 'dark' | 'system'>('system');
-
-  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
-    setTheme(newTheme);
-    // Apply theme to document
-    if (newTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-      if (systemTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    } else if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    // Save to localStorage
-    localStorage.setItem('theme', newTheme);
-  };
-
-  React.useEffect(() => {
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      handleThemeChange(savedTheme);
-    }
-  }, []);
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="settings-overlay">
@@ -51,26 +22,35 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
           <div className="settings-section">
             <h3>Appearance</h3>
             <div className="setting-item">
-              <label>Theme</label>
+              <div
+                style={{
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'var(--text)',
+                }}
+              >
+                Theme
+              </div>
               <div className="theme-options">
                 <button
                   type="button"
                   className={`theme-btn ${theme === 'light' ? 'active' : ''}`}
-                  onClick={() => handleThemeChange('light')}
+                  onClick={() => setTheme('light')}
                 >
                   Light
                 </button>
                 <button
                   type="button"
                   className={`theme-btn ${theme === 'dark' ? 'active' : ''}`}
-                  onClick={() => handleThemeChange('dark')}
+                  onClick={() => setTheme('dark')}
                 >
                   Dark
                 </button>
                 <button
                   type="button"
                   className={`theme-btn ${theme === 'system' ? 'active' : ''}`}
-                  onClick={() => handleThemeChange('system')}
+                  onClick={() => setTheme('system')}
                 >
                   System
                 </button>
@@ -81,7 +61,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
           <div className="settings-section">
             <h3>Library</h3>
             <div className="setting-item">
-              <label>Default View</label>
+              <div
+                style={{
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'var(--text)',
+                }}
+              >
+                Default View
+              </div>
               <div className="setting-info">Grid view (List view removed)</div>
             </div>
           </div>
@@ -89,7 +78,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
           <div className="settings-section">
             <h3>About</h3>
             <div className="setting-item">
-              <label>Version</label>
+              <div
+                style={{
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'var(--text)',
+                }}
+              >
+                Version
+              </div>
               <div className="setting-info">Perch App v1.0.0</div>
             </div>
           </div>
