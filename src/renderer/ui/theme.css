@@ -509,17 +509,19 @@ body {
 	background: var(--primary);
 	color: var(--bg);
 	border: none;
-	border-radius: 8px;
-	padding: 10px 16px;
-	font-size: 14px;
+	border-radius: 6px;
+	padding: 8px 12px;
+	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
 	transition: all 0.15s ease;
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 6px;
 	flex-shrink: 0;
 	white-space: nowrap;
+	min-width: 120px;
+	justify-content: center;
 }
 
 .add-btn svg {
@@ -547,8 +549,15 @@ body {
 	}
 
 	.add-btn {
-		padding: 8px 12px;
-		font-size: 13px;
+		padding: 6px 10px;
+		font-size: 12px;
+		min-width: 100px;
+	}
+
+	.control-btn {
+		padding: 6px 10px;
+		font-size: 12px;
+		min-width: 100px;
 	}
 }
 
@@ -566,7 +575,14 @@ body {
 
 	.add-btn {
 		justify-content: center;
-		padding: 12px;
+		padding: 10px;
+		min-width: 120px;
+	}
+
+	.control-btn {
+		justify-content: center;
+		padding: 8px 12px;
+		min-width: 120px;
 	}
 }
 
@@ -586,8 +602,15 @@ body {
 	}
 
 	.add-btn {
-		padding: 8px 12px;
-		font-size: 12px;
+		padding: 6px 10px;
+		font-size: 11px;
+		min-width: 100px;
+	}
+
+	.control-btn {
+		padding: 6px 10px;
+		font-size: 11px;
+		min-width: 100px;
 	}
 }
 
@@ -4857,6 +4880,10 @@ textarea:focus-visible {
 	color: var(--text);
 	font-size: 13px;
 	font-weight: 500;
+	flex-shrink: 0;
+	white-space: nowrap;
+	min-width: 120px;
+	justify-content: center;
 }
 
 .control-btn:hover {
