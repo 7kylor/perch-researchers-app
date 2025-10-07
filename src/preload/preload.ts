@@ -104,6 +104,8 @@ declare global {
 // Context Bridge Setup
 import { contextBridge, ipcRenderer } from 'electron';
 
+console.log('Preload script loaded');
+
 contextBridge.exposeInMainWorld('api', {
   papers: {
     get: (id: string) => ipcRenderer.invoke('papers:get', id),
@@ -146,7 +148,7 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('dialog:showOpenDialog', options),
   },
   on: (channel: string, listener: (...args: unknown[]) => void) => {
-    ipcRenderer.on(channel, listener);
+    ipcRenderer.on(channel, (event, ...args) => listener(...args));
   },
   sidebar: {
     list: () => ipcRenderer.invoke('sidebar:list'),
@@ -161,3 +163,5 @@ contextBridge.exposeInMainWorld('api', {
     },
   },
 });
+
+console.log('API exposed successfully');

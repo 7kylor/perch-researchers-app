@@ -42,13 +42,23 @@ export const App: React.FC = () => {
   const openPaper = React.useCallback(async (id: string) => {
     const paper = await window.api.papers.get(id);
     if (paper) {
+      console.log('Opening paper in PDF reader:', {
+        id: paper.id,
+        title: paper.title,
+        filePath: paper.filePath,
+        hasFilePath: !!paper.filePath,
+      });
+
       // Always open in separate PDF reader window
       try {
         await window.api['pdf-reader']['create-window'](paper);
-      } catch {
+      } catch (error) {
+        console.error('Failed to open PDF reader window:', error);
         // Failed to open PDF reader window
         setToast({ message: 'Failed to open PDF reader', type: 'error' });
       }
+    } else {
+      console.log('Paper not found:', id);
     }
   }, []);
 

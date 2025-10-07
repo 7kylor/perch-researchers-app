@@ -226,7 +226,34 @@
       padding: 8px 24px;
       font-size: 12px;
       color: var(--text-secondary);
-      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-left, .status-center, .status-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .status-btn:hover {
+      background: var(--surface-secondary);
+    }
+
+    .status-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     /* Dark theme for PDF.js */
@@ -269,6 +296,21 @@
         <p class="paper-meta" id="paper-meta">Loading...</p>
       </div>
       <div class="controls">
+        <button class="control-btn" id="zoom-out" title="Zoom Out">
+          <span>-</span>
+        </button>
+        <button class="control-btn" id="zoom-in" title="Zoom In">
+          <span>+</span>
+        </button>
+        <button class="control-btn" id="fit-width" title="Fit to Width">
+          <span>↔</span>
+        </button>
+        <button class="control-btn" id="fit-page" title="Fit to Page">
+          <span>⤢</span>
+        </button>
+        <button class="control-btn" id="rotate" title="Rotate">
+          <span>↻</span>
+        </button>
         <button class="control-btn" id="close-reader">
           <span>Close</span>
         </button>
@@ -298,15 +340,29 @@
     </div>
 
     <div class="status-bar" id="status-bar">
-      Ready
+      <div class="status-left">
+        <span id="page-info">Page 1 of 1</span>
+        <span id="zoom-info">100%</span>
+      </div>
+      <div class="status-center">
+        Ready
+      </div>
+      <div class="status-right">
+        <button class="status-btn" id="prev-page" title="Previous Page">‹</button>
+        <button class="status-btn" id="next-page" title="Next Page">›</button>
+      </div>
     </div>
   </div>
 
   <script type="module">
-    import 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    import 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/build/pdf.min.js';
 
     // Initialize PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/build/pdf.worker.min.js';
+
+    // Debug PDF.js loading
+    console.log('PDF.js version:', pdfjsLib.version);
+    console.log('Worker source:', pdfjsLib.GlobalWorkerOptions.workerSrc);
 
     class PDFReader {
       constructor() {
@@ -316,6 +372,10 @@
         this.totalPages = 0;
         this.scale = 1.0;
         this.renderTask = null;
+        this.textLayerTask = null;
+        this.isRendering = false;
+        this.fitToWidth = true;
+        this.rotation = 0;
 
         this.init();
       }
@@ -328,30 +388,95 @@
       setupEventListeners() {
         // Close button
         document.getElementById('close-reader').addEventListener('click', () => {
-          window.api['pdf-reader:close-window']();
+          if (window.api && window.api['pdf-reader'] && typeof window.api['pdf-reader']['close-window'] === 'function') {
+            window.api['pdf-reader']['close-window']();
+          } else {
+            window.close();
+          }
+        });
+
+        // Zoom controls
+        document.getElementById('zoom-out').addEventListener('click', () => {
+          this.zoomOut();
+        });
+
+        document.getElementById('zoom-in').addEventListener('click', () => {
+          this.zoomIn();
+        });
+
+        document.getElementById('fit-width').addEventListener('click', () => {
+          this.fitToWidth = true;
+          this.renderCurrentPage();
+        });
+
+        document.getElementById('fit-page').addEventListener('click', () => {
+          this.fitToWidth = false;
+          this.renderCurrentPage();
+        });
+
+        document.getElementById('rotate').addEventListener('click', () => {
+          this.rotate();
+        });
+
+        // Page navigation
+        document.getElementById('prev-page').addEventListener('click', () => {
+          this.goToPage(this.currentPage - 1);
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+          this.goToPage(this.currentPage + 1);
         });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+          // Don't interfere with text input
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+          }
+
           switch (e.key) {
             case 'ArrowLeft':
+              e.preventDefault();
               if (this.currentPage > 1) {
                 this.goToPage(this.currentPage - 1);
               }
               break;
             case 'ArrowRight':
+              e.preventDefault();
               if (this.currentPage < this.totalPages) {
                 this.goToPage(this.currentPage + 1);
               }
               break;
             case 'Home':
+              e.preventDefault();
               this.goToPage(1);
               break;
             case 'End':
+              e.preventDefault();
               this.goToPage(this.totalPages);
               break;
             case 'Escape':
-              window.api['pdf-reader:close-window']();
+              e.preventDefault();
+              if (window.api && window.api['pdf-reader'] && typeof window.api['pdf-reader']['close-window'] === 'function') {
+                window.api['pdf-reader']['close-window']();
+              } else {
+                window.close();
+              }
+              break;
+            case '+':
+            case '=':
+              e.preventDefault();
+              this.zoomIn();
+              break;
+            case '-':
+              e.preventDefault();
+              this.zoomOut();
+              break;
+            case 'r':
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                this.rotate();
+              }
               break;
           }
         });
@@ -366,8 +491,26 @@
       }
 
       async setupIPC() {
+        console.log('Setting up IPC listeners');
         // Listen for paper data from main process
         window.api.on('pdf-reader:paper-loaded', async (paper) => {
+          console.log('Received paper data (after IPC fix):', paper);
+          console.log('Paper type:', typeof paper);
+          console.log('Paper keys:', Object.keys(paper || {}));
+          console.log('Paper ID:', paper?.id);
+          console.log('Paper filePath:', paper?.filePath);
+          console.log('Paper title:', paper?.title);
+
+          if (!paper || !paper.id || !paper.filePath) {
+            console.error('Invalid or missing paper data received:', paper);
+            if (!paper.filePath) {
+              this.showNoPDF();
+            } else {
+              this.showError('Invalid paper data received');
+            }
+            return;
+          }
+
           this.currentPaper = paper;
           this.updatePaperInfo();
           await this.loadPDF();
@@ -414,15 +557,45 @@
 
         document.getElementById('paper-title').textContent = this.currentPaper.title || 'Untitled Paper';
         document.getElementById('paper-meta').textContent =
-          `${this.currentPaper.authors?.join(', ') || 'Unknown Authors'} • ${this.currentPaper.venue || ''} • ${this.currentPaper.year || ''}`.trim().replace(/^•|•$/g, '');
+          `${Array.isArray(this.currentPaper.authors) ? this.currentPaper.authors.join(', ') : 'Unknown Authors'}`;
       }
 
       async loadPDF() {
-        if (!this.currentPaper) return;
+        console.log('loadPDF called with paper:', this.currentPaper);
+        if (!this.currentPaper) {
+          console.log('No current paper, returning');
+          return;
+        }
 
         try {
+          // Check if API is available with retry logic
+          let retries = 0;
+          const maxRetries = 10;
+
+          while (retries < maxRetries) {
+            if (window.api && window.api['pdf-reader'] && typeof window.api['pdf-reader']['get-file-path'] === 'function') {
+              break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retries++;
+          }
+
+          if (!window.api) {
+            throw new Error('window.api is not available');
+          }
+
+          if (!window.api || !window.api['pdf-reader']) {
+            throw new Error('window.api.pdf-reader is not available. Available keys: ' + Object.keys(window.api || {}).join(', '));
+          }
+
+          if (typeof window.api['pdf-reader']['get-file-path'] !== 'function') {
+            throw new Error('window.api.pdf-reader.get-file-path is not a function. Available methods: ' + Object.keys(window.api['pdf-reader'] || {}).join(', '));
+          }
+
           // Get the PDF file path from the main process
-          const filePath = await window.api['pdf-reader:get-file-path'](this.currentPaper.id);
+          console.log('API object:', window.api);
+          console.log('PDF reader API:', window.api?.['pdf-reader']);
+          const filePath = await window.api['pdf-reader']['get-file-path'](this.currentPaper.id);
 
           if (!filePath) {
             this.showNoPDF();
@@ -430,7 +603,10 @@
           }
 
           // Check if file exists
-          const exists = await window.api['pdf-reader:file-exists'](filePath);
+          if (!window.api || !window.api['pdf-reader'] || typeof window.api['pdf-reader']['file-exists'] !== 'function') {
+            throw new Error('PDF reader API not available');
+          }
+          const exists = await window.api['pdf-reader']['file-exists'](filePath);
           if (!exists) {
             this.showNoPDF();
             return;
@@ -439,14 +615,36 @@
           this.showLoading('Loading PDF...');
 
           // Load the PDF document
-          const arrayBuffer = await window.api['file:read'](filePath);
-          const uint8Array = new Uint8Array(arrayBuffer);
+          if (!window.api || !window.api['file'] || typeof window.api['file']['read'] !== 'function') {
+            throw new Error('File API not available');
+          }
 
-          this.pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+          console.log('Reading PDF file:', filePath);
+          const arrayBuffer = await window.api['file']['read'](filePath);
+          console.log('File read successfully, size:', arrayBuffer.byteLength);
+
+          const uint8Array = new Uint8Array(arrayBuffer);
+          console.log('Creating PDF document from data');
+
+          // Check if PDF.js worker is ready
+          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            throw new Error('PDF.js worker not initialized');
+          }
+
+          // Add timeout to PDF loading
+          const pdfLoadPromise = pdfjsLib.getDocument({ data: uint8Array }).promise;
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('PDF loading timeout')), 10000)
+          );
+
+          this.pdfDocument = await Promise.race([pdfLoadPromise, timeoutPromise]);
+          console.log('PDF document loaded, pages:', this.pdfDocument.numPages);
+
           this.totalPages = this.pdfDocument.numPages;
           this.currentPage = 1;
 
           await this.renderCurrentPage();
+          this.updateUI();
 
         } catch (error) {
           console.error('Error loading PDF:', error);
@@ -459,30 +657,53 @@
           return;
         }
 
+        if (this.isRendering) {
+          return; // Prevent concurrent renders
+        }
+
+        this.isRendering = true;
+
         try {
           // Cancel any ongoing render task
           if (this.renderTask) {
             this.renderTask.cancel();
           }
 
+          // Cancel any ongoing text layer task
+          if (this.textLayerTask) {
+            this.textLayerTask.cancel();
+          }
+
           const page = await this.pdfDocument.getPage(this.currentPage);
-          const viewport = page.getViewport({ scale: this.scale });
+          const viewport = page.getViewport({ scale: 1.0, rotation: this.rotation });
 
           // Calculate scale to fit container if needed
           const container = document.getElementById('viewer-container');
+          if (!container) {
+            throw new Error('Viewer container not found');
+          }
+
           const containerWidth = container.clientWidth - 40; // Account for padding
+          const containerHeight = container.clientHeight - 40;
 
           let renderScale = this.scale;
-          if (renderScale === 1.0) {
+          if (this.fitToWidth && this.scale === 1.0) {
             // Auto-fit to width for initial load
             const fitScale = containerWidth / viewport.width;
             renderScale = Math.min(fitScale, 2.0); // Cap at 200%
+          } else if (!this.fitToWidth && this.scale === 1.0) {
+            // Fit to page (container height)
+            const fitScale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
+            renderScale = Math.min(fitScale, 2.0); // Cap at 200%
           }
 
-          const renderViewport = page.getViewport({ scale: renderScale });
+          const renderViewport = page.getViewport({ scale: renderScale, rotation: this.rotation });
 
           // Clear previous content
           const viewer = document.getElementById('pdf-viewer');
+          if (!viewer) {
+            throw new Error('PDF viewer element not found');
+          }
           viewer.innerHTML = '';
 
           // Create canvas for rendering
@@ -505,6 +726,17 @@
 
           viewer.appendChild(canvas);
 
+          // Add text layer for text selection if available
+          try {
+            const textContent = await page.getTextContent();
+            if (textContent.items.length > 0) {
+              this.renderTextLayer(canvas, textContent, renderViewport);
+            }
+          } catch (textError) {
+            // Text layer is optional, ignore errors
+            console.debug('Text layer not available:', textError.message);
+          }
+
           this.hideLoading();
 
         } catch (error) {
@@ -512,7 +744,40 @@
             console.error('Error rendering page:', error);
             this.showError(`Failed to render page: ${error.message}`);
           }
+        } finally {
+          this.isRendering = false;
         }
+      }
+
+      renderTextLayer(canvas, textContent, viewport) {
+        const textLayerDiv = document.createElement('div');
+        textLayerDiv.className = 'textLayer';
+        textLayerDiv.style.position = 'absolute';
+        textLayerDiv.style.top = '0';
+        textLayerDiv.style.left = '0';
+        textLayerDiv.style.width = canvas.width + 'px';
+        textLayerDiv.style.height = canvas.height + 'px';
+        textLayerDiv.style.pointerEvents = 'none';
+
+        // Position text layer over canvas
+        canvas.parentNode.style.position = 'relative';
+        canvas.parentNode.appendChild(textLayerDiv);
+
+        // Simple text rendering (PDF.js text layer would be more sophisticated)
+        const scale = viewport.width / canvas.width;
+        textContent.items.forEach((item) => {
+          if (item.str) {
+            const textDiv = document.createElement('div');
+            textDiv.textContent = item.str;
+            textDiv.style.position = 'absolute';
+            textDiv.style.left = (item.transform[4] * scale) + 'px';
+            textDiv.style.top = (item.transform[5] * scale) + 'px';
+            textDiv.style.fontSize = (item.height * scale) + 'px';
+            textDiv.style.color = 'transparent'; // Make text invisible but selectable
+            textDiv.style.userSelect = 'text';
+            textLayerDiv.appendChild(textDiv);
+          }
+        });
       }
 
       async goToPage(pageNumber) {
@@ -522,37 +787,127 @@
 
         this.currentPage = pageNumber;
         await this.renderCurrentPage();
+        this.updateUI();
+      }
+
+      zoomIn() {
+        const zoomLevels = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0];
+        const currentIndex = zoomLevels.indexOf(this.scale);
+        if (currentIndex < zoomLevels.length - 1) {
+          this.scale = zoomLevels[currentIndex + 1];
+          this.fitToWidth = false;
+          this.renderCurrentPage();
+        }
+      }
+
+      zoomOut() {
+        const zoomLevels = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0];
+        const currentIndex = zoomLevels.indexOf(this.scale);
+        if (currentIndex > 0) {
+          this.scale = zoomLevels[currentIndex - 1];
+          this.fitToWidth = false;
+          this.renderCurrentPage();
+        }
+      }
+
+      rotate() {
+        this.rotation = (this.rotation + 90) % 360;
+        this.renderCurrentPage();
+      }
+
+      updateUI() {
+        // Update page info
+        document.getElementById('page-info').textContent = `Page ${this.currentPage} of ${this.totalPages}`;
+
+        // Update zoom info
+        if (this.fitToWidth) {
+          document.getElementById('zoom-info').textContent = 'Fit Width';
+        } else {
+          document.getElementById('zoom-info').textContent = `${Math.round(this.scale * 100)}%`;
+        }
+
+        // Update navigation buttons
+        document.getElementById('prev-page').disabled = this.currentPage <= 1;
+        document.getElementById('next-page').disabled = this.currentPage >= this.totalPages;
       }
 
 
 
       showLoading(message = 'Loading...') {
-        document.getElementById('loading').querySelector('p').textContent = message;
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('error').classList.add('hidden');
-        document.getElementById('no-pdf').classList.add('hidden');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const noPdfEl = document.getElementById('no-pdf');
+
+        if (loadingEl) {
+          const loadingText = loadingEl.querySelector('p');
+          if (loadingText) {
+            loadingText.textContent = message;
+          }
+          loadingEl.classList.remove('hidden');
+        }
+
+        if (errorEl) {
+          errorEl.classList.add('hidden');
+        }
+
+        if (noPdfEl) {
+          noPdfEl.classList.add('hidden');
+        }
       }
 
       hideLoading() {
-        document.getElementById('loading').classList.add('hidden');
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+          loadingEl.classList.add('hidden');
+        }
       }
 
       showError(message) {
-        document.getElementById('error-message').textContent = message;
-        document.getElementById('error').classList.remove('hidden');
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('no-pdf').classList.add('hidden');
+        const errorMessageEl = document.getElementById('error-message');
+        const errorEl = document.getElementById('error');
+        const loadingEl = document.getElementById('loading');
+        const noPdfEl = document.getElementById('no-pdf');
+
+        if (errorMessageEl) {
+          errorMessageEl.textContent = message;
+        }
+
+        if (errorEl) {
+          errorEl.classList.remove('hidden');
+        }
+
+        if (loadingEl) {
+          loadingEl.classList.add('hidden');
+        }
+
+        if (noPdfEl) {
+          noPdfEl.classList.add('hidden');
+        }
       }
 
       showNoPDF() {
-        document.getElementById('no-pdf').classList.remove('hidden');
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('error').classList.add('hidden');
+        const noPdfEl = document.getElementById('no-pdf');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+
+        if (noPdfEl) {
+          noPdfEl.classList.remove('hidden');
+        }
+
+        if (loadingEl) {
+          loadingEl.classList.add('hidden');
+        }
+
+        if (errorEl) {
+          errorEl.classList.add('hidden');
+        }
       }
     }
 
     // Initialize the PDF reader when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, initializing PDF reader');
+      console.log('window.api at startup:', window.api);
       new PDFReader();
     });
   </script>

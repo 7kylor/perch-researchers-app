@@ -3,6 +3,12 @@ import path from 'node:path';
 import { PDFReaderWindowManager } from './pdf-reader-window';
 import { PDFImportManager } from './ingest/pdf-import';
 
+// Set up IPC handlers early
+const pdfReaderManager = PDFReaderWindowManager.getInstance();
+const _pdfImportManager = PDFImportManager.getInstance();
+
+pdfReaderManager.setupIPCHandlers();
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
@@ -37,13 +43,6 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  // Initialize PDF managers
-  const pdfReaderManager = PDFReaderWindowManager.getInstance();
-  const _pdfImportManager = PDFImportManager.getInstance();
-
-  // Setup IPC handlers
-  pdfReaderManager.setupIPCHandlers();
-
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
