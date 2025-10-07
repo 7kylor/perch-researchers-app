@@ -123,7 +123,6 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -258,8 +257,3 @@ test-results/
 
 # macOS entitlements file (build artifact)
 entitlements.mac.plist
-
-/build
-/dist
-build/
-dist/
