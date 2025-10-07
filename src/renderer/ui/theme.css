@@ -1905,6 +1905,12 @@ body {
 		padding: 4px;
 	}
 
+	.activity-compact-btn.add-btn {
+		padding: 4px 8px;
+		font-size: 11px;
+		min-width: 80px;
+	}
+
 	.activity-title {
 		font-size: 11px;
 		max-width: 120px;
