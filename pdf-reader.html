@@ -143,24 +143,32 @@
     .viewer-container {
       flex: 1;
       position: relative;
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
       background: var(--bg);
+      scroll-behavior: smooth;
+      height: 100%;
+      min-height: 100vh;
     }
 
     .pdf-viewer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: block;
       padding: 20px;
-      min-height: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: min-content;
     }
 
     .pdf-page {
       background: #ffffff;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       border-radius: 4px;
       overflow: hidden;
+      max-width: 100%;
+      box-sizing: border-box;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
 
     .loading {
@@ -477,13 +485,25 @@
           }
         });
 
-        // Handle viewer container resize
-        const resizeObserver = new ResizeObserver(() => {
-          if (this.pdfDocument && this.currentPage > 0) {
-            this.renderCurrentPage();
-          }
-        });
-        resizeObserver.observe(document.getElementById('viewer-container'));
+        // Add smooth scrolling behavior
+        const container = document.getElementById('viewer-container');
+        if (container) {
+          container.style.scrollBehavior = 'smooth';
+
+          // Handle manual scrolling for better page navigation
+          let scrollTimeout;
+          container.addEventListener('scroll', () => {
+            // Clear existing timeout
+            if (scrollTimeout) {
+              clearTimeout(scrollTimeout);
+            }
+
+            // Set new timeout to check scroll position after scrolling stops
+            scrollTimeout = setTimeout(() => {
+              this.handleScrollPosition();
+            }, 150);
+          });
+        }
       }
 
       async setupIPC() {
@@ -573,7 +593,8 @@
           this.totalPages = this.pdfDocument.numPages;
           this.currentPage = 1;
 
-          await this.renderCurrentPage();
+          // Render all pages for scrolling
+          await this.renderAllPages();
           this.updateUI();
 
         } catch (error) {
@@ -581,52 +602,75 @@
         }
       }
 
-      async renderCurrentPage() {
-        if (!this.pdfDocument || this.currentPage < 1 || this.currentPage > this.totalPages) {
+
+      async goToPage(pageNumber) {
+        if (pageNumber < 1 || pageNumber > this.totalPages || pageNumber === this.currentPage) {
           return;
         }
 
-        if (this.isRendering) {
-          return; // Prevent concurrent renders
+        // Save current scroll position before changing pages
+        const container = document.getElementById('viewer-container');
+        const currentScrollTop = container ? container.scrollTop : 0;
+
+        this.currentPage = pageNumber;
+        await this.renderCurrentPage();
+
+        // Restore scroll position after rendering (with small delay to ensure DOM is updated)
+        if (container) {
+          setTimeout(() => {
+            container.scrollTop = currentScrollTop;
+          }, 10);
         }
 
-        this.isRendering = true;
+        this.updateUI();
+      }
+
+      async renderAllPages() {
+        if (!this.pdfDocument) return;
+
+        const viewer = document.getElementById('pdf-viewer');
+        if (!viewer) return;
+
+        // Clear existing content
+        viewer.innerHTML = '';
+
+        this.showLoading(`Loading ${this.totalPages} pages...`);
 
         try {
-          // Cancel any ongoing render task
-          if (this.renderTask) {
-            this.renderTask.cancel();
+          // Render all pages sequentially
+          for (let pageNum = 1; pageNum <= this.totalPages; pageNum++) {
+            await this.renderPage(pageNum);
+            this.showLoading(`Loading page ${pageNum} of ${this.totalPages}...`);
           }
 
-          // Cancel any ongoing text layer task
-          if (this.textLayerTask) {
-            this.textLayerTask.cancel();
-          }
+          this.hideLoading();
+        } catch (error) {
+          console.error('Error rendering all pages:', error);
+          this.showError(`Failed to render pages: ${error.message}`);
+        }
+      }
 
-          const page = await this.pdfDocument.getPage(this.currentPage);
+      async renderPage(pageNumber) {
+        if (!this.pdfDocument) return;
+
+        try {
+          const page = await this.pdfDocument.getPage(pageNumber);
           const viewport = page.getViewport({ scale: 1.0, rotation: this.rotation });
 
-          // Calculate scale to fit container if needed
+          // Calculate scale to fit container width
           const container = document.getElementById('viewer-container');
-          const containerWidth = container.clientWidth - 40; // Account for padding
-          const containerHeight = container.clientHeight - 40;
+          if (!container) return;
 
-          let renderScale = this.scale;
-          if (this.fitToWidth && this.scale === 1.0) {
-            // Auto-fit to width for initial load
-            const fitScale = containerWidth / viewport.width;
-            renderScale = Math.min(fitScale, 2.0); // Cap at 200%
-          } else if (!this.fitToWidth && this.scale === 1.0) {
-            // Fit to page (container height)
-            const fitScale = Math.min(containerWidth / viewport.width, containerHeight / viewport.height);
-            renderScale = Math.min(fitScale, 2.0); // Cap at 200%
-          }
+          const containerWidth = container.clientWidth - 40; // Account for padding
+          const fitScale = containerWidth / viewport.width;
+          const renderScale = Math.min(fitScale, 2.0); // Cap at 200%
 
           const renderViewport = page.getViewport({ scale: renderScale, rotation: this.rotation });
 
-          // Clear previous content
-          const viewer = document.getElementById('pdf-viewer');
-          viewer.innerHTML = '';
+          // Create page container
+          const pageContainer = document.createElement('div');
+          pageContainer.className = 'pdf-page';
+          pageContainer.style.position = 'relative';
 
           // Create canvas for rendering
           const canvas = document.createElement('canvas');
@@ -636,6 +680,9 @@
           canvas.width = renderViewport.width;
           canvas.style.maxWidth = '100%';
           canvas.style.height = 'auto';
+          canvas.style.width = 'auto';
+          canvas.style.display = 'block';
+          canvas.style.margin = '0 auto';
 
           // Render the page
           const renderContext = {
@@ -643,35 +690,35 @@
             viewport: renderViewport,
           };
 
-          this.renderTask = page.render(renderContext);
-          await this.renderTask.promise;
+          const renderTask = page.render(renderContext);
+          await renderTask.promise;
 
-          viewer.appendChild(canvas);
+          pageContainer.appendChild(canvas);
 
           // Add text layer for text selection if available
           try {
             const textContent = await page.getTextContent();
             if (textContent.items.length > 0) {
-              this.renderTextLayer(canvas, textContent, renderViewport);
+              this.renderTextLayer(canvas, textContent, renderViewport, pageContainer);
             }
           } catch (textError) {
             // Text layer is optional, ignore errors
-            console.debug('Text layer not available:', textError.message);
+            console.debug('Text layer not available for page', pageNumber, ':', textError.message);
           }
 
-          this.hideLoading();
+          // Add to viewer
+          const viewer = document.getElementById('pdf-viewer');
+          if (viewer) {
+            viewer.appendChild(pageContainer);
+          }
 
         } catch (error) {
-          if (error.name !== 'RenderingCancelledException') {
-            console.error('Error rendering page:', error);
-            this.showError(`Failed to render page: ${error.message}`);
-          }
-        } finally {
-          this.isRendering = false;
+          console.error(`Error rendering page ${pageNumber}:`, error);
+          throw error;
         }
       }
 
-      renderTextLayer(canvas, textContent, viewport) {
+      renderTextLayer(canvas, textContent, viewport, pageContainer) {
         const textLayerDiv = document.createElement('div');
         textLayerDiv.className = 'textLayer';
         textLayerDiv.style.position = 'absolute';
@@ -681,9 +728,11 @@
         textLayerDiv.style.height = canvas.height + 'px';
         textLayerDiv.style.pointerEvents = 'none';
 
-        // Position text layer over canvas
-        canvas.parentNode.style.position = 'relative';
-        canvas.parentNode.appendChild(textLayerDiv);
+        // Position text layer over canvas within the page container
+        if (pageContainer) {
+          pageContainer.style.position = 'relative';
+          pageContainer.appendChild(textLayerDiv);
+        }
 
         // Simple text rendering (PDF.js text layer would be more sophisticated)
         const scale = viewport.width / canvas.width;
@@ -702,14 +751,42 @@
         });
       }
 
-      async goToPage(pageNumber) {
-        if (pageNumber < 1 || pageNumber > this.totalPages || pageNumber === this.currentPage) {
-          return;
+      handleScrollPosition() {
+        const container = document.getElementById('viewer-container');
+        if (!container || !this.pdfDocument) return;
+
+        const scrollTop = container.scrollTop;
+        const containerHeight = container.clientHeight;
+        const pages = container.querySelectorAll('.pdf-page');
+
+        if (pages.length === 0) return;
+
+        // Find which page is currently most visible in the viewport
+        let maxVisibleArea = 0;
+        let visiblePage = 1;
+
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i];
+          const rect = page.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+
+          // Calculate how much of this page is visible
+          const visibleTop = Math.max(rect.top, containerRect.top);
+          const visibleBottom = Math.min(rect.bottom, containerRect.bottom);
+          const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+          const visibleArea = visibleHeight / rect.height;
+
+          if (visibleArea > maxVisibleArea) {
+            maxVisibleArea = visibleArea;
+            visiblePage = i + 1;
+          }
         }
 
-        this.currentPage = pageNumber;
-        await this.renderCurrentPage();
-        this.updateUI();
+        // Update current page if it's different and valid
+        if (visiblePage !== this.currentPage && visiblePage >= 1 && visiblePage <= this.totalPages) {
+          this.currentPage = visiblePage;
+          this.updateUI();
+        }
       }
 
       zoomIn() {
@@ -718,7 +795,7 @@
         if (currentIndex < zoomLevels.length - 1) {
           this.scale = zoomLevels[currentIndex + 1];
           this.fitToWidth = false;
-          this.renderCurrentPage();
+          this.renderAllPages();
         }
       }
 
@@ -728,13 +805,13 @@
         if (currentIndex > 0) {
           this.scale = zoomLevels[currentIndex - 1];
           this.fitToWidth = false;
-          this.renderCurrentPage();
+          this.renderAllPages();
         }
       }
 
       rotate() {
         this.rotation = (this.rotation + 90) % 360;
-        this.renderCurrentPage();
+        this.renderAllPages();
       }
 
       updateUI() {
