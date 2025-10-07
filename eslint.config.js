@@ -102,7 +102,7 @@ module.exports = [
       'react/no-unescaped-entities': 'warn',
 
       // General rules
-      'no-console': 'warn',
+      'no-console': 'off', // Allow console statements in test files and development
       'no-debugger': 'error',
       'no-useless-catch': 'warn',
       'no-redeclare': 'error',

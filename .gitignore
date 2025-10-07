@@ -258,3 +258,8 @@ test-results/
 
 # macOS entitlements file (build artifact)
 entitlements.mac.plist
+
+/build
+/dist
+build/
+dist/
