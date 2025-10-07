@@ -1,6 +1,2 @@
-import './main';
-import './ipc';
-
-
-
-
+import './main.js';
+import './ipc.js';

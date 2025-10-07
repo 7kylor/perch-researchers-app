@@ -1,5 +1,5 @@
-import { openDatabase } from '../db';
-import { createAIProvider, type AIProvider } from './providers';
+import { openDatabase } from '../db.js';
+import { createAIProvider, type AIProvider } from './providers.js';
 
 const db = openDatabase();
 

@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import pdfParse from 'pdf-parse';
+import { pdf as pdfParse } from 'pdf-parse';
 
 export interface ExtractedMetadata {
   title?: string;
@@ -154,7 +154,7 @@ export class PDFMetadataExtractor {
 
     // Look for "Author:" or "Authors:" section
     const authorSection = text.match(/(?:Authors?|By)[:\s]+([^\n]+(?:\n[A-Z][^\n]+){0,5})/i);
-    if (authorSection && authorSection[1]) {
+    if (authorSection?.[1]) {
       const extractedAuthors = this.parseAuthors(authorSection[1]);
       if (extractedAuthors.length > 0 && extractedAuthors.length <= 20) {
         return extractedAuthors;

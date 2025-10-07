@@ -26,7 +26,7 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "build": {
     "appId": "app.researchers.desktop",
     "files": [
@@ -76,10 +76,10 @@
     "better-sqlite3": "^12.4.1",
     "drizzle-orm": "^0.44.6",
     "lucide-react": "^0.545.0",
+    "mupdf": "^1.25.6",
     "next-themes": "^0.4.6",
     "onnxruntime-node": "^1.23.0",
     "pdf-parse": "^2.2.0",
-    "pdfjs-dist": "^5.4.296",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sqlite-vss": "^0.1.2",

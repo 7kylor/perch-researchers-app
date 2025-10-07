@@ -1,14 +1,14 @@
 import { ipcMain } from 'electron';
-import { openDatabase } from './db';
+import { openDatabase } from './db.js';
 import { randomUUID } from 'node:crypto';
-import type { Paper } from '../shared/types';
-import { importByDOI, importPDF } from './ingest/importer';
-import { PDFImportManager } from './ingest/pdf-import';
-import { URLPaperDetector } from './ingest/url-paper-detector';
+import type { Paper } from '../shared/types.js';
+import { importByDOI, importPDF } from './ingest/importer.js';
+import { PDFImportManager } from './ingest/pdf-import.js';
+import { URLPaperDetector } from './ingest/url-paper-detector.js';
 import fs from 'node:fs';
-import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline';
-import { createRAGSystem } from './ai/rag';
-import { processPaperOCR } from './ocr/batch';
+import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline.js';
+import { createRAGSystem } from './ai/rag.js';
+import { processPaperOCR } from './ocr/batch.js';
 import {
   BUILTIN_ALL,
   BUILTIN_RECENT,
@@ -17,7 +17,7 @@ import {
   type SidebarListResponse,
   type SidebarNode,
   type SidebarPrefs,
-} from '../shared/sidebar';
+} from '../shared/sidebar.js';
 
 const db = openDatabase();
 
