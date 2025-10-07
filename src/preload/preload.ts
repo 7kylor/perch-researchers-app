@@ -161,5 +161,3 @@ contextBridge.exposeInMainWorld('api', {
     },
   },
 });
-
-console.log('API exposed successfully');

@@ -35,7 +35,6 @@ export class PDFReaderWindowManager {
         sandbox: false,
         nodeIntegration: false,
         webSecurity: true,
-        additionalArguments: ['--pdf-reader-window'],
       },
       titleBarStyle: 'hiddenInset',
       show: false, // Don't show until ready

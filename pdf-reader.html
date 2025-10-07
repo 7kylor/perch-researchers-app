@@ -608,10 +608,6 @@
 
           // Calculate scale to fit container if needed
           const container = document.getElementById('viewer-container');
-          if (!container) {
-            throw new Error('Viewer container not found');
-          }
-
           const containerWidth = container.clientWidth - 40; // Account for padding
           const containerHeight = container.clientHeight - 40;
 
@@ -630,9 +626,6 @@
 
           // Clear previous content
           const viewer = document.getElementById('pdf-viewer');
-          if (!viewer) {
-            throw new Error('PDF viewer element not found');
-          }
           viewer.innerHTML = '';
 
           // Create canvas for rendering
