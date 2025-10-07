@@ -1,7 +1,6 @@
 import React from 'react';
 import { Sidebar as NewSidebar } from './components/sidebar/Sidebar';
 import { ActivityBar } from './components/ActivityBar';
-import { LibraryControls } from './components/LibraryControls';
 import { LibraryGrid } from './components/LibraryGrid';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
 import { EmptyState } from './components/EmptyState';
@@ -350,17 +349,15 @@ export const App: React.FC = () => {
           onSettingsClick={handleSettingsClick}
           isSidebarCollapsed={prefs.sidebarCollapsed}
           onSidebarToggle={handleSidebarToggle}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
+          onAddItem={() => setShowSimpleAddModal(true)}
         />
         <div className={`library-layout ${prefs.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
           <div className={`library-main ${prefs.sidebarCollapsed ? 'expanded' : ''}`}>
-            <LibraryControls
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchChange}
-              onAddItem={() => setShowSimpleAddModal(true)}
-              sortBy={sortBy}
-              onSortChange={handleSortChange}
-            />
             <div className="library-content">
               {isLoading ? (
                 <LoadingSkeleton count={9} />
