@@ -418,6 +418,7 @@ body {
 	margin-top: auto;
 	padding-top: 8px; /* Reduced padding */
 	border-top: 1px solid var(--border-subtle);
+	background: var(--sidebar-bg);
 }
 
 .hidden {
@@ -4818,9 +4819,7 @@ textarea:focus-visible {
 	border-top: 1px solid var(--border-subtle);
 	margin-top: auto;
 	flex-shrink: 0;
-	background: rgba(255, 255, 255, 0.8);
-	backdrop-filter: blur(8px);
-	-webkit-backdrop-filter: blur(8px);
+	background: var(--sidebar-bg);
 }
 
 .sidebar-account-btn {
