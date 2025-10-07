@@ -8,31 +8,31 @@ Researchers App is a comprehensive knowledge management system designed specific
 
 ## Key Features
 
-### 📚 Paper Management
+###   Paper Management
 - **Import Papers**: Add papers via DOI, ArXiv ID, PDF URLs, or local PDF files
 - **Organize**: Create custom categories and labels using the sidebar system
 - **Search**: Full-text search across your entire paper library
 - **Status Tracking**: Mark papers as "to read", "reading", "read", etc.
 
-### 📖 PDF Reader
+###   PDF Reader
 - **Dedicated Reader**: Open papers in a separate, focused PDF reader window
 - **Annotations**: Highlight text and add notes with color coding
 - **Page Navigation**: Easy page-by-page reading experience
 - **Full-screen Mode**: Distraction-free reading environment
 
-### 🤖 AI-Powered Features
+###   AI-Powered Features
 - **Paper Summarization**: Get AI-generated summaries of papers
 - **Question Answering**: Ask questions about specific papers or your entire library
 - **Related Papers**: Discover papers similar to your current research
 - **Local AI**: Uses ONNX Runtime for privacy-preserving local AI processing
 
-### 🗂️ Organization System
+###   Organization System
 - **Hierarchical Sidebar**: Create folders and labels for organizing papers
 - **Drag & Drop**: Organize papers by dragging them between categories
 - **Custom Icons**: Personalize your organization with custom icons and colors
 - **Smart Categories**: Built-in categories like "All", "Recent", "Favorites"
 
-### 🔍 Advanced Search
+###   Advanced Search
 - **Full-text Search**: Search across paper titles, abstracts, and content
 - **Category Filtering**: Filter papers by specific categories
 - **Vector Search**: Semantic search using embeddings (coming soon)
@@ -67,7 +67,7 @@ Researchers App is a comprehensive knowledge management system designed specific
 ## Installation
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 20+ 
 - npm or yarn
 - Git
 
