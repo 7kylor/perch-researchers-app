@@ -155,6 +155,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           title="Add new paper"
         >
           <Plus size={18} />
+          <span>Add Paper</span>
         </button>
 
         <div className="activity-actions" ref={quickActionsRef}>

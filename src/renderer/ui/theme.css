@@ -1776,11 +1776,25 @@ body {
 	background: var(--primary);
 	color: var(--bg);
 	-webkit-app-region: no-drag; /* Make clickable */
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 12px;
+	width: auto;
+	min-width: auto;
+	font-size: 13px;
+	font-weight: 500;
+	white-space: nowrap;
 }
 
 .activity-compact-btn.add-btn:hover {
 	background: var(--primary-hover);
 	color: var(--bg);
+}
+
+.activity-compact-btn.add-btn span {
+	font-size: 13px;
+	font-weight: 500;
 }
 
 /* Main content area */
@@ -1847,6 +1861,12 @@ body {
 	.activity-compact-btn {
 		width: 24px;
 		height: 24px;
+	}
+
+	.activity-compact-btn.add-btn {
+		padding: 6px 10px;
+		font-size: 12px;
+		min-width: 100px;
 	}
 
 	.activity-title {
