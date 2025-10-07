@@ -1764,6 +1764,7 @@ body {
 	justify-content: center;
 	width: 28px;
 	height: 28px;
+	-webkit-app-region: no-drag; /* Make clickable */
 }
 
 .activity-compact-btn:hover {
@@ -1774,6 +1775,7 @@ body {
 .activity-compact-btn.add-btn {
 	background: var(--primary);
 	color: var(--bg);
+	-webkit-app-region: no-drag; /* Make clickable */
 }
 
 .activity-compact-btn.add-btn:hover {
@@ -2349,6 +2351,7 @@ textarea:focus-visible {
 	border: 1px solid var(--border-subtle);
 	background: var(--surface);
 	transition: all 0.15s ease;
+	-webkit-app-region: no-drag; /* Make clickable */
 }
 
 .activity-bar .search-bar:focus-within {
@@ -2360,10 +2363,19 @@ textarea:focus-visible {
 	font-size: 14px;
 	font-weight: 400;
 	letter-spacing: -0.01em;
+	-webkit-app-region: no-drag; /* Make clickable */
 }
 
 .activity-bar .search-input::placeholder {
 	color: var(--text-secondary);
+}
+
+.activity-bar .search-clear {
+	-webkit-app-region: no-drag; /* Make clickable */
+}
+
+.activity-bar .search-icon {
+	-webkit-app-region: no-drag; /* Make clickable */
 }
 
 /* Responsive Search Bar */
