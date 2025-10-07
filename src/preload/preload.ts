@@ -1,6 +1,7 @@
 import type { Paper } from '../shared/types';
 import type { SidebarListResponse, SidebarNode, SidebarPrefs } from '../shared/sidebar';
 import type { OpenDialogOptions, OpenDialogReturnValue } from 'electron';
+import fs from 'node:fs';
 
 export interface PDFImportProgress {
   stage: 'downloading' | 'processing' | 'complete' | 'error';
@@ -80,6 +81,11 @@ declare global {
 // Context Bridge Setup
 import { contextBridge, ipcRenderer } from 'electron';
 
+function readFileBuffer(filePath: string): ArrayBuffer {
+  const buf = fs.readFileSync(filePath);
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+}
+
 contextBridge.exposeInMainWorld('api', {
   papers: {
     get: (id: string) => ipcRenderer.invoke('papers:get', id),
@@ -104,21 +110,30 @@ contextBridge.exposeInMainWorld('api', {
   },
   'pdf-reader': {
     'create-window': (paper: Paper) => ipcRenderer.invoke('pdf-reader:create-window', paper),
-    'close-window': (windowId?: string) => ipcRenderer.invoke('pdf-reader:close-window', windowId),
+    // If a windowId is provided, close that specific window. If omitted, close the sender window.
+    'close-window': (windowId?: string) =>
+      windowId
+        ? ipcRenderer.invoke('pdf-reader:close-window', windowId)
+        : ipcRenderer.invoke('pdf-reader:close-self'),
     'get-file-path': (paperId: string) => ipcRenderer.invoke('pdf-reader:get-file-path', paperId),
     'file-exists': (filePath: string) => ipcRenderer.invoke('pdf-reader:file-exists', filePath),
     'get-windows': () => ipcRenderer.invoke('pdf-reader:get-windows'),
     'focus-window': (windowId: string) => ipcRenderer.invoke('pdf-reader:focus-window', windowId),
   },
   file: {
-    read: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
+    // Read file directly from preload for ArrayBuffer results (avoids IPC marshalling quirks)
+    read: async (filePath: string) => readFileBuffer(filePath),
   },
   dialog: {
     showOpenDialog: (options?: OpenDialogOptions) =>
       ipcRenderer.invoke('dialog:showOpenDialog', options),
   },
   on: (channel: string, listener: (...args: unknown[]) => void) => {
-    ipcRenderer.on(channel, listener);
+    ipcRenderer.on(channel, (_event, ...args) => {
+      // Normalize to the data payload(s) only; single arg becomes listener(arg)
+      if (args.length <= 1) listener(args[0]);
+      else listener(...(args as unknown[]));
+    });
   },
   sidebar: {
     list: () => ipcRenderer.invoke('sidebar:list'),

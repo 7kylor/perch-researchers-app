@@ -46,21 +46,39 @@ export class PDFReaderWindowManager {
     // Load the PDF reader HTML
     const isDev = process.env['VITE_DEV_SERVER_URL'];
     if (isDev) {
-      // In development, load from the dev server at the root level
-      window.loadURL(`${process.env['VITE_DEV_SERVER_URL']}/pdf-reader.html`);
+      // In development, load from the dev server at the root level and pass paperId
+      const url = `${process.env['VITE_DEV_SERVER_URL']}/pdf-reader.html?paperId=${encodeURIComponent(paper.id)}`;
+      window.loadURL(url);
       window.webContents.openDevTools({ mode: 'detach' });
     } else {
-      // In production, load from the built files
-      window.loadFile(path.join(__dirname, '../renderer/pdf-reader.html'));
+      // In production, load from the built files and pass paperId via query
+      window.loadFile(path.join(__dirname, '../renderer/pdf-reader.html'), {
+        query: { paperId: paper.id },
+      });
     }
 
     // Handle window events
+    // Ensure the renderer has loaded before sending the paper payload to avoid race conditions
+    let sentPaperPayload = false;
+    const sendPaperPayload = () => {
+      if (sentPaperPayload) return;
+      try {
+        window.webContents.send('pdf-reader:paper-loaded', paper);
+        sentPaperPayload = true;
+      } catch {
+        // ignore
+      }
+    };
+
+    window.webContents.once('did-finish-load', () => {
+      sendPaperPayload();
+    });
+
     window.once('ready-to-show', () => {
       window.show();
       window.focus();
-
-      // Send the paper data to the window
-      window.webContents.send('pdf-reader:paper-loaded', paper);
+      // Fallback: if for some reason we haven't sent yet, send now
+      sendPaperPayload();
     });
 
     window.on('closed', () => {
@@ -164,6 +182,16 @@ export class PDFReaderWindowManager {
           window.restore();
         }
         window.focus();
+        return true;
+      }
+      return false;
+    });
+
+    // Close the window that invoked this IPC (used by renderer 'close-window' without id)
+    ipcMain.handle('pdf-reader:close-self', async (event) => {
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (win) {
+        win.close();
         return true;
       }
       return false;

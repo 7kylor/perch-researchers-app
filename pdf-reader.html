@@ -3,262 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws:; object-src 'none'; base-uri 'self'">
   <title>PDF Reader</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #ffffff;
-      --surface: #f8f9fa;
-      --surface-secondary: #e9ecef;
-      --surface-elevated: #dee2e6;
-      --text: #000000;
-      --text-secondary: #495057;
-      --muted: #6c757d;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --border: #dee2e6;
-      --border-subtle: #e9ecef;
-      --ring: #3b82f6;
-      --sidebar-bg: #f1f3f4;
-      --card-hover: rgba(59, 130, 246, 0.05);
-      --card-hover-strong: rgba(59, 130, 246, 0.1);
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+      --bg: #ffffff; --surface: #f8f9fa; --surface-secondary: #e9ecef; --surface-elevated: #dee2e6;
+      --text: #000000; --text-secondary: #495057; --muted: #6c757d; --primary: #3b82f6; --primary-hover: #2563eb;
+      --border: #dee2e6; --border-subtle: #e9ecef; --ring: #3b82f6; --sidebar-bg: #f1f3f4;
+      --card-hover: rgba(59,130,246,.05); --card-hover-strong: rgba(59,130,246,.1);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.1); --shadow-md: 0 4px 6px -1px rgba(0,0,0,.15);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.2); --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.25);
     }
-
     :root[data-theme="dark"] {
-      --bg: #000000;
-      --surface: #1a1a1a;
-      --surface-secondary: #2a2a2a;
-      --surface-elevated: #333333;
-      --text: #ffffff;
-      --text-secondary: #cccccc;
-      --muted: #888888;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --border: #404040;
-      --border-subtle: #2a2a2a;
-      --ring: #3b82f6;
-      --sidebar-bg: #111111;
-      --card-hover: rgba(59, 130, 246, 0.1);
-      --card-hover-strong: rgba(59, 130, 246, 0.2);
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+      --bg: #000; --surface: #1a1a1a; --surface-secondary: #2a2a2a; --surface-elevated: #333;
+      --text: #fff; --text-secondary: #ccc; --muted: #888; --primary: #3b82f6; --primary-hover: #2563eb;
+      --border: #404040; --border-subtle: #2a2a2a; --ring: #3b82f6; --sidebar-bg: #111;
+      --card-hover: rgba(59,130,246,.1); --card-hover-strong: rgba(59,130,246,.2);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.3); --shadow-md: 0 4px 6px -1px rgba(0,0,0,.4);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.5); --shadow-xl: 0 20px 25px -5px rgba(0,0,0,.6);
     }
-
-    body {
-      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-    }
-
-    .app {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 70px;
-    }
-
-    .paper-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .paper-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text);
-      margin: 0;
-      max-width: 400px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .paper-meta {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin: 0;
-    }
-
-    .controls {
-      display: flex;
-      align-items: center;
-    }
-
-    .control-btn {
-      background: var(--surface-secondary);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .control-btn:hover {
-      background: var(--surface-elevated);
-      border-color: var(--border);
-    }
-
-    .control-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-
-
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-    }
-
-
-    .viewer-container {
-      flex: 1;
-      position: relative;
-      overflow: auto;
-      background: var(--bg);
-    }
-
-    .pdf-viewer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      min-height: 100%;
-    }
-
-    .pdf-page {
-      background: #ffffff;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 400px;
-      color: var(--text-secondary);
-      gap: 16px;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--border);
-      border-top: 3px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .error {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 400px;
-      color: #ef4444;
-      gap: 16px;
-      text-align: center;
-      padding: 40px;
-    }
-
-    .error-icon {
-      font-size: 48px;
-      opacity: 0.7;
-    }
-
-    .no-pdf {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 400px;
-      color: var(--text-secondary);
-      gap: 16px;
-      text-align: center;
-      padding: 40px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .status-bar {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 8px 24px;
-      font-size: 12px;
-      color: var(--text-secondary);
-      text-align: center;
-    }
-
-    /* Dark theme for PDF.js */
-    .pdf-viewer canvas {
-      filter: invert(1) hue-rotate(180deg);
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .header {
-        padding: 12px 16px;
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch;
-      }
-
-      .paper-title {
-        max-width: none;
-      }
-
-      .controls {
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 12px;
-      }
-
-      .toolbar {
-        padding: 8px 16px;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-    }
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+    .app { height: 100vh; display: flex; flex-direction: column; }
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; min-height: 70px; }
+    .paper-info { display: flex; flex-direction: column; gap: 4px; }
+    .paper-title { font-size: 18px; font-weight: 600; color: var(--text); margin: 0; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .paper-meta { font-size: 14px; color: var(--text-secondary); margin: 0; }
+    .controls { display: flex; align-items: center; }
+    .control-btn { background: var(--surface-secondary); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 14px; transition: .2s; display: flex; align-items: center; gap: 6px; }
+    .control-btn:hover { background: var(--surface-elevated); }
+    .control-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+    .viewer-container { flex: 1; position: relative; overflow: auto; background: var(--bg); }
+    .pdf-viewer { display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100%; }
+    .pdf-page { background: #fff; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,.3); border-radius: 4px; overflow: hidden; }
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--text-secondary); gap: 16px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
+    .error { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: #ef4444; gap: 16px; text-align: center; padding: 40px; }
+    .error-icon { font-size: 48px; opacity: .7; }
+    .no-pdf { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--text-secondary); gap: 16px; text-align: center; padding: 40px; }
+    .hidden { display: none !important; }
+    .status-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 8px 24px; font-size: 12px; color: var(--text-secondary); text-align: center; }
+    :root[data-theme="dark"] .pdf-viewer canvas { filter: invert(1) hue-rotate(180deg); }
+    @media (max-width: 768px){ .header{padding:12px 16px; flex-direction:column; gap:12px; align-items:stretch} .paper-title{max-width:none} .controls{justify-content:center; flex-wrap:wrap; gap:12px} }
   </style>
 </head>
 <body>
@@ -269,12 +57,15 @@
         <p class="paper-meta" id="paper-meta">Loading...</p>
       </div>
       <div class="controls">
-        <button class="control-btn" id="close-reader">
-          <span>Close</span>
-        </button>
+        <button class="control-btn" id="prev-page" title="Previous Page">Prev</button>
+        <span id="page-info" style="margin: 0 8px; min-width: 64px; text-align:center">—</span>
+        <button class="control-btn" id="next-page" title="Next Page">Next</button>
+        <button class="control-btn" id="zoom-out" title="Zoom Out" style="margin-left:12px">-</button>
+        <button class="control-btn" id="zoom-in" title="Zoom In">+</button>
+        <button class="control-btn" id="zoom-reset" title="Fit to Width">Fit</button>
+        <button class="control-btn" id="close-reader"><span>Close</span></button>
       </div>
     </header>
-
 
     <div class="main-content">
       <div class="viewer-container" id="viewer-container">
@@ -297,16 +88,13 @@
       </div>
     </div>
 
-    <div class="status-bar" id="status-bar">
-      Ready
-    </div>
+    <div class="status-bar" id="status-bar">Ready</div>
   </div>
 
   <script type="module">
-    import 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
-
-    // Initialize PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+    import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
+    GlobalWorkerOptions.workerSrc = workerUrl;
 
     class PDFReader {
       constructor() {
@@ -314,231 +102,246 @@
         this.pdfDocument = null;
         this.currentPage = 1;
         this.totalPages = 0;
-        this.scale = 1.0;
+        this.scale = 1.0; // 1.0 means "fit to width"
+        this.autoFitScale = 1.0;
         this.renderTask = null;
-
+        this._resizeObs = null;
+        this._fallbackTimer = null;
         this.init();
       }
 
       async init() {
         this.setupEventListeners();
-        await this.setupIPC();
+        this.setupIPC();
       }
 
       setupEventListeners() {
-        // Close button
-        document.getElementById('close-reader').addEventListener('click', () => {
-          window.api['pdf-reader:close-window']();
+        document.getElementById('close-reader')?.addEventListener('click', () => {
+          window.api['pdf-reader']['close-window']();
         });
 
-        // Keyboard shortcuts
+        // Header controls
+        document.getElementById('prev-page')?.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          if (this.currentPage > 1) void this.goToPage(this.currentPage - 1);
+        });
+        document.getElementById('next-page')?.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          if (this.currentPage < this.totalPages) void this.goToPage(this.currentPage + 1);
+        });
+        document.getElementById('zoom-in')?.addEventListener('click', () => this.zoomIn());
+        document.getElementById('zoom-out')?.addEventListener('click', () => this.zoomOut());
+        document.getElementById('zoom-reset')?.addEventListener('click', () => this.zoomReset());
+
         document.addEventListener('keydown', (e) => {
           switch (e.key) {
-            case 'ArrowLeft':
-              if (this.currentPage > 1) {
-                this.goToPage(this.currentPage - 1);
-              }
-              break;
-            case 'ArrowRight':
-              if (this.currentPage < this.totalPages) {
-                this.goToPage(this.currentPage + 1);
-              }
-              break;
-            case 'Home':
-              this.goToPage(1);
-              break;
-            case 'End':
-              this.goToPage(this.totalPages);
-              break;
-            case 'Escape':
-              window.api['pdf-reader:close-window']();
-              break;
+            case 'ArrowLeft': if (this.currentPage > 1) this.goToPage(this.currentPage - 1); break;
+            case 'ArrowRight': if (this.currentPage < this.totalPages) this.goToPage(this.currentPage + 1); break;
+            case 'Home': this.goToPage(1); break;
+            case 'End': this.goToPage(this.totalPages); break;
+            case 'Escape': window.api['pdf-reader']['close-window'](); break;
           }
         });
 
-        // Handle viewer container resize
-        const resizeObserver = new ResizeObserver(() => {
-          if (this.pdfDocument && this.currentPage > 0) {
-            this.renderCurrentPage();
-          }
+        const container = document.getElementById('viewer-container');
+        this._resizeObs = new ResizeObserver(() => {
+          if (this.pdfDocument && this.currentPage > 0) this.renderCurrentPage();
         });
-        resizeObserver.observe(document.getElementById('viewer-container'));
+        this._resizeObs.observe(container);
       }
 
-      async setupIPC() {
-        // Listen for paper data from main process
+      setupIPC() {
         window.api.on('pdf-reader:paper-loaded', async (paper) => {
           this.currentPaper = paper;
           this.updatePaperInfo();
           await this.loadPDF();
         });
-
-        // Get initial theme from localStorage (shared with main app)
         this.applyThemeFromStorage();
+        window.addEventListener('storage', (e) => { if (e.key === 'theme') this.applyThemeFromStorage(); });
 
-        // Listen for storage changes (when main app changes theme)
-        window.addEventListener('storage', (e) => {
-          if (e.key === 'theme') {
-            this.applyThemeFromStorage();
+        // Fallback: if no IPC payload arrives quickly, extract paperId from query and load
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const paperId = params.get('paperId');
+          if (paperId) {
+            this._fallbackTimer = window.setTimeout(async () => {
+              if (!this.currentPaper) {
+                try {
+                  const paper = await window.api.papers.get(paperId);
+                  if (paper) {
+                    this.currentPaper = paper;
+                    this.updatePaperInfo();
+                    await this.loadPDF();
+                  } else {
+                    // If DB lookup fails, still attempt render with only file path
+                    await this.loadPDFFromIdOnly(paperId);
+                  }
+                } catch (e) {
+                  await this.loadPDFFromIdOnly(paperId);
+                }
+              }
+            }, 800);
           }
-        });
-      }
-
-      applyTheme(theme) {
-        if (theme === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.removeAttribute('data-theme');
-        }
+        } catch {}
       }
 
       applyThemeFromStorage() {
-        try {
-          const savedTheme = localStorage.getItem('theme');
-          if (savedTheme === 'dark') {
-            this.applyTheme('dark');
-          } else if (savedTheme === 'light') {
-            this.applyTheme('light');
-          } else {
-            // Default to light or system preference
-            this.applyTheme('light');
-          }
-        } catch (error) {
-          console.warn('Could not read theme from storage:', error);
-          this.applyTheme('light');
-        }
+        try { const t = localStorage.getItem('theme'); this.applyTheme(t === 'dark' ? 'dark' : 'light'); }
+        catch { this.applyTheme('light'); }
+      }
+      applyTheme(theme) {
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
       }
 
       updatePaperInfo() {
         if (!this.currentPaper) return;
-
-        document.getElementById('paper-title').textContent = this.currentPaper.title || 'Untitled Paper';
-        document.getElementById('paper-meta').textContent =
-          `${this.currentPaper.authors?.join(', ') || 'Unknown Authors'} • ${this.currentPaper.venue || ''} • ${this.currentPaper.year || ''}`.trim().replace(/^•|•$/g, '');
+        const title = this.currentPaper.title || 'Untitled Paper';
+        const authors = Array.isArray(this.currentPaper.authors) ? this.currentPaper.authors.join(', ') : 'Unknown Authors';
+        const venue = this.currentPaper.venue || '';
+        const year = this.currentPaper.year || '';
+        document.getElementById('paper-title').textContent = title;
+        document.getElementById('paper-meta').textContent = [authors, venue, year].filter(Boolean).join(' · ');
       }
 
       async loadPDF() {
         if (!this.currentPaper) return;
-
         try {
-          // Get the PDF file path from the main process
-          const filePath = await window.api['pdf-reader:get-file-path'](this.currentPaper.id);
-
-          if (!filePath) {
-            this.showNoPDF();
-            return;
-          }
-
-          // Check if file exists
-          const exists = await window.api['pdf-reader:file-exists'](filePath);
-          if (!exists) {
-            this.showNoPDF();
-            return;
-          }
-
           this.showLoading('Loading PDF...');
+          const filePath = await window.api['pdf-reader']['get-file-path'](this.currentPaper.id);
+          if (!filePath) return this.showNoPDF();
 
-          // Load the PDF document
-          const arrayBuffer = await window.api['file:read'](filePath);
-          const uint8Array = new Uint8Array(arrayBuffer);
+          const exists = await window.api['pdf-reader']['file-exists'](filePath);
+          if (!exists) return this.showNoPDF();
 
-          this.pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+          const arrayBuffer = await window.api.file.read(filePath);
+          const data = new Uint8Array(arrayBuffer);
+
+          this.pdfDocument = await getDocument({ data }).promise;
           this.totalPages = this.pdfDocument.numPages;
           this.currentPage = 1;
-
+          this.updateToolbar();
           await this.renderCurrentPage();
+        } catch (err) {
+          console.error(err);
+          this.showError(`Failed to load PDF: ${err?.message || String(err)}`);
+        }
+      }
 
-        } catch (error) {
-          console.error('Error loading PDF:', error);
-          this.showError(`Failed to load PDF: ${error.message}`);
+      async loadPDFFromIdOnly(paperId) {
+        try {
+          this.showLoading('Loading PDF...');
+          const filePath = await window.api['pdf-reader']['get-file-path'](paperId);
+          if (!filePath) return this.showNoPDF();
+          const exists = await window.api['pdf-reader']['file-exists'](filePath);
+          if (!exists) return this.showNoPDF();
+          const arrayBuffer = await window.api.file.read(filePath);
+          const data = new Uint8Array(arrayBuffer);
+          this.pdfDocument = await getDocument({ data }).promise;
+          this.totalPages = this.pdfDocument.numPages;
+          this.currentPage = 1;
+          this.updateToolbar();
+          await this.renderCurrentPage();
+        } catch (err) {
+          console.error(err);
+          this.showError(`Failed to load PDF: ${err?.message || String(err)}`);
         }
       }
 
       async renderCurrentPage() {
-        if (!this.pdfDocument || this.currentPage < 1 || this.currentPage > this.totalPages) {
-          return;
-        }
-
+        if (!this.pdfDocument || this.currentPage < 1 || this.currentPage > this.totalPages) return;
         try {
-          // Cancel any ongoing render task
-          if (this.renderTask) {
-            this.renderTask.cancel();
-          }
-
+          if (this.renderTask) this.renderTask.cancel();
           const page = await this.pdfDocument.getPage(this.currentPage);
-          const viewport = page.getViewport({ scale: this.scale });
-
-          // Calculate scale to fit container if needed
-          const container = document.getElementById('viewer-container');
-          const containerWidth = container.clientWidth - 40; // Account for padding
-
-          let renderScale = this.scale;
-          if (renderScale === 1.0) {
-            // Auto-fit to width for initial load
-            const fitScale = containerWidth / viewport.width;
-            renderScale = Math.min(fitScale, 2.0); // Cap at 200%
-          }
-
-          const renderViewport = page.getViewport({ scale: renderScale });
-
-          // Clear previous content
           const viewer = document.getElementById('pdf-viewer');
+          const container = document.getElementById('viewer-container');
+
+          const baseViewport = page.getViewport({ scale: 1 });
+          const fitScale = Math.max(0.1, (container.clientWidth - 40) / baseViewport.width);
+          this.autoFitScale = fitScale;
+          const renderViewport = page.getViewport({ scale: this.scale === 1 ? fitScale : this.scale });
+
           viewer.innerHTML = '';
-
-          // Create canvas for rendering
           const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-
-          canvas.height = renderViewport.height;
-          canvas.width = renderViewport.width;
-          canvas.style.maxWidth = '100%';
-          canvas.style.height = 'auto';
-
-          // Render the page
-          const renderContext = {
-            canvasContext: context,
-            viewport: renderViewport,
-          };
-
-          this.renderTask = page.render(renderContext);
+          const ctx = canvas.getContext('2d');
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(renderViewport.width * dpr);
+          canvas.height = Math.floor(renderViewport.height * dpr);
+          canvas.style.width = Math.floor(renderViewport.width) + 'px';
+          canvas.style.height = Math.floor(renderViewport.height) + 'px';
+          const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null;
+          this.renderTask = page.render({ canvasContext: ctx, viewport: renderViewport, transform });
           await this.renderTask.promise;
-
+          canvas.className = 'pdf-page';
           viewer.appendChild(canvas);
-
           this.hideLoading();
-
-        } catch (error) {
-          if (error.name !== 'RenderingCancelledException') {
-            console.error('Error rendering page:', error);
-            this.showError(`Failed to render page: ${error.message}`);
+          this.updateToolbar();
+        } catch (err) {
+          if (err?.name !== 'RenderingCancelledException') {
+            console.error(err);
+            this.showError(`Failed to render page: ${err?.message || String(err)}`);
           }
         }
       }
 
-      async goToPage(pageNumber) {
-        if (pageNumber < 1 || pageNumber > this.totalPages || pageNumber === this.currentPage) {
-          return;
-        }
-
-        this.currentPage = pageNumber;
+      async goToPage(n) {
+        if (!this.pdfDocument) return;
+        const target = Math.max(1, Math.min(Number(n), this.totalPages));
+        if (target === this.currentPage) return;
+        this.currentPage = target;
+        this.updateToolbar();
         await this.renderCurrentPage();
       }
 
+      zoomIn() {
+        if (!this.pdfDocument) return;
+        if (this.scale === 1) this.scale = this.autoFitScale; // start from fitted scale
+        this.scale = Math.min(this.scale * 1.25, 5);
+        void this.renderCurrentPage();
+      }
 
+      zoomOut() {
+        if (!this.pdfDocument) return;
+        if (this.scale === 1) this.scale = this.autoFitScale; // start from fitted scale
+        this.scale = Math.max(this.scale / 1.25, 0.25);
+        void this.renderCurrentPage();
+      }
 
-      showLoading(message = 'Loading...') {
-        document.getElementById('loading').querySelector('p').textContent = message;
-        document.getElementById('loading').classList.remove('hidden');
+      zoomReset() {
+        if (!this.pdfDocument) return;
+        this.scale = 1; // back to fit to width
+        void this.renderCurrentPage();
+      }
+
+      updateToolbar() {
+        const pageInfo = document.getElementById('page-info');
+        if (pageInfo) pageInfo.textContent = (this.pdfDocument ? `${this.currentPage} / ${this.totalPages}` : '—');
+        const prev = document.getElementById('prev-page');
+        const next = document.getElementById('next-page');
+        if (prev) prev.disabled = !this.pdfDocument || this.currentPage <= 1;
+        if (next) next.disabled = !this.pdfDocument || this.currentPage >= this.totalPages;
+        const zi = document.getElementById('zoom-in');
+        const zo = document.getElementById('zoom-out');
+        const zr = document.getElementById('zoom-reset');
+        const atFit = this.scale === 1;
+        if (zi) zi.disabled = !this.pdfDocument || (!atFit && this.scale >= 5);
+        if (zo) zo.disabled = !this.pdfDocument || (!atFit && this.scale <= 0.25);
+        if (zr) zr.disabled = !this.pdfDocument || atFit;
+      }
+
+      showLoading(msg = 'Loading...') {
+        const l = document.getElementById('loading');
+        const p = l.querySelector('p');
+        if (p) p.textContent = msg;
+        l.classList.remove('hidden');
         document.getElementById('error').classList.add('hidden');
         document.getElementById('no-pdf').classList.add('hidden');
       }
 
-      hideLoading() {
-        document.getElementById('loading').classList.add('hidden');
-      }
+      hideLoading() { document.getElementById('loading').classList.add('hidden'); }
 
-      showError(message) {
-        document.getElementById('error-message').textContent = message;
+      showError(m) {
+        document.getElementById('error-message').textContent = m;
         document.getElementById('error').classList.remove('hidden');
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('no-pdf').classList.add('hidden');
@@ -551,10 +354,7 @@
       }
     }
 
-    // Initialize the PDF reader when DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-      new PDFReader();
-    });
+    document.addEventListener('DOMContentLoaded', () => new PDFReader());
   </script>
 </body>
 </html>
