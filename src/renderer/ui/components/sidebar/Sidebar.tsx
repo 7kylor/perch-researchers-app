@@ -3,6 +3,7 @@ import { useSidebarStore } from '../../sidebar/store';
 import { SidebarTree } from './SidebarTree';
 import { BookOpen, Clock, FolderOpen, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { SidebarFooter } from './SidebarFooter';
+import type { SidebarNode } from '../../../../shared/sidebar';
 
 type SidebarProps = {
   selectedId: string;
@@ -14,6 +15,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   const [renamingId, setRenamingId] = React.useState<string | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
   const [categoriesExpanded, setCategoriesExpanded] = React.useState(true);
+
+  // Count the actual number of categories (folders and labels)
+  const categoryCount = React.useMemo(() => {
+    return nodes.filter((node: SidebarNode) => node.type === 'folder' || node.type === 'label')
+      .length;
+  }, [nodes]);
 
   const startRename = (id: string, name: string) => {
     setRenamingId(id);
@@ -141,9 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
                 <div className="item-expand-indicator">
                   {categoriesExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </div>
-                <span className="item-count">
-                  {counts.find((c) => c.nodeId === 'builtin:categories')?.paperCount ?? 0}
-                </span>
+                <span className="item-count">{categoryCount}</span>
               </button>
               {/* Categories Section - now nested under main Categories item */}
               {categoriesExpanded && (
