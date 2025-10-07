@@ -21,8 +21,8 @@ type SidebarNodeProps = {
   onDragOver?: (e: React.DragEvent<HTMLLIElement>) => void;
   onDragLeave?: (e: React.DragEvent<HTMLLIElement>) => void;
   onDrop?: (e: React.DragEvent<HTMLLIElement>) => void;
-  onContextMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  onMouseDown?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onContextMenu?: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseDown?: (e: React.MouseEvent<HTMLElement>) => void;
   onDropOnList?: (e: React.DragEvent<HTMLUListElement>, parentId: string | null) => void;
 };
 
@@ -278,7 +278,7 @@ export const SidebarTree: React.FC<SidebarTreeProps> = ({
         selectedId={selectedId}
         collapsedIds={collapsedIds}
         dropTarget={dropTarget}
-        renamingId={renamingId}
+        renamingId={renamingId || null}
         renameValue={renameValue}
         onSelect={onSelect}
         onRenameStart={onRenameStart}
