@@ -27,9 +27,9 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   venue,
   year,
   doi,
-  _abstract,
-  _source,
-  _status,
+  abstract,
+  source,
+  status,
   isNew = false,
   count,
   onClick,
@@ -55,7 +55,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
 
   const handleRename = async () => {
     const newTitle = prompt('Enter new title:');
-    if (newTitle && newTitle.trim()) {
+    if (newTitle?.trim()) {
       // TODO: Implement rename functionality
     }
     setContextMenu({ isOpen: false, x: 0, y: 0 });
@@ -71,6 +71,13 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
       }
     }
     setContextMenu({ isOpen: false, x: 0, y: 0 });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick(id);
+    }
   };
 
   const contextMenuItems = [
@@ -102,69 +109,102 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     });
   };
 
+  const truncateText = (text: string, maxLength: number) => {
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'to_read':
+        return 'var(--text-secondary)';
+      case 'in_review':
+        return 'var(--primary)';
+      case 'annotated':
+        return 'var(--success)';
+      case 'archived':
+        return 'var(--muted)';
+      default:
+        return 'var(--text-secondary)';
+    }
+  };
+
   return (
     <>
-      <div
-        className={`book-card ${isHovered ? 'hovered' : ''}`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={() => onClick(id)}
-        onContextMenu={handleRightClick}
-      >
-        {/* Book Cover */}
-        <div className="book-cover">
-          {/* Book Spine */}
-          <div className="book-spine"></div>
+      <div className={`book-card ${isHovered ? 'hovered' : ''}`}>
+        <button
+          className="book-card-button"
+          onClick={() => onClick(id)}
+          onContextMenu={handleRightClick}
+          onKeyDown={handleKeyDown}
+          onKeyUp={(e) => {
+            if (e.key === ' ') {
+              e.preventDefault();
+            }
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          type="button"
+          aria-label={`Open paper: ${title}`}
+        >
+          <div className="book-cover">
+            <div className="book-spine"></div>
 
-          {/* Front Cover Content */}
-          <div className="book-front">
-            {/* Title Badge */}
-            <div className="book-title-badge">{year || 'Unknown'}</div>
-
-            {/* Main Title */}
-            <div className="book-main-title">
-              {title.length > 50 ? `${title.substring(0, 50)}...` : title}
-            </div>
-
-            {/* Authors */}
-            {authors.length > 0 && (
-              <div className="book-authors-card">
-                {authors.slice(0, 2).join(', ')}
-                {authors.length > 2 && ` +${authors.length - 2}`}
+            <div className="book-front">
+              <div className="book-header">
+                <div
+                  className="book-status-indicator"
+                  style={{ backgroundColor: getStatusColor(status) }}
+                ></div>
+                {isNew && <div className="book-new-badge">New</div>}
               </div>
-            )}
 
-            {/* Venue */}
-            {venue && <div className="book-venue-card">{venue}</div>}
-
-            {/* DOI */}
-            {doi && (
-              <div className="book-doi-card">
-                DOI: {doi.length > 25 ? `${doi.substring(0, 25)}...` : doi}
-              </div>
-            )}
-
-            {/* Status and Notes */}
-            <div className="book-bottom-info">
-              <div className="book-status">
-                {isNew ? 'New' : formatDate(dateAdded) || 'Unknown'}
-              </div>
-              {count > 0 && (
-                <div className="book-notes">
-                  <FileText size={10} />
-                  <span>{count}</span>
+              <div className="book-content">
+                {/* Title Section */}
+                <div className="book-title-section">
+                  <div className="book-title">{truncateText(title, 55)}</div>
+                  {authors.length > 0 && (
+                    <div className="book-authors">
+                      {authors.slice(0, 3).join(', ')}
+                      {authors.length > 3 ? ` +${authors.length - 3} more` : ''}
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Publication Info */}
+                <div className="book-publication">
+                  <div className="publication-row">
+                    {year && <span className="publication-year">{year}</span>}
+                    {venue && <span className="publication-venue">{truncateText(venue, 30)}</span>}
+                  </div>
+                  {(doi || source) && (
+                    <div className="publication-details">
+                      {doi && <span className="publication-doi">DOI: {truncateText(doi, 20)}</span>}
+                      {source && <span className="publication-source">{source}</span>}
+                    </div>
+                  )}
+                </div>
+
+                {/* Abstract Preview */}
+                {abstract && (
+                  <div className="book-abstract">
+                    <div className="abstract-content">{truncateText(abstract, 100)}</div>
+                  </div>
+                )}
+
+                {/* Footer Info */}
+                <div className="book-footer">
+                  <div className="book-date">Added {formatDate(dateAdded)}</div>
+                  {count > 0 && (
+                    <div className="book-notes">
+                      <FileText size={12} />
+                      <span>{count} notes</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Book Pages Effect on Hover */}
-          <div className="book-pages">
-            <div className="page page-1"></div>
-            <div className="page page-2"></div>
-            <div className="page page-3"></div>
-          </div>
-        </div>
+        </button>
       </div>
 
       <ContextMenu
