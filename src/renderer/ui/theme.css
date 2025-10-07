@@ -378,12 +378,12 @@ body {
 /* Library Sidebar - Grid Design System */
 .library-sidebar {
 	background: var(--sidebar-bg);
-	width: 200px;
+	width: 250px;
 	height: 100%;
 	display: grid;
 	grid-template-rows: 1fr auto;
 	flex-shrink: 0; /* Prevent shrinking */
-	min-width: 200px; /* Fixed width when visible */
+	min-width: 250px; /* Fixed width when visible */
 	position: relative;
 	padding: 8px 0; /* Reduced padding */
 	transition: all 0.3s ease;
@@ -808,7 +808,7 @@ body {
 /* Responsive Sidebar */
 @media (max-width: 900px) {
 	.library-sidebar {
-		width: 180px;
+		width: 230px;
 	}
 
 	.library-sidebar.collapsed {
@@ -852,7 +852,7 @@ body {
 
 @media (max-width: 768px) {
 	.library-sidebar {
-		width: 160px;
+		width: 210px;
 	}
 
 	.library-sidebar.collapsed {
@@ -898,7 +898,7 @@ body {
 
 @media (max-width: 600px) {
 	.library-sidebar {
-		width: 140px;
+		width: 190px;
 	}
 
 	.library-sidebar.collapsed {
@@ -968,7 +968,6 @@ body {
 	display: flex;
 	flex-direction: column;
 	padding: 8px 0;
-	border-top: 1px solid var(--border-subtle);
 	margin-top: 8px;
 }
 
@@ -1044,7 +1043,7 @@ body {
 
 .sidebar-item {
 	display: grid;
-	grid-template-columns: auto 1fr auto;
+	grid-template-columns: auto 1fr auto auto;
 	align-items: center;
 	gap: 8px; /* Consistent gap */
 	padding: 8px 12px; /* Consistent padding */
@@ -1116,6 +1115,34 @@ body {
 	color: var(--text-secondary);
 }
 
+.item-content {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.item-expand-indicator {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-secondary);
+	opacity: 0.7;
+	transition: opacity 0.15s ease;
+	cursor: pointer;
+	padding: 2px;
+	border-radius: 2px;
+}
+
+.sidebar-item:hover .item-expand-indicator {
+	opacity: 1;
+}
+
+.item-expand-indicator:hover {
+	background: var(--card-hover);
+}
+
 .item-text {
 	justify-self: start; /* Grid positioning */
 	font-size: 13px; /* Consistent font size */
@@ -1137,8 +1164,8 @@ body {
 
 .sidebar-footer {
 	margin-top: auto;
-	padding-top: 16px;
-	border-top: 1px solid var(--border-subtle);
+	padding-top: 24px;
+	padding-bottom: 16px;
 	flex-shrink: 0; /* Account section doesn't shrink */
 	flex-grow: 0; /* Account section doesn't grow */
 	align-self: flex-end; /* Stick to bottom */
@@ -2774,11 +2801,11 @@ textarea:focus-visible {
 
 /* View Mode Variations */
 .library-sidebar.view-mode-grid {
-	width: 240px;
+	width: 290px;
 }
 
 .library-sidebar.view-mode-compact {
-	width: 160px;
+	width: 210px;
 }
 
 .sidebar-item.compact {
@@ -2873,6 +2900,35 @@ textarea:focus-visible {
 	flex-direction: column;
 	flex: 1;
 	min-height: 0; /* Allow shrinking */
+}
+
+/* Nested Categories within main Categories item */
+.nested-categories {
+	padding-left: 16px;
+	border-top: none;
+	margin-top: 0;
+	padding-top: 2px;
+	flex: 1;
+	min-height: 0; /* Allow shrinking */
+	max-height: 400px; /* Limit total height to ensure footer remains visible */
+	display: flex;
+	flex-direction: column;
+	transition: all 0.2s ease;
+	overflow: hidden;
+}
+
+.nested-categories .categories-scroll-container {
+	flex: 1;
+	min-height: 0; /* Allow shrinking */
+	max-height: 300px; /* Limit height to ensure scrolling works properly */
+}
+
+.nested-categories .section-header {
+	padding-left: 0;
+}
+
+.nested-categories .section-items {
+	padding-left: 0;
 }
 
 .categories-scroll-container {
@@ -3200,11 +3256,11 @@ textarea:focus-visible {
 /* Responsive adjustments for enhanced features */
 @media (max-width: 900px) {
 	.library-sidebar.view-mode-grid {
-		width: 220px;
+		width: 270px;
 	}
 
 	.library-sidebar.view-mode-compact {
-		width: 140px;
+		width: 190px;
 	}
 
 	.search-controls {
@@ -3219,11 +3275,11 @@ textarea:focus-visible {
 
 @media (max-width: 768px) {
 	.library-sidebar.view-mode-grid {
-		width: 200px;
+		width: 250px;
 	}
 
 	.library-sidebar.view-mode-compact {
-		width: 120px;
+		width: 170px;
 	}
 
 	.group-by-select {
@@ -3234,11 +3290,11 @@ textarea:focus-visible {
 
 @media (max-width: 600px) {
 	.library-sidebar.view-mode-grid {
-		width: 180px;
+		width: 230px;
 	}
 
 	.library-sidebar.view-mode-compact {
-		width: 100px;
+		width: 150px;
 	}
 
 	.search-controls-section {

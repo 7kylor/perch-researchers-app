@@ -12,7 +12,7 @@ import { processPaperOCR } from './ocr/batch';
 import {
   BUILTIN_ALL,
   BUILTIN_RECENT,
-  BUILTIN_UNFILED,
+  BUILTIN_CATEGORIES,
   type CategoryCount,
   type SidebarListResponse,
   type SidebarNode,
@@ -365,7 +365,7 @@ function computeCounts(): CategoryCount[] {
       `select count(1) as c from papers p left join paper_categories pc on p.id = pc.paperId where pc.paperId is null`,
     )
     .get() as { c: number };
-  counts.push({ nodeId: BUILTIN_UNFILED, paperCount: unfiledCount.c });
+  counts.push({ nodeId: BUILTIN_CATEGORIES, paperCount: unfiledCount.c });
 
   // Labels
   const byNode = db
@@ -535,7 +535,7 @@ ipcMain.handle('papers:listByCategory', (_e, nodeId: string, limit = 50) => {
         `select * from papers where addedAt >= date('now', '-30 days') order by addedAt desc limit ?`,
       )
       .all(limit) as DBPaperRow[];
-  } else if (nodeId === BUILTIN_UNFILED) {
+  } else if (nodeId === BUILTIN_CATEGORIES) {
     rows = db
       .prepare(
         `select p.* from papers p left join paper_categories pc on p.id = pc.paperId where pc.paperId is null order by p.addedAt desc limit ?`,
