@@ -36,6 +36,10 @@
     ],
     "nodeGypRebuild": false,
     "npmRebuild": false,
+    "directories": {
+      "output": "build",
+      "buildResources": "build"
+    },
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
@@ -59,9 +63,6 @@
         "deb",
         "zip"
       ]
-    },
-    "directories": {
-      "buildResources": "build"
     }
   },
   "dependencies": {
