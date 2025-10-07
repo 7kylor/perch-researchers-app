@@ -360,10 +360,6 @@
     // Initialize PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.6.172/build/pdf.worker.min.js';
 
-    // Debug PDF.js loading
-    console.log('PDF.js version:', pdfjsLib.version);
-    console.log('Worker source:', pdfjsLib.GlobalWorkerOptions.workerSrc);
-
     class PDFReader {
       constructor() {
         this.currentPaper = null;
@@ -491,18 +487,9 @@
       }
 
       async setupIPC() {
-        console.log('Setting up IPC listeners');
         // Listen for paper data from main process
         window.api.on('pdf-reader:paper-loaded', async (paper) => {
-          console.log('Received paper data (after IPC fix):', paper);
-          console.log('Paper type:', typeof paper);
-          console.log('Paper keys:', Object.keys(paper || {}));
-          console.log('Paper ID:', paper?.id);
-          console.log('Paper filePath:', paper?.filePath);
-          console.log('Paper title:', paper?.title);
-
           if (!paper || !paper.id || !paper.filePath) {
-            console.error('Invalid or missing paper data received:', paper);
             if (!paper.filePath) {
               this.showNoPDF();
             } else {
@@ -561,40 +548,9 @@
       }
 
       async loadPDF() {
-        console.log('loadPDF called with paper:', this.currentPaper);
-        if (!this.currentPaper) {
-          console.log('No current paper, returning');
-          return;
-        }
+        if (!this.currentPaper) return;
 
         try {
-          // Check if API is available with retry logic
-          let retries = 0;
-          const maxRetries = 10;
-
-          while (retries < maxRetries) {
-            if (window.api && window.api['pdf-reader'] && typeof window.api['pdf-reader']['get-file-path'] === 'function') {
-              break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 100));
-            retries++;
-          }
-
-          if (!window.api) {
-            throw new Error('window.api is not available');
-          }
-
-          if (!window.api || !window.api['pdf-reader']) {
-            throw new Error('window.api.pdf-reader is not available. Available keys: ' + Object.keys(window.api || {}).join(', '));
-          }
-
-          if (typeof window.api['pdf-reader']['get-file-path'] !== 'function') {
-            throw new Error('window.api.pdf-reader.get-file-path is not a function. Available methods: ' + Object.keys(window.api['pdf-reader'] || {}).join(', '));
-          }
-
-          // Get the PDF file path from the main process
-          console.log('API object:', window.api);
-          console.log('PDF reader API:', window.api?.['pdf-reader']);
           const filePath = await window.api['pdf-reader']['get-file-path'](this.currentPaper.id);
 
           if (!filePath) {
@@ -602,10 +558,6 @@
             return;
           }
 
-          // Check if file exists
-          if (!window.api || !window.api['pdf-reader'] || typeof window.api['pdf-reader']['file-exists'] !== 'function') {
-            throw new Error('PDF reader API not available');
-          }
           const exists = await window.api['pdf-reader']['file-exists'](filePath);
           if (!exists) {
             this.showNoPDF();
@@ -614,32 +566,10 @@
 
           this.showLoading('Loading PDF...');
 
-          // Load the PDF document
-          if (!window.api || !window.api['file'] || typeof window.api['file']['read'] !== 'function') {
-            throw new Error('File API not available');
-          }
-
-          console.log('Reading PDF file:', filePath);
           const arrayBuffer = await window.api['file']['read'](filePath);
-          console.log('File read successfully, size:', arrayBuffer.byteLength);
-
           const uint8Array = new Uint8Array(arrayBuffer);
-          console.log('Creating PDF document from data');
 
-          // Check if PDF.js worker is ready
-          if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-            throw new Error('PDF.js worker not initialized');
-          }
-
-          // Add timeout to PDF loading
-          const pdfLoadPromise = pdfjsLib.getDocument({ data: uint8Array }).promise;
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('PDF loading timeout')), 10000)
-          );
-
-          this.pdfDocument = await Promise.race([pdfLoadPromise, timeoutPromise]);
-          console.log('PDF document loaded, pages:', this.pdfDocument.numPages);
-
+          this.pdfDocument = await pdfjsLib.getDocument({ data: uint8Array }).promise;
           this.totalPages = this.pdfDocument.numPages;
           this.currentPage = 1;
 
@@ -647,7 +577,6 @@
           this.updateUI();
 
         } catch (error) {
-          console.error('Error loading PDF:', error);
           this.showError(`Failed to load PDF: ${error.message}`);
         }
       }
@@ -906,8 +835,6 @@
 
     // Initialize the PDF reader when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM loaded, initializing PDF reader');
-      console.log('window.api at startup:', window.api);
       new PDFReader();
     });
   </script>

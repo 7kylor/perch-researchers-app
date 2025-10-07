@@ -104,8 +104,6 @@ declare global {
 // Context Bridge Setup
 import { contextBridge, ipcRenderer } from 'electron';
 
-console.log('Preload script loaded');
-
 contextBridge.exposeInMainWorld('api', {
   papers: {
     get: (id: string) => ipcRenderer.invoke('papers:get', id),

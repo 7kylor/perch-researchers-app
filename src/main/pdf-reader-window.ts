@@ -20,15 +20,6 @@ export class PDFReaderWindowManager {
   }
 
   createWindow(paper: Paper): string {
-    console.log('createWindow called with paper:', {
-      id: paper.id,
-      title: paper.title,
-      filePath: paper.filePath,
-      hasFilePath: !!paper.filePath,
-      authors: paper.authors,
-      status: paper.status,
-    });
-
     const windowId = `pdf-reader-${this.nextWindowId++}`;
 
     // Create the browser window
@@ -70,16 +61,6 @@ export class PDFReaderWindowManager {
       window.focus();
 
       // Send the paper data to the window
-      console.log('Sending paper data to PDF reader window:', {
-        id: paper.id,
-        title: paper.title,
-        filePath: paper.filePath,
-        hasFilePath: !!paper.filePath,
-        authors: paper.authors,
-        status: paper.status,
-      });
-
-      // Create a simple, serializable paper object
       const simplePaperData = {
         id: paper.id,
         title: paper.title || 'Untitled Paper',
@@ -87,8 +68,6 @@ export class PDFReaderWindowManager {
         filePath: paper.filePath || null,
         status: paper.status,
       };
-
-      console.log('Sending simplified paper data:', simplePaperData);
 
       window.webContents.send('pdf-reader:paper-loaded', simplePaperData);
     });
@@ -159,7 +138,6 @@ export class PDFReaderWindowManager {
 
     // Get PDF file path for a paper
     ipcMain.handle('pdf-reader:get-file-path', async (_event, paperId: string) => {
-      console.log('Getting file path for paper:', paperId);
       // Import here to avoid circular dependency
       const { openDatabase } = await import('./db.js');
       const db = openDatabase();
@@ -178,19 +156,14 @@ export class PDFReaderWindowManager {
         addedAt: string;
         updatedAt: string;
       };
-      console.log('Found file path:', row?.filePath);
       return row?.filePath || null;
     });
 
     // Check if PDF file exists
     ipcMain.handle('pdf-reader:file-exists', async (_event, filePath: string) => {
-      console.log('Checking if file exists:', filePath);
       try {
-        const exists = fs.existsSync(filePath);
-        console.log('File exists:', exists);
-        return exists;
-      } catch (error) {
-        console.error('Error checking file existence:', error);
+        return fs.existsSync(filePath);
+      } catch {
         return false;
       }
     });

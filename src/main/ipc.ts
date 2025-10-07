@@ -114,36 +114,9 @@ ipcMain.handle('import:pdf', async (_e, absPath: string) => {
 });
 
 ipcMain.handle('papers:get', (_e, id: string) => {
-  console.log('Getting paper:', id);
   const row = db.prepare(`select * from papers where id = ?`).get(id) as DBPaperRow | undefined;
-  if (!row) {
-    console.log('Paper not found:', id);
-    return null;
-  }
-
-  console.log('Raw DB row:', {
-    id: row.id,
-    title: row.title,
-    authors: row.authors,
-    filePath: row.filePath,
-    status: row.status,
-  });
-
-  try {
-    const authors = row.authors ? JSON.parse(row.authors) : [];
-    const paper = { ...row, authors } as Paper;
-    console.log('Parsed paper:', {
-      id: paper.id,
-      title: paper.title,
-      authors: paper.authors,
-      filePath: paper.filePath,
-      status: paper.status,
-    });
-    return paper;
-  } catch (error) {
-    console.error('Error parsing paper data:', error);
-    return null;
-  }
+  if (!row) return null;
+  return { ...row, authors: JSON.parse(row.authors) } as Paper;
 });
 
 ipcMain.handle('papers:delete', (_e, id: string) => {
@@ -155,15 +128,7 @@ ipcMain.handle('papers:delete', (_e, id: string) => {
 });
 
 ipcMain.handle('file:read', async (_e, absPath: string) => {
-  console.log('Reading file:', absPath);
-  try {
-    const result = await fs.promises.readFile(absPath);
-    console.log('File read successfully, size:', result.length);
-    return result;
-  } catch (error) {
-    console.error('Error reading file:', absPath, error);
-    throw error;
-  }
+  return fs.promises.readFile(absPath);
 });
 
 ipcMain.handle(
