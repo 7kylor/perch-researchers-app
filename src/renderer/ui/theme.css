@@ -3001,7 +3001,6 @@ textarea:focus-visible {
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding-right: 12px; /* Space for scrollbar */
-	padding-top: 8px; /* Space from top */
 	scroll-behavior: smooth;
 	min-height: 0; /* Allow shrinking */
 }
@@ -3013,6 +3012,7 @@ textarea:focus-visible {
 .categories-scroll-container::-webkit-scrollbar-track {
 	background: transparent;
 	border-radius: 3px;
+	margin-top: 8px; /* Space from top for scrollbar */
 }
 
 .categories-scroll-container::-webkit-scrollbar-thumb {
@@ -4776,7 +4776,6 @@ textarea:focus-visible {
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding-right: 12px;
-	padding-top: 8px; /* Space from top */
 	margin-right: -6px;
 }
 
@@ -4787,6 +4786,7 @@ textarea:focus-visible {
 .sidebar-section-scrollable::-webkit-scrollbar-track {
 	background: transparent;
 	border-radius: 3px;
+	margin-top: 8px; /* Space from top for scrollbar */
 }
 
 .sidebar-section-scrollable::-webkit-scrollbar-thumb {
