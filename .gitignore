@@ -255,3 +255,6 @@ release/
 # Playwright test reports and artifacts
 playwright-report/
 test-results/
+
+# macOS entitlements file (build artifact)
+entitlements.mac.plist
