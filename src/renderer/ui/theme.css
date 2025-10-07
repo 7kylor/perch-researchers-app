@@ -1043,7 +1043,7 @@ body {
 
 .sidebar-item {
 	display: grid;
-	grid-template-columns: auto 1fr auto;
+	grid-template-columns: auto 1fr auto auto;
 	align-items: center;
 	gap: 8px; /* Consistent gap */
 	padding: 8px 12px; /* Consistent padding */
@@ -1121,6 +1121,26 @@ body {
 	gap: 8px;
 	justify-content: space-between;
 	width: 100%;
+}
+
+.item-expand-indicator {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-secondary);
+	opacity: 0.7;
+	transition: opacity 0.15s ease;
+	cursor: pointer;
+	padding: 2px;
+	border-radius: 2px;
+}
+
+.sidebar-item:hover .item-expand-indicator {
+	opacity: 1;
+}
+
+.item-expand-indicator:hover {
+	background: var(--card-hover);
 }
 
 .item-text {
@@ -2891,6 +2911,8 @@ textarea:focus-visible {
 	min-height: 0; /* Allow shrinking */
 	display: flex;
 	flex-direction: column;
+	transition: all 0.2s ease;
+	overflow: hidden;
 }
 
 .nested-categories .categories-scroll-container {

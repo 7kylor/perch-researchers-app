@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSidebarStore } from '../../sidebar/store';
 import { SidebarTree } from './SidebarTree';
-import { BookOpen, Clock, FolderOpen, Plus } from 'lucide-react';
+import { BookOpen, Clock, FolderOpen, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { SidebarFooter } from './SidebarFooter';
 
 type SidebarProps = {
@@ -13,6 +13,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   const { nodes, prefs, counts, actions } = useSidebarStore();
   const [renamingId, setRenamingId] = React.useState<string | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
+  const [categoriesExpanded, setCategoriesExpanded] = React.useState(true);
 
   const startRename = (id: string, name: string) => {
     setRenamingId(id);
@@ -113,7 +114,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
                 type="button"
                 className={`sidebar-item ${selectedId === 'builtin:categories' ? 'selected' : ''}`}
                 aria-current={selectedId === 'builtin:categories' ? 'page' : undefined}
-                onClick={() => onSelect('builtin:categories')}
+                onClick={() => {
+                  onSelect('builtin:categories');
+                  setCategoriesExpanded(!categoriesExpanded);
+                }}
               >
                 <span className="item-icon" aria-hidden="true">
                   <FolderOpen size={16} />
@@ -134,35 +138,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
                     </button>
                   </div>
                 </div>
+                <div className="item-expand-indicator">
+                  {categoriesExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </div>
                 <span className="item-count">
                   {counts.find((c) => c.nodeId === 'builtin:categories')?.paperCount ?? 0}
                 </span>
               </button>
               {/* Categories Section - now nested under main Categories item */}
-              <div className="sidebar-section sidebar-section-scrollable nested-categories">
-                <div className="categories-scroll-container">
-                  <SidebarTree
-                    nodes={nodes}
-                    collapsedIds={prefs.collapsedNodeIds}
-                    selectedId={selectedId}
-                    onSelect={onSelect}
-                    onMove={(id, parentId, index) => actions.move(id, parentId, index)}
-                    _onToggleCollapse={async (id: string, open: boolean) => {
-                      const set = new Set(prefs.collapsedNodeIds);
-                      if (!open) set.add(id);
-                      else set.delete(id);
-                      await actions.setCollapsedNodeIds(Array.from(set));
-                    }}
-                    renamingId={renamingId}
-                    renameValue={renameValue}
-                    onRenameChange={setRenameValue}
-                    onRenameCommit={commitRename}
-                    onRenameCancel={cancelRename}
-                    onRenameStart={startRename}
-                    onRequestDelete={deleteNode}
-                  />
+              {categoriesExpanded && (
+                <div className="sidebar-section sidebar-section-scrollable nested-categories">
+                  <div className="categories-scroll-container">
+                    <SidebarTree
+                      nodes={nodes}
+                      collapsedIds={prefs.collapsedNodeIds}
+                      selectedId={selectedId}
+                      onSelect={onSelect}
+                      onMove={(id, parentId, index) => actions.move(id, parentId, index)}
+                      _onToggleCollapse={async (id: string, open: boolean) => {
+                        const set = new Set(prefs.collapsedNodeIds);
+                        if (!open) set.add(id);
+                        else set.delete(id);
+                        await actions.setCollapsedNodeIds(Array.from(set));
+                      }}
+                      renamingId={renamingId}
+                      renameValue={renameValue}
+                      onRenameChange={setRenameValue}
+                      onRenameCommit={commitRename}
+                      onRenameCancel={cancelRename}
+                      onRenameStart={startRename}
+                      onRequestDelete={deleteNode}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </li>
           </ul>
         </div>
