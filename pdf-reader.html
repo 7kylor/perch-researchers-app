@@ -330,6 +330,117 @@
       font-size: 11px;
       color: var(--muted);
     }
+
+    /* Text Selection & Annotation */
+    .text-layer {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 100;
+      pointer-events: auto;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
+    }
+
+    .text-layer > div {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+    }
+
+    .text-selection {
+      position: absolute;
+      background: rgba(0, 123, 255, 0.3);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .highlight-annotation {
+      position: absolute;
+      pointer-events: none;
+      z-index: 5;
+      border-radius: 2px;
+    }
+
+    .highlight-yellow {
+      background: rgba(255, 255, 0, 0.4);
+      border: 1px solid rgba(255, 200, 0, 0.6);
+    }
+
+    .highlight-green {
+      background: rgba(0, 255, 0, 0.3);
+      border: 1px solid rgba(0, 200, 0, 0.6);
+    }
+
+    .highlight-blue {
+      background: rgba(0, 123, 255, 0.3);
+      border: 1px solid rgba(0, 100, 200, 0.6);
+    }
+
+    .highlight-red {
+      background: rgba(255, 0, 0, 0.3);
+      border: 1px solid rgba(200, 0, 0, 0.6);
+    }
+
+    .context-menu {
+      position: fixed;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: var(--shadow-lg);
+      z-index: 1000;
+      display: none;
+    }
+
+    .context-menu.active {
+      display: block;
+    }
+
+    .context-menu-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .context-menu-item:hover {
+      background: var(--surface-secondary);
+    }
+
+    .context-menu-separator {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .page-container {
+      position: relative;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    .page-canvas {
+      display: block;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
+      position: relative;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
@@ -446,6 +557,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+      <div class="context-menu-item" id="contextCopy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy Text
+      </div>
+      <div class="context-menu-separator"></div>
+      <div class="context-menu-item" id="contextHighlightYellow">
+        <div style="width: 16px; height: 16px; background: rgba(255, 255, 0, 0.6); border-radius: 2px;"></div>
+        Highlight Yellow
+      </div>
+      <div class="context-menu-item" id="contextHighlightGreen">
+        <div style="width: 16px; height: 16px; background: rgba(0, 255, 0, 0.5); border-radius: 2px;"></div>
+        Highlight Green
+      </div>
+      <div class="context-menu-item" id="contextHighlightBlue">
+        <div style="width: 16px; height: 16px; background: rgba(0, 123, 255, 0.5); border-radius: 2px;"></div>
+        Highlight Blue
+      </div>
+      <div class="context-menu-item" id="contextHighlightRed">
+        <div style="width: 16px; height: 16px; background: rgba(255, 0, 0, 0.5); border-radius: 2px;"></div>
+        Highlight Red
+      </div>
+      <div class="context-menu-separator"></div>
+      <div class="context-menu-item" id="contextAddNote">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Add Note
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -461,6 +607,17 @@
       searchResults: [],
       currentSearchIndex: -1,
       annotations: {},
+      structuredTexts: {}, // Store StructuredText per pageNumber
+      pageViews: {}, // Store per-page displayScale and page size (points)
+      selection: {
+        active: false,
+        startPage: null,
+        endPage: null,
+        startPoint: null,
+        endPoint: null,
+        text: '',
+        quads: [],
+      },
     };
 
     // DOM elements
@@ -569,6 +726,7 @@
     function renderAllPages() {
       if (!state.pdfDocument) return;
 
+      cleanupStructuredTexts();
       elements.pagesWrapper.innerHTML = '';
 
       const dpr = window.devicePixelRatio || 1;
@@ -576,25 +734,33 @@
       const matrix = mupdf.Matrix.scale(scale, scale);
 
       for (let i = 0; i < state.totalPages; i++) {
-        const pageDiv = document.createElement('div');
-        pageDiv.style.display = 'flex';
-        pageDiv.style.flexDirection = 'column';
-        pageDiv.style.alignItems = 'center';
+        const pageContainer = document.createElement('div');
+        pageContainer.className = 'page-container';
+        pageContainer.dataset.pageNumber = i + 1;
+        pageContainer.style.position = 'relative';
 
         const canvas = document.createElement('canvas');
         canvas.className = 'page-canvas';
         canvas.dataset.pageNumber = i + 1;
 
+        const textLayer = document.createElement('div');
+        textLayer.className = 'text-layer';
+        textLayer.dataset.pageNumber = i + 1;
+
         const pageLabel = document.createElement('div');
         pageLabel.className = 'page-number-label';
         pageLabel.textContent = `Page ${i + 1}`;
 
-        pageDiv.appendChild(canvas);
-        pageDiv.appendChild(pageLabel);
-        elements.pagesWrapper.appendChild(pageDiv);
+        pageContainer.appendChild(canvas);
+        pageContainer.appendChild(textLayer);
+        pageContainer.appendChild(pageLabel);
+        elements.pagesWrapper.appendChild(pageContainer);
 
         renderPage(i, canvas, matrix, dpr);
+        extractStructuredText(i, textLayer, scale / dpr);
       }
+
+      renderAnnotations();
     }
 
     // Render a single page
@@ -646,6 +812,359 @@
       }
     }
 
+    // Extract StructuredText for selection/highlight
+    function extractStructuredText(pageIndex, textLayer, displayScale) {
+      try {
+        const page = state.pdfDocument.loadPage(pageIndex);
+        const bounds = page.getBounds();
+        const pageWidth = bounds[2] - bounds[0];
+        const pageHeight = bounds[3] - bounds[1];
+        
+        // Set text layer size to match canvas
+        textLayer.style.width = `${pageWidth * displayScale}px`;
+        textLayer.style.height = `${pageHeight * displayScale}px`;
+        
+        // Build StructuredText and store for selection/highlight operations
+        try {
+          const structuredText = page.toStructuredText('preserve-whitespace');
+          const pageNumber = pageIndex + 1;
+
+          // Keep for later selection/copy/highlight
+          state.structuredTexts[pageNumber] = structuredText;
+          state.pageViews[pageNumber] = {
+            displayScale,
+            widthPts: pageWidth,
+            heightPts: pageHeight,
+          };
+
+          // Create an empty overlay div to keep layer sizing aligned
+          const overlayDiv = document.createElement('div');
+          overlayDiv.dataset.pageNumber = pageNumber;
+          textLayer.appendChild(overlayDiv);
+        } catch (e) {
+          console.error('StructuredText creation failed:', e);
+        }
+
+        page.destroy();
+      } catch (error) {
+        console.error(`Error extracting text from page ${pageIndex + 1}:`, error);
+        console.error('Error stack:', error.stack);
+      }
+    }
+
+    function cleanupStructuredTexts() {
+      try {
+        if (state.structuredTexts) {
+          Object.values(state.structuredTexts).forEach((st) => {
+            try { st?.destroy?.(); } catch {}
+          });
+        }
+      } catch {}
+      state.structuredTexts = {};
+      state.pageViews = {};
+    }
+
+    // Text selection handling using MuPDF StructuredText
+    function setupTextSelection() {
+      const container = elements.pagesWrapper;
+
+      container.addEventListener('mousedown', handleSelectionStart);
+      container.addEventListener('mousemove', handleSelectionMove);
+      container.addEventListener('mouseup', handleSelectionEnd);
+      document.addEventListener('mouseup', handleSelectionEnd);
+
+      // Context menu
+      container.addEventListener('contextmenu', handleContextMenu);
+      document.addEventListener('click', hideContextMenu);
+    }
+
+    function getPageContainerFromEvent(e) {
+      const pageContainer = e.target.closest('.page-container');
+      return pageContainer || null;
+    }
+
+    function clientToPagePoint(pageNumber, clientX, clientY) {
+      const view = state.pageViews[pageNumber];
+      const container = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
+      if (!view || !container) return null;
+      const rect = container.getBoundingClientRect();
+      const xCss = clientX - rect.left;
+      const yCss = clientY - rect.top;
+      const xPts = xCss / view.displayScale;
+      const yPtsTop = yCss / view.displayScale;
+      const yPts = view.heightPts - yPtsTop; // flip to page coordinate space
+      return [xPts, yPts];
+    }
+
+    function handleSelectionStart(e) {
+      if (e.button !== 0) return; // Only left click
+      const pageContainer = getPageContainerFromEvent(e);
+      if (!pageContainer) return;
+
+      const pageNumber = parseInt(pageContainer.dataset.pageNumber, 10);
+      const st = state.structuredTexts[pageNumber];
+      if (!st) return;
+
+      const p = clientToPagePoint(pageNumber, e.clientX, e.clientY);
+      if (!p) return;
+
+      clearSelectionPreview(pageNumber);
+      state.selection.active = true;
+      state.selection.startPage = pageNumber;
+      state.selection.endPage = pageNumber;
+      state.selection.startPoint = { x: p[0], y: p[1] };
+      state.selection.endPoint = null;
+      state.selection.text = '';
+      state.selection.quads = [];
+    }
+
+    function handleSelectionMove(e) {
+      if (!state.selection.active) return;
+      const pageContainer = getPageContainerFromEvent(e);
+      if (!pageContainer) return;
+      const pageNumber = parseInt(pageContainer.dataset.pageNumber, 10);
+      if (pageNumber !== state.selection.startPage) return; // same-page selection only for now
+      const p = clientToPagePoint(pageNumber, e.clientX, e.clientY);
+      if (!p) return;
+      state.selection.endPoint = { x: p[0], y: p[1] };
+
+      // Preview selection using quads
+      const st = state.structuredTexts[pageNumber];
+      try {
+        const quads = st.highlight(
+          [state.selection.startPoint.x, state.selection.startPoint.y],
+          [state.selection.endPoint.x, state.selection.endPoint.y],
+        ) || [];
+        drawSelectionPreview(pageNumber, quads);
+      } catch {}
+    }
+
+    function handleSelectionEnd(e) {
+      if (!state.selection.active) return;
+      state.selection.active = false;
+
+      const pageContainer = getPageContainerFromEvent(e) || elements.pagesWrapper.querySelector(`[data-page-number="${state.selection.startPage}"]`);
+      if (!pageContainer) { resetSelectionState(); return; }
+      const pageNumber = parseInt(pageContainer.dataset.pageNumber, 10);
+      if (pageNumber !== state.selection.startPage) { resetSelectionState(); return; }
+      const p = clientToPagePoint(pageNumber, e.clientX, e.clientY);
+      if (!p) { resetSelectionState(); return; }
+      state.selection.endPoint = { x: p[0], y: p[1] };
+
+      // Finalize text and quads
+      const st = state.structuredTexts[pageNumber];
+      try {
+        const text = st.copy(
+          [state.selection.startPoint.x, state.selection.startPoint.y],
+          [state.selection.endPoint.x, state.selection.endPoint.y],
+        ) || '';
+        const quads = st.highlight(
+          [state.selection.startPoint.x, state.selection.startPoint.y],
+          [state.selection.endPoint.x, state.selection.endPoint.y],
+        ) || [];
+        state.selection.text = (text || '').trim();
+        state.selection.quads = quads;
+        if (!state.selection.text) {
+          clearSelectionPreview(pageNumber);
+          resetSelectionState();
+        }
+      } catch (err) {
+        console.error('Selection finalize error:', err);
+        clearSelectionPreview(pageNumber);
+        resetSelectionState();
+      }
+    }
+
+    function resetSelectionState() {
+      state.selection = {
+        active: false,
+        startPage: null,
+        endPage: null,
+        startPoint: null,
+        endPoint: null,
+        text: '',
+        quads: [],
+      };
+    }
+
+    function clearSelectionPreview(pageNumber) {
+      const pageContainer = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
+      if (!pageContainer) return;
+      pageContainer.querySelectorAll('.text-selection').forEach(el => el.remove());
+    }
+
+    function drawSelectionPreview(pageNumber, quads) {
+      clearSelectionPreview(pageNumber);
+      const pageContainer = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
+      if (!pageContainer) return;
+      const view = state.pageViews[pageNumber];
+      if (!view) return;
+
+      (quads || []).forEach((q) => {
+        const [x0,y0,x1,y1,x2,y2,x3,y3] = q;
+        const minX = Math.min(x0,x1,x2,x3);
+        const maxX = Math.max(x0,x1,x2,x3);
+        const minY = Math.min(y0,y1,y2,y3);
+        const maxY = Math.max(y0,y1,y2,y3);
+        const left = minX * view.displayScale;
+        const top = (view.heightPts - maxY) * view.displayScale;
+        const width = (maxX - minX) * view.displayScale;
+        const height = (maxY - minY) * view.displayScale;
+        const selDiv = document.createElement('div');
+        selDiv.className = 'text-selection';
+        selDiv.style.left = `${left}px`;
+        selDiv.style.top = `${top}px`;
+        selDiv.style.width = `${width}px`;
+        selDiv.style.height = `${height}px`;
+        pageContainer.appendChild(selDiv);
+      });
+    }
+
+    // Context menu handling
+    const contextMenu = document.getElementById('contextMenu');
+
+    function handleContextMenu(e) {
+      if (state.selection.text && state.selection.text.length > 0) {
+        e.preventDefault();
+        contextMenu.style.left = `${e.clientX}px`;
+        contextMenu.style.top = `${e.clientY}px`;
+        contextMenu.classList.add('active');
+      }
+    }
+
+    function hideContextMenu() {
+      contextMenu.classList.remove('active');
+    }
+
+    // Copy text
+    document.getElementById('contextCopy').addEventListener('click', async () => {
+      if (state.selection.text) {
+        try {
+          await navigator.clipboard.writeText(state.selection.text);
+          console.log('Text copied to clipboard');
+        } catch (err) {
+          console.error('Failed to copy text:', err);
+        }
+      }
+      hideContextMenu();
+    });
+
+    // Highlight functionality
+    function createHighlight(color) {
+      if (!state.selection.text || !state.paper) return;
+      const pageNumber = state.selection.startPage;
+      if (!pageNumber || !state.selection.quads || state.selection.quads.length === 0) return;
+
+      const annotation = {
+        id: Date.now().toString(),
+        type: 'highlight',
+        color: color,
+        text: state.selection.text,
+        pageNumber: pageNumber,
+        quads: state.selection.quads,
+        createdAt: new Date().toISOString(),
+      };
+
+      if (!state.annotations[pageNumber]) {
+        state.annotations[pageNumber] = [];
+      }
+      state.annotations[pageNumber].push(annotation);
+
+      saveAnnotations();
+      renderAnnotations();
+      clearSelectionPreview(pageNumber);
+      resetSelectionState();
+      hideContextMenu();
+    }
+
+    document.getElementById('contextHighlightYellow').addEventListener('click', () => createHighlight('yellow'));
+    document.getElementById('contextHighlightGreen').addEventListener('click', () => createHighlight('green'));
+    document.getElementById('contextHighlightBlue').addEventListener('click', () => createHighlight('blue'));
+    document.getElementById('contextHighlightRed').addEventListener('click', () => createHighlight('red'));
+
+    // Add note
+    document.getElementById('contextAddNote').addEventListener('click', () => {
+      const note = prompt('Enter your note:');
+      if (note && state.selection.text) {
+        createHighlight('yellow');
+        // Note is stored with the highlight
+        const pageAnnotations = state.annotations[state.selection.startPage] || [];
+        const lastAnnotation = pageAnnotations[pageAnnotations.length - 1];
+        if (lastAnnotation) {
+          lastAnnotation.note = note;
+          saveAnnotations();
+          renderAnnotationsList();
+        }
+      }
+      hideContextMenu();
+    });
+
+    // Render annotations
+    function renderAnnotations() {
+      // Remove existing highlights
+      document.querySelectorAll('.highlight-annotation').forEach(el => el.remove());
+
+      Object.keys(state.annotations).forEach(pageNum => {
+        const pageAnnotations = state.annotations[pageNum];
+        const pageContainer = elements.pagesWrapper.querySelector(`[data-page-number="${pageNum}"]`);
+        
+        if (!pageContainer) return;
+        const view = state.pageViews[pageNum];
+        const containerRect = pageContainer.getBoundingClientRect();
+
+        pageAnnotations.forEach(annotation => {
+          if (annotation.type === 'highlight') {
+            if (annotation.quads && view) {
+              annotation.quads.forEach(q => {
+                const [x0,y0,x1,y1,x2,y2,x3,y3] = q;
+                const minX = Math.min(x0,x1,x2,x3);
+                const maxX = Math.max(x0,x1,x2,x3);
+                const minY = Math.min(y0,y1,y2,y3);
+                const maxY = Math.max(y0,y1,y2,y3);
+                const left = minX * view.displayScale;
+                const top = (view.heightPts - maxY) * view.displayScale;
+                const width = (maxX - minX) * view.displayScale;
+                const height = (maxY - minY) * view.displayScale;
+                const highlightDiv = document.createElement('div');
+                highlightDiv.className = `highlight-annotation highlight-${annotation.color}`;
+                highlightDiv.style.left = `${left}px`;
+                highlightDiv.style.top = `${top}px`;
+                highlightDiv.style.width = `${width}px`;
+                highlightDiv.style.height = `${height}px`;
+                highlightDiv.title = annotation.note || (annotation.text || '').substring(0, 50);
+                pageContainer.appendChild(highlightDiv);
+              });
+            } else if (annotation.rects) {
+              // Fallback for older rect-based annotations (CSS pixel coords)
+              annotation.rects.forEach(rect => {
+                const highlightDiv = document.createElement('div');
+                highlightDiv.className = `highlight-annotation highlight-${annotation.color}`;
+                highlightDiv.style.left = `${rect.left - containerRect.left}px`;
+                highlightDiv.style.top = `${rect.top - containerRect.top}px`;
+                highlightDiv.style.width = `${rect.width}px`;
+                highlightDiv.style.height = `${rect.height}px`;
+                highlightDiv.title = annotation.note || (annotation.text || '').substring(0, 50);
+                pageContainer.appendChild(highlightDiv);
+              });
+            }
+          }
+        });
+      });
+    }
+
+    // Save annotations to database
+    async function saveAnnotations() {
+      if (!state.paper) return;
+
+      try {
+        await window.api['pdf-reader']['save-annotations'](state.paper.id, state.annotations);
+        renderAnnotationsList();
+        console.log('Annotations saved');
+      } catch (error) {
+        console.error('Error saving annotations:', error);
+      }
+    }
+
     // Navigation
     function updateNavigationButtons() {
       elements.prevPageBtn.disabled = state.currentPage <= 1;
@@ -679,13 +1198,6 @@
       scrollToPage(page);
       updateNavigationButtons();
     });
-
-    function scrollToPage(pageNumber) {
-      const canvas = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
-      if (canvas) {
-        canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
 
     // Zoom
     elements.zoomInBtn.addEventListener('click', () => {
@@ -827,9 +1339,10 @@
       if (!state.paper) return;
 
       try {
-        const annotations = await window.api.pdfReader.getAnnotations(state.paper.id);
+        const annotations = await window.api['pdf-reader']['get-annotations'](state.paper.id);
         state.annotations = annotations || {};
         renderAnnotationsList();
+        renderAnnotations();
       } catch (error) {
         console.error('Error loading annotations:', error);
       }
@@ -848,6 +1361,8 @@
         });
       });
 
+      allAnnotations.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
       if (allAnnotations.length === 0) {
         elements.annotationList.innerHTML = `
           <div style="padding: 12px; text-align: center; color: var(--muted); font-size: 13px;">
@@ -857,12 +1372,30 @@
         return;
       }
 
+      function getColorStyle(color) {
+        const colors = {
+          yellow: 'rgba(255, 255, 0, 0.8)',
+          green: 'rgba(0, 255, 0, 0.7)',
+          blue: 'rgba(0, 123, 255, 0.7)',
+          red: 'rgba(255, 0, 0, 0.7)',
+        };
+        return colors[color] || colors.yellow;
+      }
+
       elements.annotationList.innerHTML = allAnnotations
         .map(
           ann => `
-          <div class="annotation-item" data-page="${ann.page}">
-            <div class="annotation-text">${ann.note || ann.text || 'Highlight'}</div>
-            <div class="annotation-meta">Page ${ann.page}</div>
+          <div class="annotation-item" data-page="${ann.page}" data-annotation-id="${ann.id}" style="cursor: pointer; display: flex; align-items: start; gap: 8px;">
+            <div style="width: 8px; height: 8px; background: ${getColorStyle(ann.color)}; border-radius: 50%; margin-top: 6px; flex-shrink: 0;"></div>
+            <div style="flex: 1; min-width: 0;">
+              <div class="annotation-text" style="font-size: 13px; margin-bottom: 4px; word-break: break-word;">
+                ${(ann.text || '').substring(0, 80)}${(ann.text || '').length > 80 ? '...' : ''}
+              </div>
+              ${ann.note ? `<div style="font-size: 12px; color: var(--muted); margin-bottom: 4px; font-style: italic; word-break: break-word;">${ann.note}</div>` : ''}
+              <div class="annotation-meta" style="font-size: 11px; color: var(--muted);">
+                Page ${ann.page}
+              </div>
+            </div>
           </div>
         `
         )
@@ -875,6 +1408,16 @@
         });
       });
     }
+
+    function scrollToPage(pageNumber) {
+      const pageContainer = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
+      if (pageContainer) {
+        pageContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    // Initialize
+    setupTextSelection();
 
     // Listen for paper data from main process
     window.api.pdfReader.onPaperLoaded((paper) => {

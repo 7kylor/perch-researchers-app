@@ -23,6 +23,14 @@
 	--success: #666666;
 	--warning: #666666;
 	--error: #666666;
+	/* Theme-aware book cover variables */
+	--cover-gradient: linear-gradient(
+		135deg,
+		var(--surface) 0%,
+		var(--surface-secondary) 50%,
+		var(--surface-elevated) 100%
+	);
+	--cover-year-bg: rgba(0, 0, 0, 0.05);
 }
 
 :root[data-theme="dark"] {
@@ -48,6 +56,14 @@
 	--success: #cccccc;
 	--warning: #cccccc;
 	--error: #cccccc;
+	/* Theme-aware book cover variables (dark) */
+	--cover-gradient: linear-gradient(
+		135deg,
+		var(--surface) 0%,
+		var(--surface-secondary) 50%,
+		var(--surface-elevated) 100%
+	);
+	--cover-year-bg: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -1415,7 +1431,7 @@ body {
 .book-front {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+	background: var(--cover-gradient);
 	padding: 16px 12px 16px 20px;
 	display: flex;
 	flex-direction: column;
@@ -1509,7 +1525,7 @@ body {
 	font-size: 13px;
 	font-weight: 600;
 	color: var(--primary);
-	background: rgba(51, 51, 51, 0.05);
+	background: var(--cover-year-bg);
 	padding: 2px 6px;
 	border-radius: 4px;
 	white-space: nowrap;
