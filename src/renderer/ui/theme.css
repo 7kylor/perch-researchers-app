@@ -1064,29 +1064,7 @@ body {
 		Arial, sans-serif;
 }
 
-.sidebar-item::after {
-	content: "";
-	position: absolute;
-	right: 8px;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 0;
-	height: 0;
-	border-left: 4px solid transparent;
-	border-right: 4px solid transparent;
-	border-top: 4px solid var(--text-secondary);
-	opacity: 0;
-	transition: opacity 0.15s ease;
-}
-
-.sidebar-item:hover::after {
-	opacity: 0.3;
-}
-
-/* Don't show dropdown indicator for categories that have context menus */
-.sidebar-section:nth-child(2) .sidebar-item::after {
-	display: none;
-}
+/* Removed dropdown arrows from all sidebar items */
 
 .sidebar-item:hover {
 	background: var(--card-hover);
@@ -1123,25 +1101,7 @@ body {
 	width: 100%;
 }
 
-.item-expand-indicator {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--text-secondary);
-	opacity: 0.7;
-	transition: opacity 0.15s ease;
-	cursor: pointer;
-	padding: 2px;
-	border-radius: 2px;
-}
-
-.sidebar-item:hover .item-expand-indicator {
-	opacity: 1;
-}
-
-.item-expand-indicator:hover {
-	background: var(--card-hover);
-}
+/* Removed unused expand indicator styles */
 
 .item-text {
 	justify-self: start; /* Grid positioning */
@@ -4858,6 +4818,9 @@ textarea:focus-visible {
 	border-top: 1px solid var(--border-subtle);
 	margin-top: auto;
 	flex-shrink: 0;
+	background: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 }
 
 .sidebar-account-btn {
