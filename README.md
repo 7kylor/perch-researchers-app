@@ -195,6 +195,39 @@ The app supports light and dark themes with system preference detection.
 - **E2E Tests**: Playwright for integration testing
 - **Coverage**: Aim for high test coverage
 
+## Releases
+
+### Automated Releases
+
+This project uses GitHub Actions to automatically build and release the application for multiple platforms when a new version tag is pushed.
+
+#### Creating a Release
+
+1. **Update Version**: Update the version in `package.json`
+2. **Create Git Tag**: Create and push a version tag:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+3. **Automatic Build**: GitHub Actions will automatically:
+   - Build for Linux (AppImage, deb, zip)
+   - Build for Windows (NSIS installer, zip)
+   - Build for macOS (Intel and Apple Silicon)
+   - Create a GitHub release with all artifacts
+
+#### Supported Platforms
+
+- **Linux**: AppImage, Debian package, ZIP archive
+- **Windows**: NSIS installer, ZIP archive
+- **macOS**: DMG installer, ZIP archive (Intel and Apple Silicon)
+
+#### Continuous Integration
+
+The project includes CI workflows that run on every push and pull request:
+- **Linting**: Code style and type checking
+- **Testing**: Unit and E2E tests
+- **Build Verification**: Ensures the app builds correctly on all platforms
+
 ## Contributing
 
 1. Fork the repository

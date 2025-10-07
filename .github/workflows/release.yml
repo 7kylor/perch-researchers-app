@@ -1,0 +1,108 @@
+name: Release
+
+on:
+    push:
+        tags:
+            - "v*"
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            matrix:
+                include:
+                    - os: ubuntu-22.04
+                      platform: linux
+                      arch: x64
+                    - os: windows-latest
+                      platform: win
+                      arch: x64
+                    - os: macos-latest
+                      platform: mac
+                      arch: x64
+                    - os: macos-latest
+                      platform: mac
+                      arch: arm64
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build application (main process)
+              run: npm run build:main
+
+            - name: Build renderer process
+              run: npm run build:renderer
+
+            - name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
+              run: npx electron-builder --publish=never --${{ matrix.platform }} --${{ matrix.arch }}
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: List dist files
+              run: ls -la dist/
+              shell: bash
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: perch-app-${{ matrix.platform }}-${{ matrix.arch }}
+                  path: |
+                      dist/*-1.0.0.*
+                      dist/make/**/*.*
+                  if-no-files-found: error
+                  retention-days: 30
+
+    create-release:
+        needs: build
+        runs-on: ubuntu-latest
+        if: startsWith(github.ref, 'refs/tags/')
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Get version from tag
+              id: version
+              run: |
+                  VERSION=${GITHUB_REF#refs/tags/}
+                  echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+                  echo "Version: $VERSION"
+
+            - name: Download all artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+
+            - name: List downloaded artifacts
+              run: find artifacts/ -type f -name "*" | head -20
+
+            - name: Create Release
+              id: create_release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ github.ref }}
+                  name: Release ${{ steps.version.outputs.VERSION }}
+                  draft: false
+                  prerelease: false
+                  generate_release_notes: true
+                  files: |
+                      artifacts/perch-app-linux-x64/*.AppImage
+                      artifacts/perch-app-linux-x64/*.deb
+                      artifacts/perch-app-linux-x64/*.zip
+                      artifacts/perch-app-win-x64/*.exe
+                      artifacts/perch-app-win-x64/*.zip
+                      artifacts/perch-app-mac-x64/*.dmg
+                      artifacts/perch-app-mac-x64/*.zip
+                      artifacts/perch-app-mac-arm64/*.dmg
+                      artifacts/perch-app-mac-arm64/*.zip

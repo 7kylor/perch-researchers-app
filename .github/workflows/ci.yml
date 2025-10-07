@@ -4,39 +4,61 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20.x]
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linting
-        run: npm run lint
-
-      - name: Run type checking
+      - name: Type check
         run: npm run typecheck
 
-      - name: Run tests
-        run: npm run test:all
+      - name: Lint
+        run: npm run lint
 
-      - name: Build app
+      - name: Test
+        run: npm run test
+
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
         run: npm run build
 
-      - name: Package app
+      - name: Package application (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: npm run pack
+
+      - name: Package application (Windows)
+        if: matrix.os == 'windows-latest'
         run: npm run pack
