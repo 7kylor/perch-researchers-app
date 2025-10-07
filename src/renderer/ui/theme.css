@@ -3014,7 +3014,7 @@ textarea:focus-visible {
 	padding-top: 2px;
 	flex: 1;
 	min-height: 0; /* Allow shrinking */
-	max-height: 400px; /* Limit total height to ensure footer remains visible */
+	max-height: 600px; /* Increased height to show more categories */
 	display: flex;
 	flex-direction: column;
 	transition: all 0.2s ease;
@@ -3024,7 +3024,7 @@ textarea:focus-visible {
 .nested-categories .categories-scroll-container {
 	flex: 1;
 	min-height: 0; /* Allow shrinking */
-	max-height: 300px; /* Limit height to ensure scrolling works properly */
+	max-height: 500px; /* Increased height to show more categories */
 }
 
 .nested-categories .section-header {
@@ -3039,7 +3039,7 @@ textarea:focus-visible {
 	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
-	padding-right: 4px; /* Space for scrollbar */
+	padding-right: 8px; /* Space for scrollbar */
 	scroll-behavior: smooth;
 	min-height: 0; /* Allow shrinking */
 }
@@ -3049,18 +3049,19 @@ textarea:focus-visible {
 }
 
 .categories-scroll-container::-webkit-scrollbar-track {
-	background: var(--surface-elevated);
+	background: transparent;
 	border-radius: 3px;
 }
 
 .categories-scroll-container::-webkit-scrollbar-thumb {
-	background: var(--text-secondary);
+	background: var(--border-subtle);
 	border-radius: 3px;
-	opacity: 0.5;
+	opacity: 0.4;
 }
 
 .categories-scroll-container::-webkit-scrollbar-thumb:hover {
-	opacity: 0.8;
+	opacity: 0.7;
+	background: var(--text-secondary);
 }
 
 .categories-list-wrapper {
@@ -4765,59 +4766,6 @@ textarea:focus-visible {
 
 /* ==================== ENHANCED UI COMPONENTS ==================== */
 
-/* Sidebar Stats */
-.sidebar-stats {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.stat-item {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 12px;
-	background: var(--surface);
-	border-radius: 8px;
-	border: 1px solid var(--border-subtle);
-	transition: all 0.15s ease;
-}
-
-.stat-item:hover {
-	background: var(--card-hover);
-}
-
-.stat-icon {
-	color: var(--primary);
-	width: 20px;
-	height: 20px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-}
-
-.stat-content {
-	flex: 1;
-	min-width: 0;
-}
-
-.stat-value {
-	font-size: 18px;
-	font-weight: 600;
-	color: var(--text);
-	line-height: 1.2;
-	margin-bottom: 2px;
-}
-
-.stat-label {
-	font-size: 11px;
-	font-weight: 500;
-	color: var(--text-secondary);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
 /* Section Header with Actions */
 .section-header {
 	display: flex;
@@ -4865,30 +4813,27 @@ textarea:focus-visible {
 	min-height: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
-	margin-right: -6px;
-	padding-right: 6px;
+	padding-right: 24px;
 }
 
 .sidebar-section-scrollable::-webkit-scrollbar {
-	width: 8px;
+	width: 6px;
 }
 
 .sidebar-section-scrollable::-webkit-scrollbar-track {
 	background: transparent;
-	margin: 8px 0;
+	border-radius: 3px;
 }
 
 .sidebar-section-scrollable::-webkit-scrollbar-thumb {
-	background: var(--border);
-	border-radius: 4px;
-	border: 2px solid transparent;
-	background-clip: padding-box;
+	background: var(--border-subtle);
+	border-radius: 3px;
+	opacity: 0.4;
 }
 
 .sidebar-section-scrollable::-webkit-scrollbar-thumb:hover {
+	opacity: 0.7;
 	background: var(--text-secondary);
-	border: 2px solid transparent;
-	background-clip: padding-box;
 }
 
 /* Sidebar Empty State */

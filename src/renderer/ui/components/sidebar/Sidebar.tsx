@@ -56,11 +56,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     }
   };
 
-  // Calculate total papers count
-  const totalPapers = React.useMemo(() => {
-    return counts.find((c) => c.nodeId === 'builtin:all')?.paperCount ?? 0;
-  }, [counts]);
-
   if (prefs.sidebarCollapsed) {
     return <nav className="library-sidebar collapsed" aria-label="Sidebar" />;
   }
@@ -68,19 +63,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   return (
     <nav className="library-sidebar" aria-label="Sidebar">
       <div className="sidebar-grid">
-        {/* Quick Stats Header */}
-        <div className="sidebar-section stats-section">
-          <div className="sidebar-stats">
-            <div className="stat-item">
-              <BookOpen className="stat-icon" />
-              <div className="stat-content">
-                <div className="stat-value">{totalPapers}</div>
-                <div className="stat-label">Papers</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Main Navigation Section */}
         <div className="sidebar-section categories-section">
           <ul className="section-items">
