@@ -157,6 +157,8 @@ contextBridge.exposeInMainWorld('api', {
   },
   file: {
     read: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
+    write: (filePath: string, data: ArrayBuffer | string) =>
+      ipcRenderer.invoke('file:write', filePath, data),
   },
   dialog: {
     showOpenDialog: (options?: OpenDialogOptions) =>

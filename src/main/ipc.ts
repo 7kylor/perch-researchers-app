@@ -131,6 +131,15 @@ ipcMain.handle('file:read', async (_e, absPath: string) => {
   return fs.promises.readFile(absPath);
 });
 
+ipcMain.handle('file:write', async (_e, absPath: string, data: ArrayBuffer | string) => {
+  if (typeof data === 'string') {
+    await fs.promises.writeFile(absPath, data);
+  } else {
+    await fs.promises.writeFile(absPath, Buffer.from(data as ArrayBuffer));
+  }
+  return true;
+});
+
 ipcMain.handle(
   'annotations:add',
   (

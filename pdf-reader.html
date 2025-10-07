@@ -1221,8 +1221,30 @@
     elements.zoomSelect.addEventListener('change', (e) => {
       const value = e.target.value;
       if (value === 'fit-width' || value === 'fit-page') {
-        // TODO: Implement fit width/page
-        console.log('Fit width/page not yet implemented');
+        const container = elements.canvasContainer;
+        if (!container || !state.pdfDocument) return;
+        const page = state.pdfDocument.loadPage(0);
+        const bounds = page.getBounds();
+        const pageWidthPts = bounds[2] - bounds[0];
+        const pageHeightPts = bounds[3] - bounds[1];
+        page.destroy();
+
+        const containerRect = container.getBoundingClientRect();
+        const padding = 40; // total horizontal padding in container
+        const availableWidthCss = containerRect.width - padding;
+        const availableHeightCss = containerRect.height - padding;
+        const cssPerPt = 96 / 72;
+
+        if (value === 'fit-width') {
+          const zoom = Math.max(0.25, Math.min(4, availableWidthCss / (pageWidthPts * cssPerPt)));
+          state.zoom = zoom;
+        } else if (value === 'fit-page') {
+          const scaleW = availableWidthCss / (pageWidthPts * cssPerPt);
+          const scaleH = availableHeightCss / (pageHeightPts * cssPerPt);
+          state.zoom = Math.max(0.25, Math.min(4, Math.min(scaleW, scaleH)));
+        }
+        elements.zoomSelect.value = state.zoom;
+        renderAllPages();
         return;
       }
       state.zoom = parseFloat(value);
@@ -1327,6 +1349,39 @@
       elements.searchNextBtn.disabled = true;
     }
 
+    // Observe viewport for lazy rendering
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          const pageNumber = parseInt(el.dataset.pageNumber || '0', 10) - 1;
+          if (!Number.isFinite(pageNumber) || pageNumber < 0) return;
+          const canvas = el.querySelector('canvas.page-canvas');
+          if (!canvas) return;
+          const dpr = window.devicePixelRatio || 1;
+          const scale = state.zoom * (96 / 72) * dpr;
+          const matrix = mupdf.Matrix.scale(scale, scale);
+          if (entry.isIntersecting) {
+            renderPage(pageNumber, canvas, matrix, dpr);
+            const textLayer = el.querySelector('.text-layer');
+            if (textLayer && !state.structuredTexts[pageNumber + 1]) {
+              extractStructuredText(pageNumber, textLayer, scale / dpr);
+            }
+          }
+        });
+      },
+      { root: elements.canvasContainer, rootMargin: '600px 0px', threshold: 0.01 },
+    );
+
+    // Re-render on container resize for fit modes
+    const resizeObserver = new ResizeObserver(() => {
+      const value = elements.zoomSelect.value;
+      if (value === 'fit-width' || value === 'fit-page') {
+        elements.zoomSelect.dispatchEvent(new Event('change'));
+      }
+    });
+    resizeObserver.observe(elements.canvasContainer);
+
     // Annotations
     elements.annotationBtn.addEventListener('click', () => {
       elements.annotationPanel.classList.toggle('active');
@@ -1392,8 +1447,10 @@
                 ${(ann.text || '').substring(0, 80)}${(ann.text || '').length > 80 ? '...' : ''}
               </div>
               ${ann.note ? `<div style="font-size: 12px; color: var(--muted); margin-bottom: 4px; font-style: italic; word-break: break-word;">${ann.note}</div>` : ''}
-              <div class="annotation-meta" style="font-size: 11px; color: var(--muted);">
-                Page ${ann.page}
+              <div class="annotation-meta" style="font-size: 11px; color: var(--muted); display:flex; align-items:center; gap:8px;">
+                <span>Page ${ann.page}</span>
+                <button data-action="edit" data-id="${ann.id}" class="btn btn-icon" title="Edit Note" style="padding:4px;">✏️</button>
+                <button data-action="delete" data-id="${ann.id}" class="btn btn-icon" title="Delete" style="padding:4px;">🗑️</button>
               </div>
             </div>
           </div>
@@ -1402,11 +1459,57 @@
         .join('');
 
       elements.annotationList.querySelectorAll('.annotation-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const page = parseInt(item.dataset.page, 10);
+        item.addEventListener('click', (ev) => {
+          const target = ev.target;
+          const action = target?.getAttribute('data-action');
+          const id = target?.getAttribute('data-id');
+          if (action && id) {
+            ev.stopPropagation();
+            if (action === 'delete') {
+              deleteAnnotation(id);
+            } else if (action === 'edit') {
+              editAnnotation(id);
+            }
+            return;
+          }
+          const page = parseInt(item.dataset.page || '1', 10);
           scrollToPage(page);
         });
       });
+    }
+
+    function deleteAnnotation(annotationId) {
+      let changed = false;
+      Object.keys(state.annotations).forEach((pageNum) => {
+        const arr = state.annotations[pageNum] || [];
+        const next = arr.filter((a) => a.id !== annotationId);
+        if (next.length !== arr.length) {
+          state.annotations[pageNum] = next;
+          changed = true;
+        }
+      });
+      if (changed) {
+        saveAnnotations();
+        renderAnnotations();
+        renderAnnotationsList();
+      }
+    }
+
+    function editAnnotation(annotationId) {
+      for (const pageNum of Object.keys(state.annotations)) {
+        const arr = state.annotations[pageNum] || [];
+        const idx = arr.findIndex((a) => a.id === annotationId);
+        if (idx >= 0) {
+          const current = arr[idx];
+          const nextNote = prompt('Edit note:', current.note || '');
+          if (nextNote !== null) {
+            current.note = nextNote;
+            saveAnnotations();
+            renderAnnotationsList();
+          }
+          return;
+        }
+      }
     }
 
     function scrollToPage(pageNumber) {
@@ -1438,6 +1541,12 @@
           e.preventDefault();
           elements.searchPanel.classList.add('active');
           elements.searchInput.focus();
+        } else if (e.key.toLowerCase() === 'c') {
+          // Copy selection
+          if (state.selection.text) {
+            e.preventDefault();
+            navigator.clipboard.writeText(state.selection.text).catch(() => {});
+          }
         } else if (e.key === '+' || e.key === '=') {
           e.preventDefault();
           elements.zoomInBtn.click();
@@ -1458,6 +1567,13 @@
         }
       }
     });
+
+    // Observe page containers for lazy rendering
+    new MutationObserver(() => {
+      document.querySelectorAll('.page-container').forEach((el) => {
+        intersectionObserver.observe(el);
+      });
+    }).observe(elements.pagesWrapper, { childList: true });
 
     console.log('PDF Reader initialized with mupdf.js');
   </script>
