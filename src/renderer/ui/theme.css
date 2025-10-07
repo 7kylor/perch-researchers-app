@@ -417,7 +417,6 @@ body {
 .sidebar-footer.collapsed {
 	margin-top: auto;
 	padding-top: 8px; /* Reduced padding */
-	border-top: 1px solid var(--border-subtle);
 	background: var(--sidebar-bg);
 }
 
@@ -3002,6 +3001,7 @@ textarea:focus-visible {
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding-right: 12px; /* Space for scrollbar */
+	padding-top: 8px; /* Space from top */
 	scroll-behavior: smooth;
 	min-height: 0; /* Allow shrinking */
 }
@@ -4776,6 +4776,7 @@ textarea:focus-visible {
 	overflow-y: auto;
 	overflow-x: hidden;
 	padding-right: 12px;
+	padding-top: 8px; /* Space from top */
 	margin-right: -6px;
 }
 
@@ -4816,7 +4817,6 @@ textarea:focus-visible {
 .sidebar-footer {
 	position: relative;
 	padding: 8px;
-	border-top: 1px solid var(--border-subtle);
 	margin-top: auto;
 	flex-shrink: 0;
 	background: var(--sidebar-bg);
