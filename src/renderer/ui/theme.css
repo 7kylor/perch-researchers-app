@@ -1164,7 +1164,8 @@ body {
 
 .sidebar-footer {
 	margin-top: auto;
-	padding-top: 16px;
+	padding-top: 24px;
+	padding-bottom: 16px;
 	flex-shrink: 0; /* Account section doesn't shrink */
 	flex-grow: 0; /* Account section doesn't grow */
 	align-self: flex-end; /* Stick to bottom */
@@ -2909,6 +2910,7 @@ textarea:focus-visible {
 	padding-top: 2px;
 	flex: 1;
 	min-height: 0; /* Allow shrinking */
+	max-height: 400px; /* Limit total height to ensure footer remains visible */
 	display: flex;
 	flex-direction: column;
 	transition: all 0.2s ease;
@@ -2918,6 +2920,7 @@ textarea:focus-visible {
 .nested-categories .categories-scroll-container {
 	flex: 1;
 	min-height: 0; /* Allow shrinking */
+	max-height: 300px; /* Limit height to ensure scrolling works properly */
 }
 
 .nested-categories .section-header {
