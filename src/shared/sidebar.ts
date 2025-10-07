@@ -44,4 +44,4 @@ export type SidebarListResponse = {
 
 export const BUILTIN_ALL = 'builtin:all';
 export const BUILTIN_RECENT = 'builtin:recent';
-export const BUILTIN_UNFILED = 'builtin:unfiled';
+export const BUILTIN_CATEGORIES = 'builtin:categories';

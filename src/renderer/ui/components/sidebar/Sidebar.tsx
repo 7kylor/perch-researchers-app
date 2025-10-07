@@ -74,10 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
         </div>
 
         {/* Main Navigation Section */}
-        <div className="sidebar-section">
-          <div className="section-header">
-            <h3 className="section-title"></h3>
-          </div>
+        <div className="sidebar-section categories-section">
           <ul className="section-items">
             <li>
               <button
@@ -114,57 +111,60 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
             <li>
               <button
                 type="button"
-                className={`sidebar-item ${selectedId === 'builtin:unfiled' ? 'selected' : ''}`}
-                aria-current={selectedId === 'builtin:unfiled' ? 'page' : undefined}
-                onClick={() => onSelect('builtin:unfiled')}
+                className={`sidebar-item ${selectedId === 'builtin:categories' ? 'selected' : ''}`}
+                aria-current={selectedId === 'builtin:categories' ? 'page' : undefined}
+                onClick={() => onSelect('builtin:categories')}
               >
                 <span className="item-icon" aria-hidden="true">
                   <FolderOpen size={16} />
                 </span>
-                <span className="item-text">Unfiled</span>
+                <div className="item-content">
+                  <span className="item-text">Categories</span>
+                  <div className="section-actions">
+                    <button
+                      type="button"
+                      className="section-action-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addLabelRoot();
+                      }}
+                      title="Add category"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
                 <span className="item-count">
-                  {counts.find((c) => c.nodeId === 'builtin:unfiled')?.paperCount ?? 0}
+                  {counts.find((c) => c.nodeId === 'builtin:categories')?.paperCount ?? 0}
                 </span>
               </button>
+              {/* Categories Section - now nested under main Categories item */}
+              <div className="sidebar-section sidebar-section-scrollable nested-categories">
+                <div className="categories-scroll-container">
+                  <SidebarTree
+                    nodes={nodes}
+                    collapsedIds={prefs.collapsedNodeIds}
+                    selectedId={selectedId}
+                    onSelect={onSelect}
+                    onMove={(id, parentId, index) => actions.move(id, parentId, index)}
+                    _onToggleCollapse={async (id: string, open: boolean) => {
+                      const set = new Set(prefs.collapsedNodeIds);
+                      if (!open) set.add(id);
+                      else set.delete(id);
+                      await actions.setCollapsedNodeIds(Array.from(set));
+                    }}
+                    renamingId={renamingId}
+                    renameValue={renameValue}
+                    onRenameChange={setRenameValue}
+                    onRenameCommit={commitRename}
+                    onRenameCancel={cancelRename}
+                    onRenameStart={startRename}
+                    onRequestDelete={deleteNode}
+                  />
+                </div>
+              </div>
             </li>
           </ul>
-        </div>
-
-        {/* Categories Section */}
-        <div className="sidebar-section sidebar-section-scrollable">
-          <div className="section-header">
-            <h3 className="section-title">Categories</h3>
-            <div className="section-actions">
-              <button
-                type="button"
-                className="section-action-btn"
-                onClick={addLabelRoot}
-                title="Add category"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-          </div>
-          <SidebarTree
-            nodes={nodes}
-            collapsedIds={prefs.collapsedNodeIds}
-            selectedId={selectedId}
-            onSelect={onSelect}
-            onMove={(id, parentId, index) => actions.move(id, parentId, index)}
-            _onToggleCollapse={async (id: string, open: boolean) => {
-              const set = new Set(prefs.collapsedNodeIds);
-              if (!open) set.add(id);
-              else set.delete(id);
-              await actions.setCollapsedNodeIds(Array.from(set));
-            }}
-            renamingId={renamingId}
-            renameValue={renameValue}
-            onRenameChange={setRenameValue}
-            onRenameCommit={commitRename}
-            onRenameCancel={cancelRename}
-            onRenameStart={startRename}
-            onRequestDelete={deleteNode}
-          />
         </div>
       </div>
 
