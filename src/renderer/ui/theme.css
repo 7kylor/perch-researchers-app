@@ -4749,6 +4749,16 @@ textarea:focus-visible {
 	opacity: 1;
 }
 
+.categories-header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.categories-add-btn {
+	flex-shrink: 0;
+}
+
 .section-action-btn {
 	background: none;
 	border: none;
