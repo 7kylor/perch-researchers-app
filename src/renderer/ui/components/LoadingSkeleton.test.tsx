@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { LoadingSkeleton } from './LoadingSkeleton';
+import React from 'react';
 
 describe('LoadingSkeleton', () => {
   it('renders the default number of skeleton items', () => {
