@@ -99,39 +99,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
               </button>
             </li>
             <li>
-              <button
-                type="button"
-                className={`sidebar-item ${selectedId === 'builtin:categories' ? 'selected' : ''}`}
-                aria-current={selectedId === 'builtin:categories' ? 'page' : undefined}
-                onClick={() => {
-                  onSelect('builtin:categories');
-                  setCategoriesExpanded(!categoriesExpanded);
-                }}
-              >
-                <span className="item-icon" aria-hidden="true">
-                  <FolderOpen size={16} />
-                </span>
-                <div className="item-content">
+              <div className="categories-header">
+                <button
+                  type="button"
+                  className={`sidebar-item ${selectedId === 'builtin:categories' ? 'selected' : ''}`}
+                  aria-current={selectedId === 'builtin:categories' ? 'page' : undefined}
+                  onClick={() => {
+                    onSelect('builtin:categories');
+                    setCategoriesExpanded(!categoriesExpanded);
+                  }}
+                >
+                  <span className="item-icon" aria-hidden="true">
+                    <FolderOpen size={16} />
+                  </span>
                   <span className="item-text">Categories</span>
-                  <div className="section-actions">
-                    <button
-                      type="button"
-                      className="section-action-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addLabelRoot();
-                      }}
-                      title="Add category"
-                    >
-                      <Plus size={14} />
-                    </button>
+                  <div className="item-expand-indicator">
+                    {categoriesExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </div>
-                </div>
-                <div className="item-expand-indicator">
-                  {categoriesExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </div>
-                <span className="item-count">{categoryCount}</span>
-              </button>
+                  <span className="item-count">{categoryCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className="section-action-btn categories-add-btn"
+                  onClick={addLabelRoot}
+                  title="Add category"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
               {/* Categories Section - now nested under main Categories item */}
               {categoriesExpanded && (
                 <div className="sidebar-section sidebar-section-scrollable nested-categories">
