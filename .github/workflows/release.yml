@@ -49,6 +49,8 @@ jobs:
         run: npx electron-builder --publish=never --${{ matrix.platform }} --${{ matrix.arch }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WIN_CSC_LINK: ""
+          WIN_CSC_KEY_PASSWORD: ""
 
       - name: List dist files
         run: ls -la dist/

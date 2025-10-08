@@ -58,7 +58,14 @@
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "verifyUpdateCodeSignature": false,
+      "nsis": {
+        "oneClick": false,
+        "perMachine": false,
+        "allowToChangeInstallationDirectory": true,
+        "deleteAppDataOnUninstall": false
+      }
     },
     "linux": {
       "target": [
