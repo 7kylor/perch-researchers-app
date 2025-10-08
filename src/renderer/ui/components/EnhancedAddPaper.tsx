@@ -122,8 +122,11 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({
 
         if (filePaths.length === 1) {
           // Single file upload - use existing logic
-          await onAdd(filePaths[0], 'pdf');
-          onClose();
+          const filePath = filePaths[0];
+          if (filePath) {
+            await onAdd(filePath, 'pdf');
+            onClose();
+          }
         } else {
           // Bulk upload - process multiple files
           await handleBulkUpload(filePaths);
@@ -148,6 +151,8 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({
 
     for (let i = 0; i < filePaths.length; i++) {
       const filePath = filePaths[i];
+      if (!filePath) continue;
+
       const fileName = filePath.split('/').pop() || filePath;
 
       setBulkProgress({

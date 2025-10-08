@@ -18,6 +18,17 @@ export default defineConfig({
         main: path.resolve(__dirname, 'src/renderer/index.html'),
         'pdf-reader': path.resolve(__dirname, 'pdf-reader.html'),
       },
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+  worker: {
+    format: 'es',
+    rollupOptions: {
+      output: {
+        format: 'es',
+      },
     },
   },
   server: {

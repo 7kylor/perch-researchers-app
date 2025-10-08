@@ -6,14 +6,18 @@ declare module 'mupdf' {
   export type Color = [number, number, number] | [number, number, number, number];
   export type TransformMatrix = [number, number, number, number, number, number];
 
-  // Matrix class
-  // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-  export class Matrix {
-    static identity: TransformMatrix;
-    static scale(sx: number, sy: number): TransformMatrix;
-    static translate(tx: number, ty: number): TransformMatrix;
-    static rotate(degrees: number): TransformMatrix;
-  }
+  // Matrix utilities
+  export const Matrix = {
+    identity: {} as TransformMatrix,
+    scale: (sx: number, sy: number): TransformMatrix => [sx, 0, 0, sy, 0, 0],
+    translate: (tx: number, ty: number): TransformMatrix => [1, 0, 0, 1, tx, ty],
+    rotate: (degrees: number): TransformMatrix => {
+      const rad = (degrees * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      return [cos, sin, -sin, cos, 0, 0];
+    },
+  } as const;
 
   // ColorSpace class
   export class ColorSpace {
