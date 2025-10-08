@@ -56,8 +56,8 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
-  const handleSidebarToggle = async () => {
-    await actions.setSidebarCollapsed(!prefs.sidebarCollapsed);
+  const handleSidebarToggle = () => {
+    actions.setSidebarCollapsed(!prefs.sidebarCollapsed);
   };
 
   const handlePaperClick = (paperId: string) => {
@@ -355,9 +355,9 @@ export const App: React.FC = () => {
           onSortChange={handleSortChange}
           onAddItem={() => setShowSimpleAddModal(true)}
         />
-        <div className={`library-layout ${prefs.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className="library-layout">
           <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
-          <div className={`library-main ${prefs.sidebarCollapsed ? 'expanded' : ''}`}>
+          <div className="library-main">
             <div className="library-content">
               {isLoading ? (
                 <LoadingSkeleton count={9} />
