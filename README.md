@@ -1,292 +1,447 @@
-# Researchers App
+# Perch Researchers App
 
-A local-first Electron desktop application for academic researchers to manage, read, and analyze research papers with AI-powered features.
+A powerful, local-first Electron desktop application designed for academic researchers to efficiently manage, read, and analyze research papers with integrated AI capabilities.
 
-## Overview
+## 🚀 Overview
 
-Researchers App is a comprehensive knowledge management system designed specifically for academic researchers. It provides a local-first approach to paper management, allowing you to build your personal research library without relying on cloud services. The app combines traditional paper management with modern AI capabilities for enhanced research productivity.
+**Perch Researchers App** is a comprehensive knowledge management system built specifically for academic researchers and scholars. It offers a local-first architecture that ensures your research data remains private and accessible without relying on external cloud services. The application seamlessly integrates traditional document management with cutting-edge AI features to enhance research productivity and discovery.
 
-## Key Features
+### Core Philosophy
+- **Privacy First**: All data stored locally, no external dependencies
+- **Research Focused**: Designed by researchers, for researchers
+- **AI Enhanced**: Local AI processing for summaries, Q&A, and discovery
+- **Cross-Platform**: Native applications for Windows, macOS, and Linux
 
-###   Paper Management
-- **Import Papers**: Add papers via DOI, ArXiv ID, PDF URLs, or local PDF files
-- **Organize**: Create custom categories and labels using the sidebar system
-- **Search**: Full-text search across your entire paper library
-- **Status Tracking**: Mark papers as "to read", "reading", "read", etc.
+## ✨ Key Features
 
-###   PDF Reader
-- **Dedicated Reader**: Open papers in a separate, focused PDF reader window
-- **Annotations**: Highlight text and add notes with color coding
-- **Page Navigation**: Easy page-by-page reading experience
+### 📚 Paper Management
+- **Smart Import**: Add papers via DOI, ArXiv ID, PDF URLs, or local PDF files
+- **Intelligent Organization**: Create custom categories and labels with drag-and-drop functionality
+- **Advanced Search**: Full-text search across titles, abstracts, and content
+- **Progress Tracking**: Mark papers as "to read", "reading", "read", or create custom statuses
+
+### 📖 PDF Reader
+- **Dedicated Reader Window**: Open papers in a separate, focused PDF reader
+- **Rich Annotations**: Highlight text, add notes, and color-code annotations
+- **Intuitive Navigation**: Page-by-page reading with keyboard shortcuts
 - **Full-screen Mode**: Distraction-free reading environment
 
-###   AI-Powered Features
-- **Paper Summarization**: Get AI-generated summaries of papers
-- **Question Answering**: Ask questions about specific papers or your entire library
-- **Related Papers**: Discover papers similar to your current research
-- **Local AI**: Uses ONNX Runtime for privacy-preserving local AI processing
+### 🤖 AI-Powered Features
+- **Paper Summarization**: Get AI-generated summaries of research papers
+- **Question Answering**: Ask natural language questions about specific papers or your entire library
+- **Related Papers**: Discover semantically similar papers using vector embeddings
+- **Local AI Processing**: Uses ONNX Runtime for privacy-preserving local inference
 
-###   Organization System
-- **Hierarchical Sidebar**: Create folders and labels for organizing papers
-- **Drag & Drop**: Organize papers by dragging them between categories
-- **Custom Icons**: Personalize your organization with custom icons and colors
+### 🗂️ Organization System
+- **Hierarchical Sidebar**: Create nested folders and labels for organizing papers
+- **Visual Customization**: Personalize categories with custom icons and colors
 - **Smart Categories**: Built-in categories like "All", "Recent", "Favorites"
+- **Bulk Operations**: Select and organize multiple papers simultaneously
 
-###   Advanced Search
-- **Full-text Search**: Search across paper titles, abstracts, and content
-- **Category Filtering**: Filter papers by specific categories
-- **Vector Search**: Semantic search using embeddings (coming soon)
-- **Search History**: Keep track of your search queries
+### 🔍 Advanced Search
+- **Full-Text Search**: Search across paper titles, abstracts, authors, and content
+- **Category Filtering**: Filter papers by specific categories or labels
+- **Semantic Search**: Vector-based similarity search for related content
+- **Search History**: Track and revisit previous search queries
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 ### Frontend
-- **React 19**: Modern React with latest features
-- **TypeScript**: Strict typing for better code quality
-- **Vite**: Fast build tool and development server
-- **Radix UI**: Accessible component primitives
-- **Lucide React**: Beautiful icon library
+- **React 19**: Modern React with latest features and performance optimizations
+- **TypeScript**: Strict typing with comprehensive type safety
+- **Vite**: Lightning-fast build tool and development server
+- **Radix UI**: Accessible, customizable component primitives
+- **Lucide React**: Beautiful, consistent icon library
 
-### Backend
-- **Electron**: Cross-platform desktop app framework
-- **Better SQLite3**: High-performance local database
-- **Drizzle ORM**: Type-safe database operations
-- **SQLite VSS**: Vector similarity search extension
+### Backend & Desktop
+- **Electron**: Cross-platform desktop application framework
+- **Better SQLite3**: High-performance embedded database
+- **Drizzle ORM**: Type-safe database operations and migrations
+- **SQLite VSS**: Vector similarity search extension for semantic features
 
-### AI & ML
-- **ONNX Runtime**: Local AI model inference
-- **Tesseract.js**: OCR capabilities for scanned papers
-- **Readability.js**: Content extraction from web pages
+### AI & Machine Learning
+- **ONNX Runtime**: Cross-platform ML model inference
+- **Tesseract.js**: Optical character recognition for scanned documents
+- **Readability.js**: Web content extraction and cleaning
+- **Sentence Transformers**: Local embedding generation
 
-### Development Tools
-- **Vitest**: Fast unit testing
-- **Playwright**: End-to-end testing
-- **ESLint**: Code linting
-- **Prettier**: Code formatting
+### Development & Quality
+- **Vitest**: Fast, modern unit testing framework
+- **Playwright**: Comprehensive end-to-end testing
+- **ESLint**: Advanced linting with custom rules
+- **Prettier**: Consistent code formatting
+- **Husky**: Git hooks for quality enforcement
 
-## Installation
+## 📦 Installation & Setup
 
 ### Prerequisites
-- Node.js 20+ 
-- npm or yarn
-- Git
+- **Node.js 20+** (LTS recommended)
+- **npm** or **yarn** package manager
+- **Git** for version control
 
 ### Development Setup
 
-1. **Clone the repository**
+1. **Clone the Repository**
    ```bash
-   git clone <repository-url>
-   cd researchers-app
+   git clone https://github.com/7kylor/perch-researchers-app.git
+   cd perch-researchers-app
    ```
 
-2. **Install dependencies**
+2. **Install Dependencies**
    ```bash
    npm install
    ```
 
-3. **Start development server**
+3. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-This will start:
-- TypeScript compiler in watch mode
-- Vite development server on port 5173
-- Electron app with hot reload
+   This will launch:
+   - TypeScript compiler in watch mode
+   - Vite development server on `http://localhost:5173`
+   - Electron application with hot reload
 
 ### Building for Production
 
-1. **Build the application**
+1. **Build Application**
    ```bash
    npm run build
    ```
 
-2. **Package for distribution**
+2. **Package for Distribution**
    ```bash
    npm run dist
    ```
 
-The built application will be available in the `dist` folder.
+   Built packages will be available in the `dist/` directory.
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
-src/
-├── main/                 # Electron main process
-│   ├── ai/               # AI providers and RAG system
-│   ├── db/               # Database schema and operations
-│   ├── embeddings/       # Text embedding pipeline
-│   ├── ingest/           # Paper import functionality
-│   ├── ocr/              # OCR processing
-│   └── main.ts           # Main process entry point
-├── preload/              # Electron preload scripts
-├── renderer/             # React frontend
-│   ├── ui/               # UI components
-│   │   ├── components/   # React components
-│   │   └── sidebar/      # Sidebar store and components
-│   └── main.tsx          # Frontend entry point
-└── shared/               # Shared types and utilities
+perch-researchers-app/
+├── src/
+│   ├── main/                    # Electron main process
+│   │   ├── ai/                  # AI providers and RAG system
+│   │   │   ├── providers.ts     # AI model providers
+│   │   │   └── rag.ts           # Retrieval-augmented generation
+│   │   ├── db/                  # Database layer
+│   │   │   ├── schema.ts        # Database schema definitions
+│   │   │   └── db.ts            # Database connection and operations
+│   │   ├── embeddings/          # Text embedding pipeline
+│   │   │   └── pipeline.ts      # Embedding generation and storage
+│   │   ├── ingest/              # Document import system
+│   │   │   ├── crossref.ts      # DOI/ArXiv metadata fetching
+│   │   │   ├── importer.ts      # Document import coordination
+│   │   │   ├── pdf-import.ts    # PDF processing and extraction
+│   │   │   └── pdf-metadata-extractor.ts
+│   │   ├── ocr/                 # OCR processing
+│   │   │   └── batch.ts         # Batch OCR operations
+│   │   ├── ipc.ts               # Inter-process communication
+│   │   └── main.ts              # Application entry point
+│   ├── preload/                 # Electron preload scripts
+│   │   └── preload.ts           # Secure context bridge
+│   ├── renderer/                # React frontend application
+│   │   ├── ui/                  # User interface components
+│   │   │   ├── components/      # Reusable UI components
+│   │   │   │   ├── ActivityBar.tsx
+│   │   │   │   ├── EnhancedAddPaper.tsx
+│   │   │   │   ├── LibraryCard.tsx
+│   │   │   │   ├── LibraryGrid.tsx
+│   │   │   │   ├── PaperReader.tsx
+│   │   │   │   └── SettingsPanel.tsx
+│   │   │   └── sidebar/         # Sidebar functionality
+│   │   │       ├── Sidebar.tsx
+│   │   │       ├── SidebarTree.tsx
+│   │   │       └── store.ts      # Zustand state management
+│   │   └── main.tsx             # React application entry
+│   ├── shared/                  # Shared utilities and types
+│   │   ├── sidebar.ts           # Sidebar type definitions
+│   │   └── types.ts             # Common TypeScript types
+│   └── types/                   # Type definitions
+│       ├── arxiv.d.ts           # ArXiv API types
+│       └── mupdf.d.ts           # PDF.js type definitions
+├── .github/
+│   └── workflows/               # CI/CD automation
+│       ├── ci.yml               # Continuous integration
+│       ├── preview.yml          # Pull request previews
+│       └── release.yml          # Automated releases
+├── dist/                        # Built application artifacts
+├── node_modules/                # Dependencies
+├── scripts/                     # Build and utility scripts
+└── docs/                        # Documentation (planned)
 ```
 
-## Usage Guide
+## 🚀 Usage Guide
 
-### Adding Papers
+### Adding Research Papers
 
-1. **Via DOI**: Enter a DOI (e.g., `10.1038/nature12373`)
-2. **Via ArXiv**: Enter ArXiv ID (e.g., `2301.00001`)
-3. **Via PDF URL**: Paste a direct PDF link
-4. **Local PDF**: Upload a PDF file from your computer
+**Multiple Import Methods:**
+1. **DOI Import**: Enter a DOI (e.g., `10.1038/nature12373`)
+2. **ArXiv Import**: Enter ArXiv ID (e.g., `2301.00001`)
+3. **PDF URL**: Paste direct links to PDF files
+4. **Local Files**: Upload PDF files from your computer
+5. **Bulk Import**: Add multiple papers simultaneously
 
-### Organizing Papers
+### Organizing Your Library
 
-1. **Create Categories**: Right-click in sidebar to create folders
-2. **Add Labels**: Create labels for tagging papers
-3. **Drag & Drop**: Organize papers by dragging between categories
-4. **Custom Icons**: Choose icons and colors for categories
+**Smart Organization:**
+1. **Create Categories**: Right-click sidebar to create folders and subfolders
+2. **Custom Labels**: Tag papers with keywords and topics
+3. **Visual Customization**: Choose icons and colors for categories
+4. **Bulk Operations**: Select multiple papers for batch organization
+5. **Smart Collections**: Use built-in categories like "Recent", "Unread", "Favorites"
 
-### Reading Papers
+### Reading & Annotating
 
-1. **Open Reader**: Click on any paper to open in PDF reader
-2. **Add Annotations**: Highlight text and add notes
-3. **Navigate**: Use arrow keys or page controls
-4. **Full-screen**: Press F11 for distraction-free reading
+**Enhanced Reading Experience:**
+1. **Dedicated Reader**: Click any paper to open in focused PDF reader
+2. **Rich Annotations**: Highlight text, add notes, and color-code annotations
+3. **Navigation Controls**: Page controls, zoom, and search within documents
+4. **Keyboard Shortcuts**: Efficient navigation with keyboard commands
+5. **Full-Screen Mode**: Distraction-free reading environment
 
-### AI Features
+### AI-Powered Research
 
-1. **Summarize**: Get AI-generated summaries of papers
-2. **Ask Questions**: Query your paper library with natural language
-3. **Find Related**: Discover similar papers based on content
+**Intelligent Assistance:**
+1. **Automatic Summarization**: Generate concise summaries of research papers
+2. **Question Answering**: Ask natural language questions about papers
+3. **Semantic Search**: Find related papers using content similarity
+4. **Smart Recommendations**: Discover relevant papers based on your reading history
 
-## Configuration
+## ⚙️ Configuration
 
-### Database
-The app uses SQLite for local storage. The database file is created automatically in the user data directory.
+### Database Configuration
+- **Storage**: SQLite database stored in user data directory
+- **Performance**: Optimized for large research libraries (1000+ papers)
+- **Backup**: Automatic daily backups with manual export options
 
-### AI Models
-- **Local Models**: Uses ONNX Runtime for local inference
-- **API Models**: Supports OpenAI API (requires API key)
-- **Usage Limits**: Free tier has usage limits for AI features
+### AI Model Configuration
+- **Local Models**: ONNX Runtime for offline AI processing
+- **API Integration**: Optional OpenAI API for enhanced features
+- **Privacy Settings**: Configurable data usage for AI features
 
-### Themes
-The app supports light and dark themes with system preference detection.
+### Theme & Appearance
+- **Light/Dark Themes**: Automatic system preference detection
+- **Customizable UI**: Adjustable sidebar width and layout options
+- **Accessibility**: High contrast mode and keyboard navigation
 
-## Development
+## 🧪 Development
 
-### Scripts
+### Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run test` - Run unit tests
-- `npm run test:e2e` - Run end-to-end tests
-- `npm run lint` - Lint code
-- `npm run format` - Format code
+```bash
+# Development
+npm run dev          # Start development server with hot reload
+npm run build        # Build for production
+npm run preview      # Preview production build
 
-### Code Style
+# Testing
+npm run test         # Run unit tests
+npm run test:e2e     # Run end-to-end tests
+npm run test:ui      # Run tests with UI
 
-- **TypeScript**: Strict mode enabled
-- **ESLint**: Configured with React and TypeScript rules
-- **Prettier**: Consistent code formatting
-- **Components**: Functional components with hooks
-- **Types**: Strict typing, no `any` types allowed
+# Code Quality
+npm run lint         # Lint code for issues
+npm run format       # Format code with Prettier
+npm run typecheck    # Check TypeScript types
 
-### Testing
+# Building & Distribution
+npm run pack         # Create development build
+npm run dist         # Create distribution packages
+```
 
-- **Unit Tests**: Vitest for component testing
-- **E2E Tests**: Playwright for integration testing
-- **Coverage**: Aim for high test coverage
+### Code Standards
 
-## Releases
+**Development Guidelines:**
+- **TypeScript Strict Mode**: Enabled for maximum type safety
+- **ESLint Configuration**: React, TypeScript, and accessibility rules
+- **Prettier Formatting**: Consistent code style across the project
+- **Component Architecture**: Functional components with custom hooks
+- **State Management**: Zustand for global state, React Query for server state
 
-### Automated Releases
+**Testing Requirements:**
+- **Unit Tests**: Vitest for component and utility testing
+- **Integration Tests**: Playwright for end-to-end workflows
+- **Minimum Coverage**: 80% code coverage requirement
+- **Test Categories**: Unit, integration, and accessibility tests
 
-This project uses GitHub Actions to automatically build and release the application for multiple platforms when a new version tag is pushed.
+## 🚀 Releases & Distribution
 
-#### Creating a Release
+### Automated Release Process
 
-1. **Update Version**: Update the version in `package.json`
-2. **Create Git Tag**: Create and push a version tag:
+The project uses GitHub Actions for fully automated multi-platform releases:
+
+#### Creating a New Release
+
+1. **Update Version**
+   ```bash
+   # Update package.json version
+   npm version patch|minor|major
+   ```
+
+2. **Create Release Tag**
    ```bash
    git tag v1.0.0
    git push origin v1.0.0
    ```
-3. **Automatic Build**: GitHub Actions will automatically:
-   - Build for Linux (AppImage, deb, zip)
-   - Build for Windows (NSIS installer, zip)
-   - Build for macOS (Intel and Apple Silicon)
-   - Create a GitHub release with all artifacts
 
-#### Supported Platforms
+3. **Automatic Build Process**
+   GitHub Actions automatically:
+   - Builds for Linux (AppImage, .deb, .zip)
+   - Builds for Windows (NSIS installer, .zip)
+   - Builds for macOS (Intel + Apple Silicon)
+   - Creates GitHub release with all artifacts
 
-- **Linux**: AppImage, Debian package, ZIP archive
-- **Windows**: NSIS installer, ZIP archive
-- **macOS**: DMG installer, ZIP archive (Intel and Apple Silicon)
+### Supported Platforms
 
-#### Continuous Integration
+| Platform | Formats | Architectures |
+|----------|---------|---------------|
+| **Linux** | AppImage, Debian (.deb), ZIP | x64 |
+| **Windows** | NSIS Installer (.exe), ZIP | x64 |
+| **macOS** | DMG Installer, ZIP | x64, arm64 (Apple Silicon) |
 
-The project includes CI workflows that run on every push and pull request:
-- **Linting**: Code style and type checking
-- **Testing**: Unit and E2E tests
-- **Build Verification**: Ensures the app builds correctly on all platforms
+### Continuous Integration
 
-## Contributing
+**Automated Quality Checks:**
+- **Code Linting**: ESLint and Prettier validation
+- **Type Checking**: TypeScript strict mode verification
+- **Unit Testing**: Vitest test suite execution
+- **Build Testing**: Multi-platform build verification
+- **Security Scanning**: Dependency vulnerability checks
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+## 🤝 Contributing
 
-### Code Guidelines
+We welcome contributions from the research community! Here's how to get involved:
 
-- Use TypeScript strict mode
-- Write tests for new features
-- Follow existing code patterns
-- Use semantic commit messages
-- Keep components small and focused
+### Getting Started
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Make** your changes with comprehensive tests
+4. **Test** thoroughly across platforms
+5. **Submit** a pull request
 
-## Roadmap
+### Contribution Guidelines
 
-### Short Term
-- [ ] Vector search implementation
-- [ ] Advanced annotation features
-- [ ] Paper export functionality
-- [ ] Collaboration features
+**Code Standards:**
+- **TypeScript Strict**: All code must pass strict type checking
+- **Test Coverage**: New features require appropriate tests
+- **Documentation**: Update README and inline documentation
+- **Semantic Commits**: Use conventional commit format
 
-### Long Term
-- [ ] Mobile companion app
-- [ ] Cloud sync (optional)
-- [ ] Advanced AI features
-- [ ] Plugin system
+**Pull Request Process:**
+1. Ensure all tests pass
+2. Update documentation as needed
+3. Follow the existing code style
+4. Request review from maintainers
 
-## Troubleshooting
+### Development Workflow
+```bash
+# Create feature branch
+git checkout -b feature/new-ai-model
+
+# Make changes and add tests
+# Ensure tests pass: npm run test
+
+# Commit with semantic message
+git commit -m "feat: add support for new embedding model"
+
+# Push and create PR
+git push origin feature/new-ai-model
+```
+
+## 🗺️ Roadmap
+
+### Short Term (v1.1 - v1.3)
+- [ ] **Vector Search Enhancement**: Improved semantic search with multiple embedding models
+- [ ] **Advanced Annotations**: Rich text notes, drawing tools, and annotation export
+- [ ] **Paper Export**: PDF export with annotations, citation management
+- [ ] **Collaboration Features**: Shared libraries and collaborative annotations
+
+### Medium Term (v1.4 - v2.0)
+- [ ] **Mobile Companion App**: iOS and Android apps for on-the-go access
+- [ ] **Plugin System**: Extensible architecture for custom integrations
+- [ ] **Cloud Sync**: Optional encrypted cloud synchronization
+- [ ] **Advanced AI Models**: Integration with state-of-the-art language models
+
+### Long Term Vision (v2.0+)
+- [ ] **Research Network**: Connect with other researchers and share libraries
+- [ ] **Citation Management**: Built-in citation tracking and bibliography generation
+- [ ] **Research Metrics**: Track reading patterns and research productivity
+- [ ] **Institutional Integration**: LDAP/SSO integration for university environments
+
+## 🔧 Troubleshooting
 
 ### Common Issues
 
-1. **Build Errors**: Ensure Node.js 18+ is installed
-2. **Database Issues**: Delete the database file to reset
-3. **AI Features**: Check API keys and model availability
-4. **Performance**: Large libraries may need optimization
+**Build Problems:**
+- Ensure Node.js 20+ is installed
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Check available disk space for large builds
+
+**Database Issues:**
+- Database location: `~/Library/Application Support/perch-researchers-app/` (macOS)
+- Reset database: Delete the `.db` file in the user data directory
+
+**AI Features Not Working:**
+- Check model download status in settings
+- Verify internet connection for initial model downloads
+- Check available disk space for model storage
+
+**Performance Issues:**
+- Large libraries (>1000 papers) may need optimization
+- Enable database indexing in settings
+- Consider archiving old papers if performance degrades
 
 ### Getting Help
 
-- Check the issues page for known problems
-- Create a new issue with detailed information
-- Include system information and error logs
+- **📖 Documentation**: Check this README and inline code documentation
+- **🐛 Issues**: [Create an issue](https://github.com/7kylor/perch-researchers-app/issues) with:
+  - Detailed description of the problem
+  - Steps to reproduce
+  - System information (OS, Node.js version)
+  - Relevant error logs
+- **💬 Discussions**: Use GitHub Discussions for questions and feature requests
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details.
+**MIT License** - See [LICENSE](LICENSE) file for full details.
 
-## Acknowledgments
+You are free to use, modify, and distribute this software under the terms of the MIT License. The software is provided "as is" without warranty of any kind.
 
-- Built with Electron and React
-- Uses Drizzle ORM for database operations
-- AI features powered by ONNX Runtime
-- Icons by Lucide React
-- UI components by Radix UI
+## 🙏 Acknowledgments
+
+**Built with Modern Technologies:**
+- **Electron** - Cross-platform desktop applications
+- **React** - User interface framework
+- **TypeScript** - Type-safe JavaScript development
+- **SQLite** - Embedded database engine
+- **Drizzle ORM** - Database toolkit for TypeScript
+- **ONNX Runtime** - Machine learning model inference
+- **Radix UI** - Accessible component system
+- **Lucide React** - Beautiful icon library
+
+**AI & Research Tools:**
+- **Sentence Transformers** - Text embedding models
+- **Tesseract.js** - Optical character recognition
+- **ArXiv API** - Research paper metadata
+- **CrossRef API** - DOI and citation data
+
+**Development Tools:**
+- **Vite** - Fast build tool and dev server
+- **Vitest** - Modern testing framework
+- **Playwright** - End-to-end testing
+- **ESLint** - Code linting and formatting
+- **Prettier** - Code formatting
 
 ---
 
-**Researchers App** - Empowering researchers with modern tools for knowledge management and discovery.
-# Test commit to trigger release workflow
+<div align="center">
+
+**Perch Researchers App** - *Empowering researchers with intelligent, local-first knowledge management*
+
+*Built by researchers, for researchers* 🦜📚
+
+[⭐ Star on GitHub](https://github.com/7kylor/perch-researchers-app) • [🐛 Report Issues](https://github.com/7kylor/perch-researchers-app/issues) • [💬 Join Discussion](https://github.com/7kylor/perch-researchers-app/discussions)
+
+</div>
