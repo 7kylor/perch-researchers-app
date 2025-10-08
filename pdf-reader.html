@@ -48,10 +48,6 @@
       --primary-hover: #339af0;
       --border: #404040;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-      /* PDF Reader Dark Mode Variables - Best practices for readability */
-      --pdf-bg: #0f0f0f;
-      --pdf-text: #ffffff;
-      --pdf-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.8);
     }
 
     body {
@@ -182,13 +178,6 @@
       padding: 20px;
     }
 
-    /* Dark mode enhancement: subtle background texture for better depth */
-    :root[data-theme="dark"] .canvas-container {
-      background-image:
-        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.01) 0%, transparent 50%);
-    }
-
     .pages-wrapper {
       display: flex;
       flex-direction: column;
@@ -197,15 +186,9 @@
     }
 
     .page-canvas {
-      box-shadow: var(--pdf-shadow, var(--shadow-md));
-      background: var(--pdf-bg, var(--bg));
+      box-shadow: var(--shadow-md);
+      background: white;
       display: block;
-      /* Best practice: subtle border for better definition in dark mode */
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      /* Ensure proper image rendering */
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
     }
 
     .loading {
@@ -594,8 +577,8 @@
     }
 
     .highlight-yellow {
-      background: rgba(255, 193, 7, 0.6);
-      border: 1px solid rgba(255, 193, 7, 0.8);
+      background: rgba(255, 255, 0, 0.4);
+      border: 1px solid rgba(255, 200, 0, 0.6);
     }
 
     .highlight-green {
@@ -948,7 +931,7 @@
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item" id="contextHighlightYellow">
-        <div style="width: 16px; height: 16px; background: rgba(255, 193, 7, 0.6); border: 1px solid rgba(255, 193, 7, 0.8); border-radius: 2px;"></div>
+        <div style="width: 16px; height: 16px; background: rgba(255, 255, 0, 0.6); border-radius: 2px;"></div>
         Highlight Yellow
       </div>
       <div class="context-menu-item" id="contextHighlightGreen">
@@ -1214,14 +1197,10 @@
       // Ensure a page-level image at the current scale (PNG from worker)
       if (!state.pageImages[pageNumber] || state.pageImages[pageNumber].scale !== scale) {
         try {
-          // Get current theme for dark mode rendering
-          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-          console.log(`Rendering page ${pageIndex + 1} in ${currentTheme} mode`);
           const { width, height, png } = await workerRequest('renderPage', {
             pageIndex,
             scale,
-            rotation: state.rotation,
-            theme: currentTheme
+            rotation: state.rotation
           });
           // Create ImageBitmap for fast drawImage clips
           const blob = new Blob([png], { type: 'image/png' });
@@ -2208,10 +2187,10 @@
 
       function getColorStyle(color) {
         const colors = {
-          yellow: 'rgba(255, 193, 7, 0.8)',
-          green: 'rgba(40, 167, 69, 0.7)',
+          yellow: 'rgba(255, 255, 0, 0.8)',
+          green: 'rgba(0, 255, 0, 0.7)',
           blue: 'rgba(0, 123, 255, 0.7)',
-          red: 'rgba(220, 53, 69, 0.7)',
+          red: 'rgba(255, 0, 0, 0.7)',
         };
         return colors[color] || colors.yellow;
       }
