@@ -289,3 +289,4 @@ MIT License - see LICENSE file for details.
 ---
 
 **Researchers App** - Empowering researchers with modern tools for knowledge management and discovery.
+# Test commit to trigger release workflow
