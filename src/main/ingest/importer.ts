@@ -2,8 +2,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { app } from 'electron';
 import { createHash } from 'node:crypto';
-import type { Paper } from '../../shared/types';
-import { fetchCrossrefByDOI } from './crossref';
+import type { Paper } from '../../shared/types.js';
+import { fetchCrossrefByDOI } from './crossref.js';
 
 export type ImportResult = { id: string };
 

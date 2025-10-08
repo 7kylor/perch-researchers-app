@@ -382,6 +382,7 @@ export const App: React.FC = () => {
           isOpen={showSimpleAddModal}
           onClose={() => setShowSimpleAddModal(false)}
           onAdd={handleSimpleAddPaper}
+          onToast={(message, type) => setToast({ message, type })}
         />
 
         {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}

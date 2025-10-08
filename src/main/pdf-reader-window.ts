@@ -1,7 +1,12 @@
 import { BrowserWindow, app, ipcMain, shell } from 'electron';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import type { Paper } from '../shared/types';
+import type { Paper } from '../shared/types.js';
+
+// ES modules: get __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface PDFReaderWindow extends BrowserWindow {
   paperId?: string;
@@ -35,6 +40,7 @@ export class PDFReaderWindowManager {
         sandbox: false,
         nodeIntegration: false,
         webSecurity: true,
+        allowRunningInsecureContent: false,
       },
       titleBarStyle: 'hiddenInset',
       show: false, // Don't show until ready
@@ -60,7 +66,16 @@ export class PDFReaderWindowManager {
       window.focus();
 
       // Send the paper data to the window
-      window.webContents.send('pdf-reader:paper-loaded', paper);
+      // Note: Keep full title to avoid truncation issues
+      const simplePaperData = {
+        id: paper.id,
+        title: paper.title || 'Untitled Paper',
+        authors: paper.authors || [],
+        filePath: paper.filePath || null,
+        status: paper.status,
+      };
+
+      window.webContents.send('pdf-reader:paper-loaded', simplePaperData);
     });
 
     window.on('closed', () => {
@@ -176,6 +191,56 @@ export class PDFReaderWindowManager {
       }
       return false;
     });
+
+    // Get annotations for a paper
+    ipcMain.handle('pdf-reader:get-annotations', async (_event, paperId: string) => {
+      try {
+        const { openDatabase } = await import('./db.js');
+        const db = openDatabase();
+
+        const row = db
+          .prepare(
+            `
+          SELECT annotations FROM papers WHERE id = ?
+        `,
+          )
+          .get(paperId) as { annotations?: string } | undefined;
+
+        if (row?.annotations) {
+          return JSON.parse(row.annotations);
+        }
+        return {};
+      } catch (error) {
+        console.error('Error getting annotations:', error);
+        return {};
+      }
+    });
+
+    // Save annotations for a paper
+    ipcMain.handle(
+      'pdf-reader:save-annotations',
+      async (_event, paperId: string, annotations: Record<string, unknown[]>) => {
+        try {
+          const { openDatabase } = await import('./db.js');
+          const db = openDatabase();
+
+          const annotationsJson = JSON.stringify(annotations);
+
+          db.prepare(
+            `
+          UPDATE papers
+          SET annotations = ?, updatedAt = datetime('now')
+          WHERE id = ?
+        `,
+          ).run(annotationsJson, paperId);
+
+          return true;
+        } catch (error) {
+          console.error('Error saving annotations:', error);
+          return false;
+        }
+      },
+    );
   }
 }
 

@@ -1,14 +1,14 @@
 import { ipcMain } from 'electron';
-import { openDatabase } from './db';
+import { openDatabase } from './db.js';
 import { randomUUID } from 'node:crypto';
-import type { Paper } from '../shared/types';
-import { importByDOI, importPDF } from './ingest/importer';
-import { PDFImportManager } from './ingest/pdf-import';
-import { URLPaperDetector } from './ingest/url-paper-detector';
+import type { Paper } from '../shared/types.js';
+import { importByDOI, importPDF } from './ingest/importer.js';
+import { PDFImportManager } from './ingest/pdf-import.js';
+import { URLPaperDetector } from './ingest/url-paper-detector.js';
 import fs from 'node:fs';
-import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline';
-import { createRAGSystem } from './ai/rag';
-import { processPaperOCR } from './ocr/batch';
+import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline.js';
+import { createRAGSystem } from './ai/rag.js';
+import { processPaperOCR } from './ocr/batch.js';
 import {
   BUILTIN_ALL,
   BUILTIN_RECENT,
@@ -17,7 +17,7 @@ import {
   type SidebarListResponse,
   type SidebarNode,
   type SidebarPrefs,
-} from '../shared/sidebar';
+} from '../shared/sidebar.js';
 
 const db = openDatabase();
 
@@ -115,6 +115,7 @@ ipcMain.handle('import:pdf', async (_e, absPath: string) => {
 
 ipcMain.handle('papers:get', (_e, id: string) => {
   const row = db.prepare(`select * from papers where id = ?`).get(id) as DBPaperRow | undefined;
+
   if (!row) return null;
   return { ...row, authors: JSON.parse(row.authors) } as Paper;
 });
@@ -129,6 +130,15 @@ ipcMain.handle('papers:delete', (_e, id: string) => {
 
 ipcMain.handle('file:read', async (_e, absPath: string) => {
   return fs.promises.readFile(absPath);
+});
+
+ipcMain.handle('file:write', async (_e, absPath: string, data: ArrayBuffer | string) => {
+  if (typeof data === 'string') {
+    await fs.promises.writeFile(absPath, data);
+  } else {
+    await fs.promises.writeFile(absPath, Buffer.from(data as ArrayBuffer));
+  }
+  return true;
 });
 
 ipcMain.handle(

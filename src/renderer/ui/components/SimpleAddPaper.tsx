@@ -5,6 +5,7 @@ type SimpleAddPaperProps = {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (input: string, type: 'url' | 'pdf') => void;
+  onToast?: (message: string, type: 'success' | 'error' | 'info') => void;
 };
 
 interface DetectedMetadata {
@@ -17,11 +18,21 @@ interface DetectedMetadata {
   source: string;
 }
 
-export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose, onAdd }) => {
+export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
+  isOpen,
+  onClose,
+  onAdd,
+  onToast,
+}) => {
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [detectedMetadata, setDetectedMetadata] = React.useState<DetectedMetadata | null>(null);
   const [isDetecting, setIsDetecting] = React.useState(false);
+  const [bulkProgress, setBulkProgress] = React.useState<{
+    current: number;
+    total: number;
+    currentFile: string;
+  } | null>(null);
   const inputId = React.useId();
   const modalRef = React.useRef<HTMLDivElement>(null);
 
@@ -121,9 +132,9 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
   const handleFileUpload = async () => {
     setIsLoading(true);
     try {
-      // Use Electron's native file dialog
+      // Use Electron's native file dialog with multi-selection support
       const result = await window.api.dialog.showOpenDialog({
-        properties: ['openFile'],
+        properties: ['openFile', 'multiSelections'],
         filters: [
           {
             name: 'PDF Files',
@@ -133,10 +144,18 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
-        const filePath = result.filePaths[0];
-        if (filePath) {
-          await onAdd(filePath, 'pdf');
-          onClose();
+        const filePaths = result.filePaths;
+
+        if (filePaths.length === 1) {
+          // Single file upload - use existing logic
+          const filePath = filePaths[0];
+          if (filePath) {
+            await onAdd(filePath, 'pdf');
+            onClose();
+          }
+        } else {
+          // Bulk upload - process multiple files
+          await handleBulkUpload(filePaths);
         }
       }
     } catch {
@@ -144,6 +163,56 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBulkUpload = async (filePaths: string[]) => {
+    setIsLoading(true);
+    setBulkProgress({ current: 0, total: filePaths.length, currentFile: '' });
+
+    const results = {
+      successful: 0,
+      failed: 0,
+      errors: [] as string[],
+    };
+
+    for (let i = 0; i < filePaths.length; i++) {
+      const filePath = filePaths[i];
+      if (!filePath) continue;
+
+      const fileName = filePath.split('/').pop() || filePath;
+
+      setBulkProgress({
+        current: i + 1,
+        total: filePaths.length,
+        currentFile: fileName,
+      });
+
+      try {
+        await onAdd(filePath, 'pdf');
+        results.successful++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push(`${fileName}: ${error}`);
+      }
+    }
+
+    // Close modal after bulk upload
+    onClose();
+
+    // Show results toast
+    if (results.successful > 0) {
+      const message = `Successfully uploaded ${results.successful} PDF${results.successful > 1 ? 's' : ''}`;
+      if (results.failed > 0) {
+        onToast?.(`${message}, ${results.failed} failed`, 'info');
+      } else {
+        onToast?.(message, 'success');
+      }
+    } else {
+      onToast?.(`Failed to upload ${results.failed} PDF${results.failed > 1 ? 's' : ''}`, 'error');
+    }
+
+    // Clear progress after a delay
+    setTimeout(() => setBulkProgress(null), 1000);
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -278,6 +347,81 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
             color: #999;
           }
 
+          .bulk-progress-container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+          }
+
+          .bulk-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+
+          .bulk-progress-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .bulk-progress-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .progress-text {
+            font-size: 14px;
+            color: #666;
+          }
+
+          .progress-percentage {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+          }
+
+          .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+          }
+
+          .current-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+          }
+
+          .current-file svg {
+            flex-shrink: 0;
+          }
+
         `}</style>
         <div className="modal-header">
           <h2 className="modal-title">Add Paper</h2>
@@ -286,38 +430,70 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
           </button>
         </div>
 
-        <button
-          type="button"
-          className="drop-zone"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              handleFileUpload();
-            }
-          }}
-          onClick={handleFileUpload}
-        >
-          <div className="drop-zone-content">
-            <div className="drop-icon">
-              <Upload size={48} />
+        {bulkProgress ? (
+          <div className="bulk-progress-container">
+            <div className="bulk-progress-header">
+              <h3>Uploading PDF Files</h3>
+              <button type="button" className="modal-close" onClick={onClose}>
+                <X size={20} />
+              </button>
             </div>
-            <p className="drop-text">Click to browse for PDF files</p>
-            <div
-              role="button"
-              tabIndex={0}
-              className="file-label"
-              onClick={handleFileUpload}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleFileUpload();
-                }
-              }}
-            >
-              Choose PDF File
+            <div className="bulk-progress-content">
+              <div className="progress-info">
+                <span className="progress-text">
+                  Processing file {bulkProgress.current} of {bulkProgress.total}
+                </span>
+                <span className="progress-percentage">
+                  {Math.round((bulkProgress.current / bulkProgress.total) * 100)}%
+                </span>
+              </div>
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${(bulkProgress.current / bulkProgress.total) * 100}%`,
+                  }}
+                />
+              </div>
+              <div className="current-file">
+                <Upload size={16} />
+                <span>{bulkProgress.currentFile}</span>
+              </div>
             </div>
           </div>
-        </button>
+        ) : (
+          <button
+            type="button"
+            className="drop-zone"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleFileUpload();
+              }
+            }}
+            onClick={handleFileUpload}
+          >
+            <div className="drop-zone-content">
+              <div className="drop-icon">
+                <Upload size={48} />
+              </div>
+              <p className="drop-text">Click to browse for PDF files</p>
+              <button
+                type="button"
+                className="file-label"
+                onClick={handleFileUpload}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleFileUpload();
+                  }
+                }}
+              >
+                Choose PDF Files
+              </button>
+            </div>
+          </button>
+        )}
 
         <div className="divider">
           <span className="divider-text">or</span>
@@ -400,3 +576,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({ isOpen, onClose,
     </div>
   );
 };
+
+SimpleAddPaper.displayName = 'SimpleAddPaper';
+
+export type { SimpleAddPaperProps };

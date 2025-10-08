@@ -1,4 +1,4 @@
-import { openDatabase } from '../db';
+import { openDatabase } from '../db.js';
 import { randomUUID } from 'node:crypto';
 
 const db = openDatabase();
@@ -107,7 +107,7 @@ export async function processPaperForEmbeddings(paperId: string, text: string): 
 
 export async function searchSimilarPapers(
   query: string,
-  _limit = 10,
+  limit = 10,
 ): Promise<
   Array<{
     paperId: string;
@@ -116,5 +116,8 @@ export async function searchSimilarPapers(
 > {
   // For now, return empty results since we don't have real embeddings
   // In production, this would use vector similarity search
+  // TODO: Implement vector similarity search using the limit parameter
+  void query;
+  void limit;
   return [];
 }

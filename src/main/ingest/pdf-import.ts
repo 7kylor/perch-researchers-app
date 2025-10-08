@@ -2,11 +2,11 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { app } from 'electron';
 import { randomUUID, createHash } from 'node:crypto';
-import type { Paper } from '../../shared/types';
+import type { Paper } from '../../shared/types.js';
 import https from 'node:https';
 import http from 'node:http';
-import { URLPaperDetector } from './url-paper-detector';
-import { PDFMetadataExtractor } from './pdf-metadata-extractor';
+import { URLPaperDetector } from './url-paper-detector.js';
+import { PDFMetadataExtractor } from './pdf-metadata-extractor.js';
 
 export interface PDFImportProgress {
   stage: 'downloading' | 'processing' | 'complete' | 'error';

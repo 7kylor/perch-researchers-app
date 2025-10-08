@@ -100,5 +100,16 @@ export function openDatabase(): Database.Database {
       updatedAt text not null
     );
   `);
+
+  // Ensure papers table has annotations column (SQLite lacks IF NOT EXISTS for columns)
+  try {
+    const columns = db.prepare(`PRAGMA table_info(papers)`).all() as Array<{ name: string }>;
+    const hasAnnotations = columns.some((c) => c.name === 'annotations');
+    if (!hasAnnotations) {
+      db.exec(`ALTER TABLE papers ADD COLUMN annotations text`);
+    }
+  } catch {
+    // Best-effort; ignore if pragma/alter not supported
+  }
   return db as unknown as Database.Database;
 }

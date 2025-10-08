@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import pdfParse from 'pdf-parse';
+import { pdf as pdfParse } from 'pdf-parse';
 
 export interface ExtractedMetadata {
   title?: string;
@@ -90,7 +90,7 @@ export class PDFMetadataExtractor {
       .replace(/[\r\n]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 500); // Max 500 chars
+      .slice(0, 1000); // Max 1000 chars for longer titles
   }
 
   /**
@@ -125,21 +125,59 @@ export class PDFMetadataExtractor {
    * Extract title from first lines of text
    */
   private extractTitleFromText(text: string): string | undefined {
-    // Get first non-empty line that looks like a title
+    // Get first non-empty lines that could be part of a title
     const lines = text
       .split('\n')
       .map((line) => line.trim())
-      .filter((line) => line.length > 10);
+      .filter((line) => line && line.length > 5); // Lower threshold for potential title parts
 
-    for (const line of lines.slice(0, 10)) {
+    // Look for consecutive lines that could form a title
+    for (let i = 0; i < Math.min(lines.length, 20); i++) {
+      const line = lines[i];
+
+      if (!line) continue;
+
       // Skip lines that look like headers, page numbers, or URLs
       if (
-        line.length < 200 &&
-        line.length > 10 &&
+        line.length > 10 && // Increased minimum length
         !line.match(/^(page|doi|arxiv|http|www|\d+$)/i) &&
-        !line.match(/^\d+$/)
+        !line.match(/^\d+$/) &&
+        !line.match(
+          /^(abstract|introduction|keywords?|references?|acknowledgments?|contents?|table of contents)$/i,
+        )
       ) {
-        return this.cleanTitle(line);
+        // Check if this might be part of a multi-line title
+        let potentialTitle = line;
+        let nextLineIndex = i + 1;
+
+        // Look ahead to see if next lines should be part of the title
+        // Look further ahead and be more permissive
+        while (nextLineIndex < lines.length && nextLineIndex < i + 8) {
+          const nextLine = lines[nextLineIndex];
+
+          if (!nextLine) break;
+
+          // More permissive conditions for title continuation
+          if (
+            nextLine.length > 8 && // Lower threshold for continuation
+            !nextLine.match(/^(page|doi|arxiv|http|www|\d+$)/i) &&
+            !nextLine.match(/^\d+$/) &&
+            !nextLine.match(
+              /^(abstract|introduction|keywords?|references?|acknowledgments?|contents?|table of contents|author|authors)$/i,
+            ) &&
+            !nextLine.match(/^\s*$/) // Not empty or whitespace-only
+          ) {
+            potentialTitle += ' ' + nextLine;
+            nextLineIndex++;
+          } else {
+            break;
+          }
+        }
+
+        // Accept longer titles
+        if (potentialTitle && potentialTitle.length > 30 && potentialTitle.length < 1500) {
+          return this.cleanTitle(potentialTitle);
+        }
       }
     }
 
@@ -152,17 +190,33 @@ export class PDFMetadataExtractor {
   private extractAuthorsFromText(text: string): string[] {
     const authors: string[] = [];
 
-    // Look for "Author:" or "Authors:" section
-    const authorSection = text.match(/(?:Authors?|By)[:\s]+([^\n]+(?:\n[A-Z][^\n]+){0,5})/i);
-    if (authorSection && authorSection[1]) {
+    // Look for "Author:" or "Authors:" section - be more specific
+    // Look for patterns that are clearly author sections, not title content
+    const authorSection = text.match(
+      /(?:^|\n)(?:Authors?|By)[:\s]*\n?([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}(?:\s*,\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})*(?:\s*\n\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})*)/i,
+    );
+    if (authorSection?.[1]) {
       const extractedAuthors = this.parseAuthors(authorSection[1]);
       if (extractedAuthors.length > 0 && extractedAuthors.length <= 20) {
-        return extractedAuthors;
+        // Filter out lines that look like they might be title fragments
+        const filteredAuthors = extractedAuthors.filter(
+          (author) =>
+            author.length < 100 && // Authors shouldn't be extremely long
+            !author.match(
+              /learning|segmentation|techniques|structures|comparison|backpropagation/i,
+            ) && // Filter out title-like words
+            author.split(' ').length <= 5, // Authors typically have 1-5 words
+        );
+        if (filteredAuthors.length > 0) {
+          return filteredAuthors;
+        }
       }
     }
 
-    // Look for email addresses (often near author names)
-    const emails = text.match(/\b[A-Z][a-z]+\s+[A-Z][a-z]+(?=.*?@)/g);
+    // Look for email addresses (often near author names) - be more restrictive
+    const emails = text.match(
+      /\b[A-Z][a-z]+\s+[A-Z]\.[A-Z][a-z]+@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?=\s|$)/g,
+    );
     if (emails && emails.length > 0 && emails.length <= 10) {
       return [...new Set(emails)];
     }

@@ -5,6 +5,7 @@ type EnhancedAddPaperProps = {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (input: string, type: 'url' | 'pdf') => void;
+  onToast?: (message: string, type: 'success' | 'error' | 'info') => void;
 };
 
 interface DetectedMetadata {
@@ -17,12 +18,22 @@ interface DetectedMetadata {
   source: string;
 }
 
-export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onClose, onAdd }) => {
+export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({
+  isOpen,
+  onClose,
+  onAdd,
+  onToast,
+}) => {
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [detectedMetadata, setDetectedMetadata] = React.useState<DetectedMetadata | null>(null);
   const [isDetecting, setIsDetecting] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<'url' | 'file'>('url');
+  const [bulkProgress, setBulkProgress] = React.useState<{
+    current: number;
+    total: number;
+    currentFile: string;
+  } | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
@@ -102,15 +113,23 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
     setIsLoading(true);
     try {
       const result = await window.api.dialog.showOpenDialog({
-        properties: ['openFile'],
+        properties: ['openFile', 'multiSelections'],
         filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
       });
 
       if (!result.canceled && result.filePaths.length > 0) {
-        const filePath = result.filePaths[0];
-        if (filePath) {
-          await onAdd(filePath, 'pdf');
-          onClose();
+        const filePaths = result.filePaths;
+
+        if (filePaths.length === 1) {
+          // Single file upload - use existing logic
+          const filePath = filePaths[0];
+          if (filePath) {
+            await onAdd(filePath, 'pdf');
+            onClose();
+          }
+        } else {
+          // Bulk upload - process multiple files
+          await handleBulkUpload(filePaths);
         }
       }
     } catch {
@@ -118,6 +137,56 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBulkUpload = async (filePaths: string[]) => {
+    setIsLoading(true);
+    setBulkProgress({ current: 0, total: filePaths.length, currentFile: '' });
+
+    const results = {
+      successful: 0,
+      failed: 0,
+      errors: [] as string[],
+    };
+
+    for (let i = 0; i < filePaths.length; i++) {
+      const filePath = filePaths[i];
+      if (!filePath) continue;
+
+      const fileName = filePath.split('/').pop() || filePath;
+
+      setBulkProgress({
+        current: i + 1,
+        total: filePaths.length,
+        currentFile: fileName,
+      });
+
+      try {
+        await onAdd(filePath, 'pdf');
+        results.successful++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push(`${fileName}: ${error}`);
+      }
+    }
+
+    // Close modal after bulk upload
+    onClose();
+
+    // Show results toast
+    if (results.successful > 0) {
+      const message = `Successfully uploaded ${results.successful} PDF${results.successful > 1 ? 's' : ''}`;
+      if (results.failed > 0) {
+        onToast?.(`${message}, ${results.failed} failed`, 'info');
+      } else {
+        onToast?.(message, 'success');
+      }
+    } else {
+      onToast?.(`Failed to upload ${results.failed} PDF${results.failed > 1 ? 's' : ''}`, 'error');
+    }
+
+    // Clear progress after a delay
+    setTimeout(() => setBulkProgress(null), 1000);
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -129,7 +198,18 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
   if (!isOpen) return null;
 
   return (
-    <div className="enhanced-modal-overlay" onClick={handleOverlayClick}>
+    <div
+      className="enhanced-modal-overlay"
+      onClick={handleOverlayClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !isLoading) {
+          onClose();
+        }
+      }}
+      tabIndex={-1}
+      role="button"
+      aria-label="Close modal"
+    >
       <div
         className="enhanced-modal"
         role="dialog"
@@ -161,12 +241,20 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
         </div>
 
         {/* Tab Navigation */}
-        <div className="enhanced-modal-tabs">
+        <div className="enhanced-modal-tabs" role="tablist">
           <button
             type="button"
             className={`enhanced-tab ${activeTab === 'url' ? 'active' : ''}`}
             onClick={() => setActiveTab('url')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setActiveTab('url');
+              }
+            }}
             disabled={isLoading}
+            role="tab"
+            aria-selected={activeTab === 'url'}
           >
             <Globe size={18} />
             <span>From URL</span>
@@ -175,12 +263,97 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
             type="button"
             className={`enhanced-tab ${activeTab === 'file' ? 'active' : ''}`}
             onClick={() => setActiveTab('file')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setActiveTab('file');
+              }
+            }}
             disabled={isLoading}
+            role="tab"
+            aria-selected={activeTab === 'file'}
           >
             <Upload size={18} />
             <span>Upload File</span>
           </button>
         </div>
+
+        <style>{`
+          .bulk-progress-container {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+          }
+
+          .bulk-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+
+          .bulk-progress-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+          }
+
+          .bulk-progress-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+          }
+
+          .progress-percentage {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+          }
+
+          .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--background-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+          }
+
+          .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+          }
+
+          .current-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--background-secondary);
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+          }
+
+          .current-file svg {
+            flex-shrink: 0;
+          }
+        `}</style>
 
         {/* Content */}
         <div className="enhanced-modal-content">
@@ -302,38 +475,78 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
             </form>
           ) : (
             <div className="upload-section">
-              <div
-                role="button"
-                tabIndex={0}
-                className="upload-drop-zone"
-                onClick={handleFileUpload}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleFileUpload();
-                  }
-                }}
-                aria-label="Upload PDF file"
-              >
-                <div className="upload-icon-wrapper">
-                  <Upload size={48} strokeWidth={1.5} />
+              {bulkProgress ? (
+                <div className="bulk-progress-container">
+                  <div className="bulk-progress-header">
+                    <h3>Uploading PDF Files</h3>
+                    <button
+                      type="button"
+                      className="enhanced-modal-close"
+                      onClick={onClose}
+                      disabled={isLoading}
+                      aria-label="Close dialog"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                  <div className="bulk-progress-content">
+                    <div className="progress-info">
+                      <span className="progress-text">
+                        Processing file {bulkProgress.current} of {bulkProgress.total}
+                      </span>
+                      <span className="progress-percentage">
+                        {Math.round((bulkProgress.current / bulkProgress.total) * 100)}%
+                      </span>
+                    </div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width: `${(bulkProgress.current / bulkProgress.total) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <div className="current-file">
+                      <FileText size={16} />
+                      <span>{bulkProgress.currentFile}</span>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="upload-title">Upload PDF File</h3>
-                <p className="upload-description">Click to browse for PDF files on your computer</p>
-                <div className="upload-button">
-                  {isLoading ? (
-                    <>
-                      <Loader2 size={18} className="spin-animation" />
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FileText size={18} />
-                      <span>Choose File</span>
-                    </>
-                  )}
-                </div>
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  className="upload-drop-zone"
+                  onClick={handleFileUpload}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleFileUpload();
+                    }
+                  }}
+                  aria-label="Upload PDF files"
+                >
+                  <div className="upload-icon-wrapper">
+                    <Upload size={48} strokeWidth={1.5} />
+                  </div>
+                  <h3 className="upload-title">Upload PDF Files</h3>
+                  <p className="upload-description">
+                    Click to browse for PDF files on your computer. You can select multiple files.
+                  </p>
+                  <div className="upload-button">
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={18} className="spin-animation" />
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={18} />
+                        <span>Choose Files</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              )}
 
               <div className="upload-info">
                 <p className="upload-info-text">Supported format: PDF</p>
@@ -348,3 +561,7 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({ isOpen, onCl
     </div>
   );
 };
+
+EnhancedAddPaper.displayName = 'EnhancedAddPaper';
+
+export type { EnhancedAddPaperProps };

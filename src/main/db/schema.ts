@@ -12,6 +12,7 @@ export const papers = sqliteTable('papers', {
   status: text('status').notNull(),
   filePath: text('filePath'),
   textHash: text('textHash').notNull(),
+  annotations: text('annotations'), // JSON string of page annotations
   addedAt: text('addedAt').notNull(),
   updatedAt: text('updatedAt').notNull(),
 });

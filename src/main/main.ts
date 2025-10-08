@@ -1,7 +1,18 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
-import { PDFReaderWindowManager } from './pdf-reader-window';
-import { PDFImportManager } from './ingest/pdf-import';
+import { fileURLToPath } from 'node:url';
+import { PDFReaderWindowManager } from './pdf-reader-window.js';
+import { PDFImportManager } from './ingest/pdf-import.js';
+
+// ES modules: get __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Set up IPC handlers early
+const pdfReaderManager = PDFReaderWindowManager.getInstance();
+const _pdfImportManager = PDFImportManager.getInstance();
+
+pdfReaderManager.setupIPCHandlers();
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -37,13 +48,6 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  // Initialize PDF managers
-  const pdfReaderManager = PDFReaderWindowManager.getInstance();
-  const _pdfImportManager = PDFImportManager.getInstance();
-
-  // Setup IPC handlers
-  pdfReaderManager.setupIPCHandlers();
-
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

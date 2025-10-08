@@ -1,5 +1,5 @@
-import type { Paper } from '../shared/types';
-import type { SidebarListResponse, SidebarNode, SidebarPrefs } from '../shared/sidebar';
+import type { Paper } from '../shared/types.js';
+import type { SidebarListResponse, SidebarNode, SidebarPrefs } from '../shared/sidebar.js';
 import type { OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 
 export interface PDFImportProgress {
@@ -65,6 +65,14 @@ export interface PreloadAPI {
     'file-exists': (filePath: string) => Promise<boolean>;
     'get-windows': () => Promise<string[]>;
     'focus-window': (windowId: string) => Promise<boolean>;
+    'get-annotations': (paperId: string) => Promise<Record<string, unknown[]>>;
+    'save-annotations': (
+      paperId: string,
+      annotations: Record<string, unknown[]>,
+    ) => Promise<boolean>;
+  };
+  pdfReader: {
+    onPaperLoaded: (callback: (paper: Paper) => void) => void;
   };
   file: {
     read: (filePath: string) => Promise<ArrayBuffer>;
@@ -137,23 +145,34 @@ contextBridge.exposeInMainWorld('api', {
     'file-exists': (filePath: string) => ipcRenderer.invoke('pdf-reader:file-exists', filePath),
     'get-windows': () => ipcRenderer.invoke('pdf-reader:get-windows'),
     'focus-window': (windowId: string) => ipcRenderer.invoke('pdf-reader:focus-window', windowId),
+    'get-annotations': (paperId: string) =>
+      ipcRenderer.invoke('pdf-reader:get-annotations', paperId),
+    'save-annotations': (paperId: string, annotations: Record<string, unknown[]>) =>
+      ipcRenderer.invoke('pdf-reader:save-annotations', paperId, annotations),
+  },
+  pdfReader: {
+    onPaperLoaded: (callback: (paper: Paper) => void) => {
+      ipcRenderer.on('pdf-reader:paper-loaded', (_event, paper) => callback(paper));
+    },
   },
   file: {
     read: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
+    write: (filePath: string, data: ArrayBuffer | string) =>
+      ipcRenderer.invoke('file:write', filePath, data),
   },
   dialog: {
     showOpenDialog: (options?: OpenDialogOptions) =>
       ipcRenderer.invoke('dialog:showOpenDialog', options),
   },
   on: (channel: string, listener: (...args: unknown[]) => void) => {
-    ipcRenderer.on(channel, listener);
+    ipcRenderer.on(channel, (_event, ...args) => listener(...args));
   },
   sidebar: {
     list: () => ipcRenderer.invoke('sidebar:list'),
     create: (node: unknown) => ipcRenderer.invoke('sidebar:create', node),
     update: (id: string, updates: unknown) => ipcRenderer.invoke('sidebar:update', id, updates),
     delete: (id: string) => ipcRenderer.invoke('sidebar:delete', id),
-    move: (id: string, newParentId: string, newIndex: number) =>
+    move: (id: string, newParentId: string | null, newIndex: number) =>
       ipcRenderer.invoke('sidebar:move', id, newParentId, newIndex),
     prefs: {
       get: () => ipcRenderer.invoke('sidebar:prefs:get'),
