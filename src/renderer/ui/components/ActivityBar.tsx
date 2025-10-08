@@ -42,14 +42,18 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   sortBy,
   onSortChange,
   onAddItem,
-  debug,
 }) => {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
 
   // Debug logging
   React.useEffect(() => {
-    console.log('ActivityBar re-rendered, isSidebarCollapsed:', isSidebarCollapsed, 'render count:', renderCount.current);
+    console.log(
+      'ActivityBar re-rendered, isSidebarCollapsed:',
+      isSidebarCollapsed,
+      'render count:',
+      renderCount.current,
+    );
   }, [isSidebarCollapsed]);
   const [showQuickActions, setShowQuickActions] = React.useState(false);
   const [showSortDropdown, setShowSortDropdown] = React.useState(false);

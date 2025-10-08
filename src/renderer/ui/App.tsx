@@ -7,6 +7,7 @@ import { EmptyState } from './components/EmptyState';
 import { EnhancedAddPaper } from './components/EnhancedAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
+import { AIChat } from './components/AIChat';
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
 
@@ -20,6 +21,7 @@ export const App: React.FC = () => {
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortOption>('recent');
+  const [showChat, setShowChat] = React.useState(false);
 
   const { prefs, actions } = useSidebarStore();
 
@@ -366,11 +368,12 @@ export const App: React.FC = () => {
           sortBy={sortBy}
           onSortChange={handleSortChange}
           onAddItem={() => setShowSimpleAddModal(true)}
-          debug={{ renderCount: 0 }}
         />
         <div className="library-layout">
-          <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
-          <div className="library-main">
+          {!prefs.sidebarCollapsed && (
+            <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
+          )}
+          <div className={`library-main ${prefs.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <div className="library-content">
               {isLoading ? (
                 <LoadingSkeleton count={9} />
@@ -388,6 +391,24 @@ export const App: React.FC = () => {
                 />
               )}
             </div>
+          </div>
+          <div className={`ai-drawer ${showChat ? 'open' : ''}`}>
+            <div className="ai-drawer-header">
+              <button
+                type="button"
+                className="ai-drawer-toggle"
+                onClick={() => setShowChat(!showChat)}
+              >
+                {showChat ? 'Close AI' : 'Open AI'}
+              </button>
+            </div>
+            {showChat && (
+              <div className="ai-drawer-body">
+                <AIChat
+                  defaultMode={(localStorage.getItem('aiMode') as 'openai' | 'local') || 'local'}
+                />
+              </div>
+            )}
           </div>
         </div>
 
