@@ -59,9 +59,8 @@ jobs:
         with:
           name: perch-app-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            dist/*-1.0.0.*
-            dist/make/**/*.*
-          if-no-files-found: error
+            dist/
+          if-no-files-found: warn
           retention-days: 30
 
   create-release:
@@ -119,12 +118,12 @@ jobs:
           prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
           generate_release_notes: true
           files: |
-            artifacts/perch-app-linux-x64/*.AppImage
-            artifacts/perch-app-linux-x64/*.deb
-            artifacts/perch-app-linux-x64/*.zip
-            artifacts/perch-app-win-x64/*.exe
-            artifacts/perch-app-win-x64/*.zip
-            artifacts/perch-app-mac-x64/*.dmg
-            artifacts/perch-app-mac-x64/*.zip
-            artifacts/perch-app-mac-arm64/*.dmg
-            artifacts/perch-app-mac-arm64/*.zip
+            artifacts/perch-app-linux-x64/*/*.AppImage
+            artifacts/perch-app-linux-x64/*/*.deb
+            artifacts/perch-app-linux-x64/*/*.zip
+            artifacts/perch-app-win-x64/*/*.exe
+            artifacts/perch-app-win-x64/*/*.zip
+            artifacts/perch-app-mac-x64/*/*.dmg
+            artifacts/perch-app-mac-x64/*/*.zip
+            artifacts/perch-app-mac-arm64/*/*.dmg
+            artifacts/perch-app-mac-arm64/*/*.zip
