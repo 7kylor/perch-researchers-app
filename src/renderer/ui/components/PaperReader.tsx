@@ -26,6 +26,13 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
   const [currentPage, setCurrentPage] = React.useState(1);
   const [totalPages] = React.useState(1);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [aiLoading, setAiLoading] = React.useState<'none' | 'summary' | 'qa' | 'related'>('none');
+  const [summary, setSummary] = React.useState<string>('');
+  const [question, setQuestion] = React.useState<string>('');
+  const [answer, setAnswer] = React.useState<string>('');
+  const [related, setRelated] = React.useState<
+    Array<{ paperId: string; title: string; score: number }>
+  >([]);
 
   const handleKeyDown = React.useCallback(
     (e: KeyboardEvent) => {
@@ -76,6 +83,70 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
 
           {/* Right section - Controls */}
           <div className="activity-right">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8 }}>
+              <button
+                type="button"
+                className="activity-compact-btn"
+                onClick={async () => {
+                  try {
+                    setAiLoading('summary');
+                    const result = await window.api.ai.summarize(paper.id);
+                    setSummary(result);
+                  } catch {
+                    setSummary('Failed to summarize.');
+                  } finally {
+                    setAiLoading('none');
+                  }
+                }}
+                title="Summarize"
+              >
+                <span>Summarize</span>
+              </button>
+              <input
+                type="text"
+                placeholder="Ask a question"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                style={{ height: 24 }}
+              />
+              <button
+                type="button"
+                className="activity-compact-btn"
+                onClick={async () => {
+                  if (!question.trim()) return;
+                  try {
+                    setAiLoading('qa');
+                    const result = await window.api.ai.question(question.trim(), paper.id);
+                    setAnswer(result);
+                  } catch {
+                    setAnswer('Failed to answer question.');
+                  } finally {
+                    setAiLoading('none');
+                  }
+                }}
+                title="Ask"
+              >
+                <span>Ask</span>
+              </button>
+              <button
+                type="button"
+                className="activity-compact-btn"
+                onClick={async () => {
+                  try {
+                    setAiLoading('related');
+                    const res = await window.api.ai.related(paper.title);
+                    setRelated(res);
+                  } catch {
+                    setRelated([]);
+                  } finally {
+                    setAiLoading('none');
+                  }
+                }}
+                title="Related"
+              >
+                <span>Related</span>
+              </button>
+            </div>
             <button
               type="button"
               className="activity-compact-btn"
@@ -161,6 +232,33 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
                       </a>
                     </p>
                   )}
+                </div>
+              )}
+            </div>
+
+            {/* AI Results */}
+            <div style={{ padding: 16, borderTop: '1px solid var(--border)' }}>
+              {aiLoading !== 'none' && <div className="loading-skeleton" style={{ height: 64 }} />}
+              {!!summary && (
+                <div style={{ marginBottom: 12 }}>
+                  <h4 style={{ margin: '0 0 8px 0' }}>Summary</h4>
+                  <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{summary}</pre>
+                </div>
+              )}
+              {!!answer && (
+                <div style={{ marginBottom: 12 }}>
+                  <h4 style={{ margin: '0 0 8px 0' }}>Answer</h4>
+                  <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{answer}</pre>
+                </div>
+              )}
+              {related.length > 0 && (
+                <div>
+                  <h4 style={{ margin: '0 0 8px 0' }}>Related Papers</h4>
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {related.map((r) => (
+                      <li key={r.paperId}>{r.title}</li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

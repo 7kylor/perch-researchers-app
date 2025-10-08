@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, Notification, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Notification } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { autoUpdater } from 'electron-updater';
@@ -30,7 +30,7 @@ function setupAutoUpdater(): void {
       title: 'Update Available',
       body: `Version ${info.version} is available. Downloading...`,
       icon: path.join(__dirname, '../renderer/assets/icon.png'), // Adjust path as needed
-      urgency: 'normal'
+      urgency: 'normal',
     });
 
     notification.show();
@@ -48,7 +48,7 @@ function setupAutoUpdater(): void {
       body: `Version ${info.version} downloaded. Restart to install.`,
       icon: path.join(__dirname, '../renderer/assets/icon.png'),
       urgency: 'normal',
-      actions: [{ type: 'button', text: 'Restart Now' }]
+      actions: [{ type: 'button', text: 'Restart Now' }],
     });
 
     notification.show();
@@ -64,7 +64,7 @@ function setupAutoUpdater(): void {
   });
 
   // Update not available
-  autoUpdater.on('update-not-available', (info) => {
+  autoUpdater.on('update-not-available', (_info) => {
     console.log('No updates available');
   });
 
@@ -128,9 +128,15 @@ ipcMain.handle('app:version', () => app.getVersion());
 ipcMain.handle('check-for-updates', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
-    return { success: true, updateInfo: result.updateInfo };
+    return {
+      success: true,
+      updateInfo: result ? result.updateInfo : null
+    };
   } catch (error) {
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 });
 
@@ -139,7 +145,10 @@ ipcMain.handle('download-update', async () => {
     await autoUpdater.downloadUpdate();
     return { success: true };
   } catch (error) {
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    };
   }
 });
 

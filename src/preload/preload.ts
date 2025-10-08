@@ -24,6 +24,13 @@ export interface PreloadAPI {
     search: (query: string) => Promise<Paper[]>;
     listByCategory: (nodeId: string, limit?: number) => Promise<Paper[]>;
   };
+  ai: {
+    init: (type: 'openai' | 'local', apiKey?: string) => Promise<void>;
+    summarize: (paperId: string) => Promise<string>;
+    question: (question: string, paperId?: string) => Promise<string>;
+    related: (query: string) => Promise<Array<{ paperId: string; title: string; score: number }>>;
+    usage: () => Promise<number>;
+  };
   ingest: {
     pdf: (filePath: string) => Promise<string>;
     doi: (doi: string) => Promise<string>;
@@ -123,6 +130,15 @@ contextBridge.exposeInMainWorld('api', {
     search: (query: string) => ipcRenderer.invoke('papers:search', query),
     listByCategory: (nodeId: string, limit?: number) =>
       ipcRenderer.invoke('papers:listByCategory', nodeId, limit),
+  },
+  ai: {
+    init: (type: 'openai' | 'local', apiKey?: string) =>
+      ipcRenderer.invoke('ai:init', type, apiKey),
+    summarize: (paperId: string) => ipcRenderer.invoke('ai:summarize', paperId),
+    question: (question: string, paperId?: string) =>
+      ipcRenderer.invoke('ai:question', question, paperId),
+    related: (query: string) => ipcRenderer.invoke('ai:related', query),
+    usage: () => ipcRenderer.invoke('ai:usage'),
   },
   ingest: {
     pdf: (filePath: string) => ipcRenderer.invoke('import:pdf', filePath),

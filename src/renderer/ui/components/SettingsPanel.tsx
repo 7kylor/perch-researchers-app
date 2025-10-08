@@ -19,7 +19,7 @@ type SettingsPanelProps = {
   onClose: () => void;
 };
 
-type TabId = 'appearance' | 'library' | 'shortcuts' | 'about';
+type TabId = 'appearance' | 'library' | 'ai' | 'shortcuts' | 'about';
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const { theme, setTheme } = useTheme();
@@ -28,6 +28,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
     { id: 'library', label: 'Library', icon: <Database size={16} /> },
+    { id: 'ai', label: 'AI', icon: <Info size={16} /> },
     { id: 'shortcuts', label: 'Shortcuts', icon: <Keyboard size={16} /> },
     { id: 'about', label: 'About', icon: <Info size={16} /> },
   ];
@@ -185,6 +186,81 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                   </button>
                   <div className="setting-description">
                     Remove all papers from your library. This action cannot be undone.
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'ai' && (
+            <>
+              <div className="settings-section">
+                <h3>AI Provider</h3>
+                <div className="setting-item">
+                  <div className="setting-label">Mode</div>
+                  <div className="theme-options">
+                    <button
+                      type="button"
+                      className={`theme-btn ${localStorage.getItem('aiMode') === 'local' ? 'active' : ''}`}
+                      onClick={async () => {
+                        localStorage.setItem('aiMode', 'local');
+                        await window.api.ai.init('local');
+                        alert('AI set to Local mode.');
+                      }}
+                    >
+                      <span>Local</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`theme-btn ${localStorage.getItem('aiMode') === 'openai' ? 'active' : ''}`}
+                      onClick={async () => {
+                        const key = localStorage.getItem('openaiKey') || '';
+                        if (!key) {
+                          alert('Please set your OpenAI API key below first.');
+                          return;
+                        }
+                        localStorage.setItem('aiMode', 'openai');
+                        await window.api.ai.init('openai', key);
+                        alert('AI set to OpenAI mode.');
+                      }}
+                    >
+                      <span>OpenAI</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="setting-item">
+                  <div className="setting-label">OpenAI API Key</div>
+                  <div className="setting-description">Stored locally on your device.</div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      type="password"
+                      defaultValue={localStorage.getItem('openaiKey') || ''}
+                      placeholder="sk-..."
+                      onChange={(e) => localStorage.setItem('openaiKey', e.target.value.trim())}
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      className="setting-action-btn"
+                      onClick={async () => {
+                        const mode = localStorage.getItem('aiMode') || 'local';
+                        const key = localStorage.getItem('openaiKey') || '';
+                        if (mode === 'openai') {
+                          if (!key) {
+                            alert('Please enter an API key.');
+                            return;
+                          }
+                          await window.api.ai.init('openai', key);
+                          alert('OpenAI initialized.');
+                        } else {
+                          await window.api.ai.init('local');
+                          alert('Local AI initialized.');
+                        }
+                      }}
+                    >
+                      <span>Apply</span>
+                    </button>
                   </div>
                 </div>
               </div>
