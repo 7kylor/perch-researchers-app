@@ -90,7 +90,7 @@ export class PDFMetadataExtractor {
       .replace(/[\r\n]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
-      .slice(0, 500); // Max 500 chars
+      .slice(0, 1000); // Max 1000 chars for longer titles
   }
 
   /**
