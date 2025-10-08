@@ -163,17 +163,30 @@ export function useSidebarStore() {
         }
       },
       setSidebarCollapsed: async (collapsed: boolean) => {
+        console.log('setSidebarCollapsed called with:', collapsed);
+        console.log('Current prefs:', prefs);
+        const currentNodes = nodes;
+        const currentCounts = counts;
         const next: SidebarPrefs = {
           ...prefs,
           sidebarCollapsed: collapsed,
           updatedAt: new Date().toISOString(),
           version: (prefs.version ?? 1) + 1,
         };
+        console.log('New prefs object:', next);
         setPrefs(next);
-        writeCache({ nodes, prefs: next, counts });
-        await window.api.sidebar.prefs.set(next);
+        console.log('Called setPrefs with new state');
+        writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
+        try {
+          await window.api.sidebar.prefs.set(next);
+          console.log('Successfully saved prefs to backend');
+        } catch (error) {
+          console.error('Failed to save sidebar prefs:', error);
+        }
       },
       setCollapsedNodeIds: async (ids: string[]) => {
+        const currentNodes = nodes;
+        const currentCounts = counts;
         const next: SidebarPrefs = {
           ...prefs,
           collapsedNodeIds: ids,
@@ -181,13 +194,18 @@ export function useSidebarStore() {
           version: (prefs.version ?? 1) + 1,
         };
         setPrefs(next);
-        writeCache({ nodes, prefs: next, counts });
-        await window.api.sidebar.prefs.set(next);
+        writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
+        try {
+          await window.api.sidebar.prefs.set(next);
+        } catch (error) {
+          console.error('Failed to save sidebar prefs:', error);
+        }
       },
       refreshCounts: async () => {
+        const currentNodes = nodes;
         const res = await window.api.sidebar.list();
         setCounts(res.counts);
-        writeCache({ nodes, prefs, counts: res.counts });
+        writeCache({ nodes: currentNodes, prefs, counts: res.counts });
       },
     };
   }, [nodes, prefs, counts]);

@@ -22,6 +22,11 @@ export const App: React.FC = () => {
   const [sortBy, setSortBy] = React.useState<SortOption>('recent');
 
   const { prefs, actions } = useSidebarStore();
+
+  // Debug logging for sidebar state changes
+  React.useEffect(() => {
+    console.log('App component re-rendered, sidebar collapsed state:', prefs.sidebarCollapsed);
+  }, [prefs.sidebarCollapsed]);
   const [toast, setToast] = React.useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -57,7 +62,14 @@ export const App: React.FC = () => {
   };
 
   const handleSidebarToggle = () => {
-    actions.setSidebarCollapsed(!prefs.sidebarCollapsed);
+    console.log('Sidebar toggle clicked, current state:', prefs.sidebarCollapsed);
+    const newCollapsed = !prefs.sidebarCollapsed;
+    console.log('Setting new state:', newCollapsed);
+    actions.setSidebarCollapsed(newCollapsed);
+    // Force a re-render check
+    setTimeout(() => {
+      console.log('After toggle, state should be:', newCollapsed);
+    }, 0);
   };
 
   const handlePaperClick = (paperId: string) => {
@@ -354,6 +366,7 @@ export const App: React.FC = () => {
           sortBy={sortBy}
           onSortChange={handleSortChange}
           onAddItem={() => setShowSimpleAddModal(true)}
+          debug={{ renderCount: 0 }}
         />
         <div className="library-layout">
           <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
