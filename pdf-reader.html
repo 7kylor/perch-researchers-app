@@ -2288,6 +2288,8 @@
     window.api.pdfReader.onPaperLoaded((paper) => {
       state.paper = paper;
       const title = paper.title || 'Untitled Paper';
+
+
       elements.documentTitle.textContent = title;
 
       if (paper.filePath) {

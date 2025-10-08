@@ -66,6 +66,7 @@ export class PDFReaderWindowManager {
       window.focus();
 
       // Send the paper data to the window
+      // Note: Keep full title to avoid truncation issues
       const simplePaperData = {
         id: paper.id,
         title: paper.title || 'Untitled Paper',

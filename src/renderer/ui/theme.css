@@ -1320,10 +1320,10 @@ body {
 /* Library Grid - Responsive Grid System */
 .library-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-	gap: clamp(20px, 3vw, 28px);
-	padding: clamp(20px, 4vw, 32px);
-	max-width: 1400px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: clamp(24px, 3.5vw, 32px);
+	padding: clamp(24px, 4vw, 36px);
+	max-width: 1600px;
 	margin: 0 auto;
 	width: 100%;
 	box-sizing: border-box;
@@ -1335,48 +1335,48 @@ body {
 /* Responsive breakpoints with consistent sizing */
 @media (max-width: 1200px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-		gap: clamp(16px, 2.5vw, 24px);
-		padding: clamp(16px, 3vw, 24px);
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: clamp(20px, 3vw, 28px);
+		padding: clamp(20px, 3.5vw, 28px);
 	}
 }
 
 @media (max-width: 900px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: clamp(14px, 2.2vw, 20px);
-		padding: clamp(14px, 2.5vw, 20px);
+		grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+		gap: clamp(18px, 2.7vw, 24px);
+		padding: clamp(18px, 3vw, 24px);
 	}
 }
 
 @media (max-width: 768px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-		gap: clamp(18px, 2.8vw, 24px);
-		padding: clamp(18px, 3.5vw, 24px);
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: clamp(20px, 3vw, 28px);
+		padding: clamp(20px, 3.5vw, 28px);
 	}
 }
 
 @media (max-width: 600px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-		gap: clamp(16px, 2.5vw, 20px);
-		padding: clamp(16px, 3vw, 20px);
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: clamp(18px, 2.7vw, 24px);
+		padding: clamp(18px, 3vw, 24px);
 	}
 }
 
 @media (max-width: 480px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: clamp(14px, 2.2vw, 18px);
-		padding: clamp(14px, 2.5vw, 18px);
+		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+		gap: clamp(16px, 2.4vw, 20px);
+		padding: clamp(16px, 2.7vw, 20px);
 	}
 }
 
 /* Book Card Design */
 .book-card {
-	width: clamp(160px, 17.6vw, 224px);
-	height: calc(clamp(160px, 17.6vw, 224px) * 1.4);
+	width: clamp(200px, 20vw, 280px);
+	height: calc(clamp(200px, 20vw, 280px) * 1.4);
 	cursor: pointer;
 	position: relative;
 	transition: all 0.2s ease;
@@ -1972,8 +1972,8 @@ textarea:focus-visible {
 /* Responsive Book Card */
 @media (max-width: 1200px) {
 	.book-card {
-		width: clamp(144px, 16vw, 192px);
-		height: calc(clamp(144px, 16vw, 192px) * 1.4);
+		width: clamp(180px, 18vw, 240px);
+		height: calc(clamp(180px, 18vw, 240px) * 1.4);
 	}
 
 	.book-front {
@@ -2016,8 +2016,8 @@ textarea:focus-visible {
 
 @media (max-width: 900px) {
 	.book-card {
-		width: clamp(136px, 14.4vw, 176px);
-		height: calc(clamp(136px, 14.4vw, 176px) * 1.4);
+		width: clamp(170px, 17vw, 220px);
+		height: calc(clamp(170px, 17vw, 220px) * 1.4);
 	}
 
 	.book-front {
@@ -2060,8 +2060,8 @@ textarea:focus-visible {
 
 @media (max-width: 768px) {
 	.book-card {
-		width: clamp(144px, 16vw, 192px);
-		height: calc(clamp(144px, 16vw, 192px) * 1.4);
+		width: clamp(180px, 18vw, 240px);
+		height: calc(clamp(180px, 18vw, 240px) * 1.4);
 	}
 
 	.book-front {
@@ -2107,8 +2107,8 @@ textarea:focus-visible {
 
 @media (max-width: 600px) {
 	.book-card {
-		width: clamp(128px, 14.4vw, 160px);
-		height: calc(clamp(128px, 14.4vw, 160px) * 1.4);
+		width: clamp(160px, 16vw, 200px);
+		height: calc(clamp(160px, 16vw, 200px) * 1.4);
 	}
 
 	.book-front {
@@ -2151,8 +2151,8 @@ textarea:focus-visible {
 
 @media (max-width: 480px) {
 	.book-card {
-		width: clamp(112px, 12.8vw, 144px);
-		height: calc(clamp(112px, 12.8vw, 144px) * 1.4);
+		width: clamp(140px, 14vw, 180px);
+		height: calc(clamp(140px, 14vw, 180px) * 1.4);
 	}
 
 	.book-front {
@@ -5651,9 +5651,9 @@ textarea:focus-visible {
 }
 
 .library-grid-list .book-cover {
-	width: 80px;
-	min-width: 80px;
-	height: 112px;
+	width: 100px;
+	min-width: 100px;
+	height: 140px;
 }
 
 .library-grid-list .book-front {
@@ -5691,43 +5691,43 @@ textarea:focus-visible {
 /* Compact View Mode */
 .library-grid-compact {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-	gap: 12px;
-	padding: 16px;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 16px;
+	padding: 20px;
 }
 
 .library-grid-compact .book-card {
-	max-width: 144px;
-	min-height: 112px;
+	max-width: 180px;
+	min-height: 140px;
 }
 
 .library-grid-compact .book-front {
-	padding: 10px 6px 10px 10px;
-	gap: 8px;
+	padding: 12px 8px 12px 12px;
+	gap: 10px;
 }
 
 .library-grid-compact .book-title {
-	font-size: 12px;
+	font-size: 13px;
 	-webkit-line-clamp: 2;
 }
 
 .library-grid-compact .book-authors {
-	font-size: 9px;
+	font-size: 10px;
 	-webkit-line-clamp: 1;
 }
 
 .library-grid-compact .publication-year {
-	font-size: 10px;
-	padding: 1px 3px;
+	font-size: 11px;
+	padding: 2px 4px;
 }
 
 .library-grid-compact .publication-venue {
-	font-size: 9px;
+	font-size: 10px;
 }
 
 .library-grid-compact .publication-doi,
 .library-grid-compact .publication-source {
-	font-size: 7px;
+	font-size: 8px;
 }
 
 /* Smooth Transitions */

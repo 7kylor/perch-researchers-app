@@ -115,6 +115,7 @@ ipcMain.handle('import:pdf', async (_e, absPath: string) => {
 
 ipcMain.handle('papers:get', (_e, id: string) => {
   const row = db.prepare(`select * from papers where id = ?`).get(id) as DBPaperRow | undefined;
+
   if (!row) return null;
   return { ...row, authors: JSON.parse(row.authors) } as Paper;
 });

@@ -8,6 +8,40 @@
 // Use runtime dynamic import to set locateFile for WASM in Vite/web worker
 import type * as MuTypes from 'mupdf';
 
+// Store original console methods
+const originalConsole = {
+  warn: console.warn,
+  error: console.error,
+  log: console.log,
+};
+
+// Override console methods to filter MuPDF warnings
+console.warn = function (...args: unknown[]) {
+  const message = String(args.join(' '));
+  // Filter out specific MuPDF font warnings that don't affect functionality
+  if (
+    message.includes('bogus font ascent/descent values') ||
+    message.includes('warning: bogus font ascent/descent values') ||
+    message.includes('font ascent/descent values')
+  ) {
+    return; // Suppress these specific warnings
+  }
+  originalConsole.warn.apply(console, args);
+};
+
+console.error = function (...args: unknown[]) {
+  const message = String(args.join(' '));
+  // Filter out MuPDF font-related errors that are non-critical
+  if (
+    message.includes('font ascent/descent') ||
+    message.includes('font metrics') ||
+    message.includes('font encoding')
+  ) {
+    return; // Suppress these specific font-related errors
+  }
+  originalConsole.error.apply(console, args);
+};
+
 let mupdfRT: typeof import('mupdf') | null = null;
 async function ensureMuPDF(): Promise<typeof import('mupdf')> {
   if (mupdfRT) return mupdfRT;
