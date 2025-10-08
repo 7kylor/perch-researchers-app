@@ -49,7 +49,7 @@ type WorkerRequest =
   | {
       id: number;
       type: 'renderPage';
-      payload: { pageIndex: number; scale: number };
+      payload: { pageIndex: number; scale: number; rotation?: number; theme?: 'light' | 'dark' };
     }
   | { id: number; type: 'search'; payload: { pageIndex: number; query: string } }
   | {
@@ -219,7 +219,7 @@ async function renderDisplayListToRGBA(
   scale: number,
 ): Promise<{ width: number; height: number; rgba: Uint8Array }> {
   const _mupdf = await ensureMuPDF();
-  const m = _mupdf.Matrix.scale(scale, scale);
+  const m = _mupdf.Matrix.scale(scale, scale) as unknown as MuTypes.TransformMatrix;
   const pix = dl.toPixmap(m, _mupdf.ColorSpace.DeviceBGR, true);
   const width = pix.getWidth();
   const height = pix.getHeight();
@@ -298,7 +298,8 @@ async function ensureStructuredText(pageIndex: number): Promise<MuTypes.Structur
   if (!doc) throw new Error('Document not opened');
   const page = doc.loadPage(pageIndex);
   try {
-    const st = page.toStructuredText('preserve-spans');
+    // Use preserve-whitespace to improve fidelity for copy/selection
+    const st = page.toStructuredText('preserve-whitespace');
     structuredTextCache.set(pageIndex, st, (s) => {
       try {
         s?.destroy?.();
@@ -365,13 +366,92 @@ globalThis.onmessage = async (e: unknown) => {
       case 'renderPage': {
         const _m = await ensureMuPDF();
         const dl = await ensureDisplayList(payload.pageIndex);
-        const m = _m.Matrix.scale(payload.scale, payload.scale);
+
+        const m = _m.Matrix.scale(
+          payload.scale,
+          payload.scale,
+        ) as unknown as MuTypes.TransformMatrix;
         const pix = dl.toPixmap(m, _m.ColorSpace.DeviceRGB, true);
         const width = pix.getWidth();
         const height = pix.getHeight();
-        const png = (pix as unknown as { asPNG: () => Uint8Array }).asPNG();
-        pix.destroy();
-        post({ id, result: { width, height, png } }, [png.buffer as unknown as ArrayBuffer]);
+
+        // Apply dark mode transformation if needed - simple and reliable approach
+        if (payload.theme === 'dark') {
+          const rgbaData = (pix as unknown as { getPixels: () => Uint8ClampedArray }).getPixels();
+          if (rgbaData) {
+            // Create high-contrast dark mode transformation
+            const transformed = new Uint8Array(width * height * 4);
+            for (let i = 0; i < rgbaData.length; i += 4) {
+              const r = rgbaData[i] || 0;
+              const g = rgbaData[i + 1] || 0;
+              const b = rgbaData[i + 2] || 0;
+              const a = rgbaData[i + 3] || 255;
+
+              // Calculate brightness (0-255)
+              const brightness = Math.round((r + g + b) / 3);
+
+              if (brightness > 240) {
+                // Very bright (white background) -> very dark background
+                transformed[i] = 15; // #0f0f0f
+                transformed[i + 1] = 15;
+                transformed[i + 2] = 15;
+                transformed[i + 3] = a;
+              } else if (brightness < 50) {
+                // Very dark (black text) -> bright white text
+                transformed[i] = 255; // Pure white
+                transformed[i + 1] = 255;
+                transformed[i + 2] = 255;
+                transformed[i + 3] = a;
+              } else {
+                // Everything else - create high contrast by thresholding
+                if (brightness > 128) {
+                  // Light colors -> dark
+                  transformed[i] = 15;
+                  transformed[i + 1] = 15;
+                  transformed[i + 2] = 15;
+                } else {
+                  // Dark colors -> light
+                  transformed[i] = 255;
+                  transformed[i + 1] = 255;
+                  transformed[i + 2] = 255;
+                }
+                transformed[i + 3] = a;
+              }
+            }
+
+            // Create new pixmap from transformed data
+            try {
+              const buffer = new _m.Buffer(transformed);
+              const transformedPixmap = new _m.Pixmap(
+                _m.ColorSpace.DeviceRGB,
+                buffer,
+                width,
+                height,
+                true,
+              );
+              const png = (transformedPixmap as unknown as { asPNG: () => Uint8Array }).asPNG();
+              transformedPixmap.destroy();
+              pix.destroy();
+              post({ id, result: { width, height, png } }, [png.buffer as unknown as ArrayBuffer]);
+            } catch (error) {
+              console.error('Dark mode pixmap creation failed:', error);
+              // Fallback to original rendering if transformation fails
+              const png = (pix as unknown as { asPNG: () => Uint8Array }).asPNG();
+              pix.destroy();
+              post({ id, result: { width, height, png } }, [png.buffer as unknown as ArrayBuffer]);
+            }
+          } else {
+            // Fallback to original rendering if no pixel data available
+            const png = (pix as unknown as { asPNG: () => Uint8Array }).asPNG();
+            pix.destroy();
+            post({ id, result: { width, height, png } }, [png.buffer as unknown as ArrayBuffer]);
+          }
+        } else {
+          // Light mode - use original rendering
+          const png = (pix as unknown as { asPNG: () => Uint8Array }).asPNG();
+          pix.destroy();
+          post({ id, result: { width, height, png } }, [png.buffer as unknown as ArrayBuffer]);
+        }
         break;
       }
       case 'renderTile': {

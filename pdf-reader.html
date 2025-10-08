@@ -48,6 +48,10 @@
       --primary-hover: #339af0;
       --border: #404040;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      /* PDF Reader Dark Mode Variables - Best practices for readability */
+      --pdf-bg: #0f0f0f;
+      --pdf-text: #ffffff;
+      --pdf-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.8);
     }
 
     body {
@@ -178,6 +182,13 @@
       padding: 20px;
     }
 
+    /* Dark mode enhancement: subtle background texture for better depth */
+    :root[data-theme="dark"] .canvas-container {
+      background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.01) 0%, transparent 50%);
+    }
+
     .pages-wrapper {
       display: flex;
       flex-direction: column;
@@ -186,9 +197,15 @@
     }
 
     .page-canvas {
-      box-shadow: var(--shadow-md);
-      background: white;
+      box-shadow: var(--pdf-shadow, var(--shadow-md));
+      background: var(--pdf-bg, var(--bg));
       display: block;
+      /* Best practice: subtle border for better definition in dark mode */
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      /* Ensure proper image rendering */
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
     }
 
     .loading {
@@ -297,6 +314,193 @@
       display: flex;
     }
 
+    .sidebar-panel {
+      width: 200px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .sidebar-panel.active {
+      display: flex;
+    }
+
+    .sidebar-header {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-secondary);
+    }
+
+    .sidebar-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .sidebar-tab {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sidebar-tab:hover {
+      background: var(--surface);
+    }
+
+    .sidebar-tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .sidebar-tab-content {
+      display: none;
+      height: 100%;
+    }
+
+    .sidebar-tab-content.active {
+      display: block;
+    }
+
+    .thumbnails-container {
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .thumbnail-item {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg);
+    }
+
+    .thumbnail-item:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+    }
+
+    .thumbnail-item.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .thumbnail-image {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumbnail-label {
+      padding: 4px;
+      font-size: 10px;
+      text-align: center;
+      color: var(--text-secondary);
+      background: var(--surface);
+    }
+
+    .thumbnails-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .bookmarks-container {
+      padding: 8px;
+    }
+
+    .bookmark-item {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg);
+    }
+
+    .bookmark-item:hover {
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .bookmark-text {
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .bookmark-meta {
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bookmark-page {
+      background: var(--primary);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 9px;
+    }
+
+    .bookmarks-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--muted);
+      text-align: center;
+      padding: 16px;
+    }
+
+    .bookmarks-empty svg {
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .bookmarks-empty p {
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .bookmarks-empty small {
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    /* Adjust main content when sidebar is visible */
+    .main.has-sidebar {
+      margin-right: 200px;
+    }
+
     .annotation-header {
       padding: 16px;
       border-bottom: 1px solid var(--border);
@@ -357,8 +561,8 @@
       height: 100%;
       z-index: 100;
       pointer-events: auto;
-      user-select: text;
-      -webkit-user-select: text;
+      user-select: none;
+      -webkit-user-select: none;
       cursor: text;
     }
 
@@ -376,7 +580,8 @@
 
     .text-selection {
       position: absolute;
-      background: rgba(0, 123, 255, 0.3);
+      background: var(--primary);
+      opacity: 0.3;
       pointer-events: none;
       z-index: 1;
     }
@@ -389,23 +594,23 @@
     }
 
     .highlight-yellow {
-      background: rgba(255, 255, 0, 0.4);
-      border: 1px solid rgba(255, 200, 0, 0.6);
+      background: rgba(255, 193, 7, 0.6);
+      border: 1px solid rgba(255, 193, 7, 0.8);
     }
 
     .highlight-green {
-      background: rgba(0, 255, 0, 0.3);
-      border: 1px solid rgba(0, 200, 0, 0.6);
+      background: rgba(40, 167, 69, 0.5);
+      border: 1px solid rgba(40, 167, 69, 0.7);
     }
 
     .highlight-blue {
-      background: rgba(0, 123, 255, 0.3);
-      border: 1px solid rgba(0, 100, 200, 0.6);
+      background: rgba(0, 123, 255, 0.5);
+      border: 1px solid rgba(0, 123, 255, 0.7);
     }
 
     .highlight-red {
-      background: rgba(255, 0, 0, 0.3);
-      border: 1px solid rgba(200, 0, 0, 0.6);
+      background: rgba(220, 53, 69, 0.5);
+      border: 1px solid rgba(220, 53, 69, 0.7);
     }
 
     .context-menu {
@@ -587,6 +792,35 @@
         <div class="search-results" id="searchResults"></div>
       </div>
 
+      <div class="sidebar-panel" id="sidebarPanel">
+        <div class="sidebar-header">
+          <div class="sidebar-tabs">
+            <button class="sidebar-tab active" data-tab="thumbnails">Thumbnails</button>
+            <button class="sidebar-tab" data-tab="bookmarks">Bookmarks</button>
+          </div>
+        </div>
+
+        <div class="sidebar-content">
+          <div class="sidebar-tab-content active" id="thumbnailsTab">
+            <div class="thumbnails-container" id="thumbnailsContainer">
+              <div class="thumbnails-loading">Loading thumbnails...</div>
+            </div>
+          </div>
+
+          <div class="sidebar-tab-content" id="bookmarksTab">
+            <div class="bookmarks-container" id="bookmarksContainer">
+              <div class="bookmarks-empty">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p>No bookmarks yet</p>
+                <small>Select text and use context menu to create bookmarks</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="annotation-panel" id="annotationPanel">
         <div class="annotation-header">Annotations</div>
         <div class="annotation-list" id="annotationList">
@@ -714,22 +948,28 @@
       </div>
       <div class="context-menu-separator"></div>
       <div class="context-menu-item" id="contextHighlightYellow">
-        <div style="width: 16px; height: 16px; background: rgba(255, 255, 0, 0.6); border-radius: 2px;"></div>
+        <div style="width: 16px; height: 16px; background: rgba(255, 193, 7, 0.6); border: 1px solid rgba(255, 193, 7, 0.8); border-radius: 2px;"></div>
         Highlight Yellow
       </div>
       <div class="context-menu-item" id="contextHighlightGreen">
-        <div style="width: 16px; height: 16px; background: rgba(0, 255, 0, 0.5); border-radius: 2px;"></div>
+        <div style="width: 16px; height: 16px; background: rgba(40, 167, 69, 0.5); border: 1px solid rgba(40, 167, 69, 0.7); border-radius: 2px;"></div>
         Highlight Green
       </div>
       <div class="context-menu-item" id="contextHighlightBlue">
-        <div style="width: 16px; height: 16px; background: rgba(0, 123, 255, 0.5); border-radius: 2px;"></div>
+        <div style="width: 16px; height: 16px; background: rgba(0, 123, 255, 0.5); border: 1px solid rgba(0, 123, 255, 0.7); border-radius: 2px;"></div>
         Highlight Blue
       </div>
       <div class="context-menu-item" id="contextHighlightRed">
-        <div style="width: 16px; height: 16px; background: rgba(255, 0, 0, 0.5); border-radius: 2px;"></div>
+        <div style="width: 16px; height: 16px; background: rgba(220, 53, 69, 0.5); border: 1px solid rgba(220, 53, 69, 0.7); border-radius: 2px;"></div>
         Highlight Red
       </div>
       <div class="context-menu-separator"></div>
+      <div class="context-menu-item" id="contextAddBookmark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Add Bookmark
+      </div>
       <div class="context-menu-item" id="contextAddNote">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -764,11 +1004,13 @@
       currentPage: 1,
       totalPages: 0,
       zoom: 1.0,
+      rotation: 0, // Document rotation in degrees (0, 90, 180, 270)
       paper: null,
       noteMode: false,
       searchResults: [],
       currentSearchIndex: -1,
       annotations: {},
+      sidebarVisible: false,
       // Per-page sizing and scale
       pageViews: {}, // { [pageNumber]: { displayScale, widthPts, heightPts } }
       pageImages: {}, // { [pageNumber]: { scale: number, image: ImageBitmap } }
@@ -802,6 +1044,9 @@
       rotateBtn: document.getElementById('rotateBtn'),
       fullscreenBtn: document.getElementById('fullscreenBtn'),
       sidebarBtn: document.getElementById('sidebarBtn'),
+      sidebarPanel: document.getElementById('sidebarPanel'),
+      thumbnailsContainer: document.getElementById('thumbnailsContainer'),
+      bookmarksContainer: document.getElementById('bookmarksContainer'),
       searchBtn: document.getElementById('searchBtn'),
       searchPanel: document.getElementById('searchPanel'),
       searchInput: document.getElementById('searchInput'),
@@ -832,6 +1077,9 @@
       const newTheme = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', newTheme);
       localStorage.setItem('theme', newTheme);
+      // Clear cached images to force re-rendering with new theme
+      state.pageImages = {};
+      state.tiles = {};
       renderAllPages();
     });
 
@@ -902,6 +1150,7 @@
       const dpr = window.devicePixelRatio || 1;
       const scale = state.zoom * (96 / 72) * dpr;
 
+      // Re-render all pages with current rotation
       for (let i = 0; i < state.totalPages; i++) {
         const pageContainer = document.createElement('div');
         pageContainer.className = 'page-container';
@@ -965,7 +1214,15 @@
       // Ensure a page-level image at the current scale (PNG from worker)
       if (!state.pageImages[pageNumber] || state.pageImages[pageNumber].scale !== scale) {
         try {
-          const { width, height, png } = await workerRequest('renderPage', { pageIndex, scale });
+          // Get current theme for dark mode rendering
+          const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+          console.log(`Rendering page ${pageIndex + 1} in ${currentTheme} mode`);
+          const { width, height, png } = await workerRequest('renderPage', {
+            pageIndex,
+            scale,
+            rotation: state.rotation,
+            theme: currentTheme
+          });
           // Create ImageBitmap for fast drawImage clips
           const blob = new Blob([png], { type: 'image/png' });
           const imgBitmap = await createImageBitmap(blob);
@@ -1074,8 +1331,7 @@
       const container = elements.pagesWrapper;
 
       container.addEventListener('mousedown', handleSelectionStart);
-      container.addEventListener('mousemove', handleSelectionMove);
-      container.addEventListener('mouseup', handleSelectionEnd);
+      document.addEventListener('mousemove', handleSelectionMove);
       document.addEventListener('mouseup', handleSelectionEnd);
 
       // Context menu
@@ -1093,10 +1349,12 @@
       const container = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
       if (!view || !container) return null;
       const rect = container.getBoundingClientRect();
-      const xCss = clientX - rect.left;
-      const yCss = clientY - rect.top;
-      const xPts = xCss / view.displayScale;
-      const yPtsTop = yCss / view.displayScale;
+      const xCss = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const yCss = Math.max(0, Math.min(clientY - rect.top, rect.height));
+      const xPtsUnclamped = xCss / view.displayScale;
+      const yPtsTopUnclamped = yCss / view.displayScale;
+      const xPts = Math.max(0, Math.min(xPtsUnclamped, view.widthPts));
+      const yPtsTop = Math.max(0, Math.min(yPtsTopUnclamped, view.heightPts));
       const yPts = view.heightPts - yPtsTop; // flip to page coordinate space
       return [xPts, yPts];
     }
@@ -1149,25 +1407,27 @@
       state.selection.quads = [];
     }
 
+    let __selRAF = 0;
     async function handleSelectionMove(e) {
       if (!state.selection.active) return;
-      const pageContainer = getPageContainerFromEvent(e);
-      if (!pageContainer) return;
-      const pageNumber = parseInt(pageContainer.dataset.pageNumber, 10);
-      if (pageNumber !== state.selection.startPage) return; // same-page selection only for now
+      const pageNumber = state.selection.startPage;
+      if (!pageNumber) return;
       const p = clientToPagePoint(pageNumber, e.clientX, e.clientY);
       if (!p) return;
       state.selection.endPoint = { x: p[0], y: p[1] };
 
-      // Preview selection using quads
-      try {
-        const quads = await workerRequest('stHighlight', {
-          pageIndex: pageNumber - 1,
-          p: [state.selection.startPoint.x, state.selection.startPoint.y],
-          q: [state.selection.endPoint.x, state.selection.endPoint.y],
-        });
-        drawSelectionPreview(pageNumber, quads);
-      } catch {}
+      if (__selRAF) return;
+      __selRAF = requestAnimationFrame(async () => {
+        __selRAF = 0;
+        try {
+          const quads = await workerRequest('stHighlight', {
+            pageIndex: pageNumber - 1,
+            p: [state.selection.startPoint.x, state.selection.startPoint.y],
+            q: [state.selection.endPoint.x, state.selection.endPoint.y],
+          });
+          drawSelectionPreview(pageNumber, quads);
+        } catch {}
+      });
     }
 
     async function handleSelectionEnd(e) {
@@ -1315,6 +1575,32 @@
     document.getElementById('contextHighlightGreen').addEventListener('click', () => createHighlight('green'));
     document.getElementById('contextHighlightBlue').addEventListener('click', () => createHighlight('blue'));
     document.getElementById('contextHighlightRed').addEventListener('click', () => createHighlight('red'));
+
+    // Add bookmark
+    document.getElementById('contextAddBookmark').addEventListener('click', () => {
+      if (state.selection.text) {
+        const bookmark = {
+          id: Date.now().toString(),
+          type: 'bookmark',
+          text: state.selection.text,
+          pageNumber: state.selection.startPage,
+          quads: state.selection.quads,
+          createdAt: new Date().toISOString(),
+          bookmark: true, // Mark as bookmark for filtering
+        };
+
+        if (!state.annotations[state.selection.startPage]) {
+          state.annotations[state.selection.startPage] = [];
+        }
+        state.annotations[state.selection.startPage].push(bookmark);
+
+        saveAnnotations();
+        renderBookmarks();
+        clearSelectionPreview(state.selection.startPage);
+        resetSelectionState();
+      }
+      hideContextMenu();
+    });
 
     // Add note
     document.getElementById('contextAddNote').addEventListener('click', () => {
@@ -1559,10 +1845,10 @@
 
     // View Controls
     elements.rotateBtn.addEventListener('click', () => {
-      // MuPDF.js rotation - this would need to be implemented in the worker
-      console.log('Rotate functionality - needs worker implementation');
-      // For now, just re-render to show the button works
+      // Rotate document clockwise by 90 degrees
+      state.rotation = (state.rotation + 90) % 360;
       renderAllPages();
+      console.log('Document rotated to:', state.rotation, 'degrees');
     });
 
     elements.fullscreenBtn.addEventListener('click', () => {
@@ -1574,8 +1860,161 @@
     });
 
     elements.sidebarBtn.addEventListener('click', () => {
-      // Toggle sidebar visibility - would need sidebar implementation
-      console.log('Sidebar toggle - needs sidebar implementation');
+      state.sidebarVisible = !state.sidebarVisible;
+      elements.sidebarPanel.classList.toggle('active', state.sidebarVisible);
+      elements.canvasContainer.classList.toggle('has-sidebar', state.sidebarVisible);
+
+      if (state.sidebarVisible) {
+        generateThumbnails();
+        renderBookmarks();
+      }
+    });
+
+    // Thumbnail generation for sidebar
+    async function generateThumbnails() {
+      if (!state.totalPages) return;
+
+      elements.thumbnailsContainer.innerHTML = '<div class="thumbnails-loading">Generating thumbnails...</div>';
+
+      const thumbnailScale = 0.2; // Small scale for thumbnails
+      const thumbnails = [];
+
+      for (let i = 0; i < state.totalPages; i++) {
+        try {
+          const { width, height, png } = await workerRequest('renderPage', {
+            pageIndex: i,
+            scale: thumbnailScale,
+            rotation: state.rotation
+          });
+
+          // Create thumbnail item
+          const thumbnailItem = document.createElement('div');
+          thumbnailItem.className = 'thumbnail-item';
+          thumbnailItem.dataset.pageNumber = i + 1;
+
+          const img = document.createElement('img');
+          img.className = 'thumbnail-image';
+          const blob = new Blob([png], { type: 'image/png' });
+          img.src = URL.createObjectURL(blob);
+
+          const label = document.createElement('div');
+          label.className = 'thumbnail-label';
+          label.textContent = `Page ${i + 1}`;
+
+          thumbnailItem.appendChild(img);
+          thumbnailItem.appendChild(label);
+          thumbnails.push(thumbnailItem);
+
+          // Add click handler
+          thumbnailItem.addEventListener('click', () => {
+            scrollToPage(i + 1);
+            state.currentPage = i + 1;
+            elements.pageInput.value = state.currentPage;
+            updateNavigationButtons();
+
+            // Highlight active thumbnail
+            document.querySelectorAll('.thumbnail-item').forEach(item => {
+              item.classList.remove('active');
+            });
+            thumbnailItem.classList.add('active');
+          });
+
+        } catch (error) {
+          console.error(`Failed to generate thumbnail for page ${i + 1}:`, error);
+        }
+      }
+
+      elements.thumbnailsContainer.innerHTML = '';
+      thumbnails.forEach(thumbnail => {
+        elements.thumbnailsContainer.appendChild(thumbnail);
+      });
+
+      // Highlight current page thumbnail
+      const currentThumbnail = elements.thumbnailsContainer.querySelector(`[data-page-number="${state.currentPage}"]`);
+      if (currentThumbnail) {
+        currentThumbnail.classList.add('active');
+      }
+    }
+
+    // Bookmark management
+    function renderBookmarks() {
+      const allBookmarks = [];
+
+      Object.keys(state.annotations).forEach(pageNum => {
+        const pageAnnotations = state.annotations[pageNum] || [];
+        pageAnnotations.forEach(ann => {
+          if (ann.bookmark) {
+            allBookmarks.push({
+              ...ann,
+              page: parseInt(pageNum, 10),
+            });
+          }
+        });
+      });
+
+      if (allBookmarks.length === 0) {
+        elements.bookmarksContainer.innerHTML = `
+          <div class="bookmarks-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <p>No bookmarks yet</p>
+            <small>Select text and use context menu to create bookmarks</small>
+          </div>
+        `;
+        return;
+      }
+
+      allBookmarks.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+      elements.bookmarksContainer.innerHTML = allBookmarks
+        .map(
+          bookmark => `
+          <div class="bookmark-item" data-page="${bookmark.page}">
+            <div class="bookmark-text">${bookmark.text || 'Bookmark'}</div>
+            <div class="bookmark-meta">
+              <span>Page ${bookmark.page}</span>
+              <span class="bookmark-page">${bookmark.page}</span>
+            </div>
+          </div>
+        `
+        )
+        .join('');
+
+      // Add click handlers
+      elements.bookmarksContainer.querySelectorAll('.bookmark-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const page = parseInt(item.dataset.page, 10);
+          scrollToPage(page);
+          state.currentPage = page;
+          elements.pageInput.value = state.currentPage;
+          updateNavigationButtons();
+        });
+      });
+    }
+
+    // Tab switching for sidebar
+    document.querySelectorAll('.sidebar-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+
+        // Update active tab
+        document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active content
+        document.querySelectorAll('.sidebar-tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+
+        // Generate content for active tab
+        if (tabName === 'thumbnails') {
+          generateThumbnails();
+        } else if (tabName === 'bookmarks') {
+          renderBookmarks();
+        }
+      });
     });
 
     // Search
@@ -1769,10 +2208,10 @@
 
       function getColorStyle(color) {
         const colors = {
-          yellow: 'rgba(255, 255, 0, 0.8)',
-          green: 'rgba(0, 255, 0, 0.7)',
+          yellow: 'rgba(255, 193, 7, 0.8)',
+          green: 'rgba(40, 167, 69, 0.7)',
           blue: 'rgba(0, 123, 255, 0.7)',
-          red: 'rgba(255, 0, 0, 0.7)',
+          red: 'rgba(220, 53, 69, 0.7)',
         };
         return colors[color] || colors.yellow;
       }
