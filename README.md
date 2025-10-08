@@ -2,7 +2,7 @@
 
 A powerful, local-first Electron desktop application designed for academic researchers to efficiently manage, read, and analyze research papers with integrated AI capabilities.
 
-## 🚀 Overview
+## Overview
 
 **Perch Researchers App** is a comprehensive knowledge management system built specifically for academic researchers and scholars. It offers a local-first architecture that ensures your research data remains private and accessible without relying on external cloud services. The application seamlessly integrates traditional document management with cutting-edge AI features to enhance research productivity and discovery.
 
@@ -12,39 +12,39 @@ A powerful, local-first Electron desktop application designed for academic resea
 - **AI Enhanced**: Local AI processing for summaries, Q&A, and discovery
 - **Cross-Platform**: Native applications for Windows, macOS, and Linux
 
-## ✨ Key Features
+## Key Features
 
-### 📚 Paper Management
+### Paper Management
 - **Smart Import**: Add papers via DOI, ArXiv ID, PDF URLs, or local PDF files
 - **Intelligent Organization**: Create custom categories and labels with drag-and-drop functionality
 - **Advanced Search**: Full-text search across titles, abstracts, and content
 - **Progress Tracking**: Mark papers as "to read", "reading", "read", or create custom statuses
 
-### 📖 PDF Reader
+### PDF Reader
 - **Dedicated Reader Window**: Open papers in a separate, focused PDF reader
 - **Rich Annotations**: Highlight text, add notes, and color-code annotations
 - **Intuitive Navigation**: Page-by-page reading with keyboard shortcuts
 - **Full-screen Mode**: Distraction-free reading environment
 
-### 🤖 AI-Powered Features
+### AI-Powered Features
 - **Paper Summarization**: Get AI-generated summaries of research papers
 - **Question Answering**: Ask natural language questions about specific papers or your entire library
 - **Related Papers**: Discover semantically similar papers using vector embeddings
 - **Local AI Processing**: Uses ONNX Runtime for privacy-preserving local inference
 
-### 🗂️ Organization System
+### Organization System
 - **Hierarchical Sidebar**: Create nested folders and labels for organizing papers
 - **Visual Customization**: Personalize categories with custom icons and colors
 - **Smart Categories**: Built-in categories like "All", "Recent", "Favorites"
 - **Bulk Operations**: Select and organize multiple papers simultaneously
 
-### 🔍 Advanced Search
+### Advanced Search
 - **Full-Text Search**: Search across paper titles, abstracts, authors, and content
 - **Category Filtering**: Filter papers by specific categories or labels
 - **Semantic Search**: Vector-based similarity search for related content
 - **Search History**: Track and revisit previous search queries
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - **React 19**: Modern React with latest features and performance optimizations
@@ -72,7 +72,7 @@ A powerful, local-first Electron desktop application designed for academic resea
 - **Prettier**: Consistent code formatting
 - **Husky**: Git hooks for quality enforcement
 
-## 📦 Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - **Node.js 20+** (LTS recommended)
@@ -116,7 +116,7 @@ A powerful, local-first Electron desktop application designed for academic resea
 
    Built packages will be available in the `dist/` directory.
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 perch-researchers-app/
