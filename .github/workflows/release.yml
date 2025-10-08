@@ -118,7 +118,6 @@ jobs:
           draft: false
           prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
           generate_release_notes: true
-          make_latest: ${{ steps.version.outputs.IS_PRERELEASE == 'false' }}
           files: |
             artifacts/perch-app-linux-x64/*.AppImage
             artifacts/perch-app-linux-x64/*.deb
