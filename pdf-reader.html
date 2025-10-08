@@ -595,11 +595,27 @@
   </div>
 
   <script type="module">
-    import * as mupdf from './node_modules/mupdf/dist/mupdf.js';
+    // PDF worker RPC setup (moves MuPDF work off UI thread)
+    const pdfWorker = new Worker(new URL('./src/renderer/workers/pdf.worker.ts', import.meta.url), { type: 'module' });
+    let __rpcId = 1;
+    const __pending = new Map();
+    pdfWorker.onmessage = (e) => {
+      const { id, result, error } = e.data || {};
+      const p = __pending.get(id);
+      if (!p) return;
+      __pending.delete(id);
+      if (error) p.reject(new Error(error)); else p.resolve(result);
+    };
+    function workerRequest(type, payload) {
+      const id = __rpcId++;
+      return new Promise((resolve, reject) => {
+        __pending.set(id, { resolve, reject });
+        pdfWorker.postMessage({ id, type, payload });
+      });
+    }
 
     // Application state
     const state = {
-      pdfDocument: null,
       currentPage: 1,
       totalPages: 0,
       zoom: 1.0,
@@ -607,8 +623,10 @@
       searchResults: [],
       currentSearchIndex: -1,
       annotations: {},
-      structuredTexts: {}, // Store StructuredText per pageNumber
-      pageViews: {}, // Store per-page displayScale and page size (points)
+      // Per-page sizing and scale
+      pageViews: {}, // { [pageNumber]: { displayScale, widthPts, heightPts } }
+      pageImages: {}, // { [pageNumber]: { scale: number, image: ImageBitmap } }
+      tiles: {}, // { [pageNumber]: { scale: number, tileSize: number, rendered: Set<string> } }
       selection: {
         active: false,
         startPage: null,
@@ -691,9 +709,9 @@
 
         console.log('PDF file loaded, size:', arrayBuffer.byteLength, 'bytes');
 
-        // Open the document with mupdf
-        state.pdfDocument = mupdf.Document.openDocument(arrayBuffer, 'application/pdf');
-        state.totalPages = state.pdfDocument.countPages();
+        // Open the document in worker
+        const openRes = await workerRequest('open', { bytes: arrayBuffer });
+        state.totalPages = openRes.pageCount || 0;
 
         console.log('PDF document opened successfully, pages:', state.totalPages);
 
@@ -706,16 +724,6 @@
         updateNavigationButtons();
         renderAllPages();
 
-        // Try to get document title
-        try {
-          const title = state.pdfDocument.getMetaData('info:Title');
-          if (title && title.trim()) {
-            elements.documentTitle.textContent = title;
-          }
-        } catch (e) {
-          console.warn('Could not get PDF title:', e);
-        }
-
       } catch (error) {
         console.error('Error loading PDF:', error);
         showError(error.message || 'Unknown error occurred');
@@ -724,28 +732,27 @@
 
     // Render all pages
     function renderAllPages() {
-      if (!state.pdfDocument) return;
+      if (!state.totalPages) return;
 
-      cleanupStructuredTexts();
+      cleanupPageViews();
       elements.pagesWrapper.innerHTML = '';
 
       const dpr = window.devicePixelRatio || 1;
       const scale = state.zoom * (96 / 72) * dpr;
-      const matrix = mupdf.Matrix.scale(scale, scale);
 
       for (let i = 0; i < state.totalPages; i++) {
         const pageContainer = document.createElement('div');
         pageContainer.className = 'page-container';
-        pageContainer.dataset.pageNumber = i + 1;
+        pageContainer.dataset.pageNumber = String(i + 1);
         pageContainer.style.position = 'relative';
 
         const canvas = document.createElement('canvas');
         canvas.className = 'page-canvas';
-        canvas.dataset.pageNumber = i + 1;
+        canvas.dataset.pageNumber = String(i + 1);
 
         const textLayer = document.createElement('div');
         textLayer.className = 'text-layer';
-        textLayer.dataset.pageNumber = i + 1;
+        textLayer.dataset.pageNumber = String(i + 1);
 
         const pageLabel = document.createElement('div');
         pageLabel.className = 'page-number-label';
@@ -756,112 +763,148 @@
         pageContainer.appendChild(pageLabel);
         elements.pagesWrapper.appendChild(pageContainer);
 
-        renderPage(i, canvas, matrix, dpr);
-        extractStructuredText(i, textLayer, scale / dpr);
+        scheduleVisibleTiles(i, canvas, scale, dpr);
       }
 
       renderAnnotations();
     }
 
-    // Render a single page
-    function renderPage(pageIndex, canvas, matrix, dpr) {
-      try {
-        console.log(`Rendering page ${pageIndex + 1}...`);
-        const page = state.pdfDocument.loadPage(pageIndex);
-        const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
-
-        const width = pixmap.getWidth();
-        const height = pixmap.getHeight();
-
-        console.log(`Page ${pageIndex + 1} dimensions: ${width}x${height}`);
-
+    // Ensure canvas size based on page info
+    async function ensureCanvasSize(pageIndex, canvas, scale, dpr) {
+      const pageNumber = pageIndex + 1;
+      const view = state.pageViews[pageNumber];
+      if (!view) return;
+      const width = Math.max(1, Math.floor(view.widthPts * scale));
+      const height = Math.max(1, Math.floor(view.heightPts * scale));
+      if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
-        canvas.style.width = `${width / dpr}px`;
-        canvas.style.height = `${height / dpr}px`;
-
-        // Convert pixmap to PNG and draw to canvas
-        const pngData = pixmap.asPNG();
-        const blob = new Blob([pngData], { type: 'image/png' });
-        const img = new Image();
-        
-        img.onload = function() {
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          URL.revokeObjectURL(img.src);
-          console.log(`Page ${pageIndex + 1} rendered successfully`);
-        };
-        
-        img.onerror = function() {
-          console.error(`Failed to load image for page ${pageIndex + 1}`);
-        };
-        
-        img.src = URL.createObjectURL(blob);
-
-        pixmap.destroy();
-        page.destroy();
-      } catch (error) {
-        console.error(`Error rendering page ${pageIndex + 1}:`, error);
-        // Show error on canvas
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = 'var(--text)';
-          ctx.font = '14px sans-serif';
-          ctx.fillText(`Error rendering page ${pageIndex + 1}`, 10, 30);
-        }
+        canvas.style.width = `${Math.max(1, Math.floor(width / dpr))}px`;
+        canvas.style.height = `${Math.max(1, Math.floor(height / dpr))}px`;
+        state.tiles[pageNumber] = { scale, tileSize: 512, rendered: new Set() };
+      } else if (!state.tiles[pageNumber] || state.tiles[pageNumber].scale !== scale) {
+        state.tiles[pageNumber] = { scale, tileSize: 512, rendered: new Set() };
       }
     }
 
-    // Extract StructuredText for selection/highlight
-    function extractStructuredText(pageIndex, textLayer, displayScale) {
-      try {
-        const page = state.pdfDocument.loadPage(pageIndex);
-        const bounds = page.getBounds();
-        const pageWidth = bounds[2] - bounds[0];
-        const pageHeight = bounds[3] - bounds[1];
-        
-        // Set text layer size to match canvas
-        textLayer.style.width = `${pageWidth * displayScale}px`;
-        textLayer.style.height = `${pageHeight * displayScale}px`;
-        
-        // Build StructuredText and store for selection/highlight operations
+    // Compute and render visible tiles
+    async function scheduleVisibleTiles(pageIndex, canvas, scale, dpr) {
+      const pageNumber = pageIndex + 1;
+      const pageContainer = elements.pagesWrapper.querySelector(`[data-page-number="${pageNumber}"]`);
+      if (!pageContainer) return;
+      const textLayer = pageContainer.querySelector('.text-layer');
+      await ensurePageView(pageIndex, textLayer, scale / dpr);
+      await ensureCanvasSize(pageIndex, canvas, scale, dpr);
+
+      const view = state.pageViews[pageNumber];
+      const tilesState = state.tiles[pageNumber];
+      if (!view || !tilesState) return;
+
+      // Ensure a page-level image at the current scale (PNG from worker)
+      if (!state.pageImages[pageNumber] || state.pageImages[pageNumber].scale !== scale) {
         try {
-          const structuredText = page.toStructuredText('preserve-whitespace');
-          const pageNumber = pageIndex + 1;
-
-          // Keep for later selection/copy/highlight
-          state.structuredTexts[pageNumber] = structuredText;
-          state.pageViews[pageNumber] = {
-            displayScale,
-            widthPts: pageWidth,
-            heightPts: pageHeight,
-          };
-
-          // Create an empty overlay div to keep layer sizing aligned
-          const overlayDiv = document.createElement('div');
-          overlayDiv.dataset.pageNumber = pageNumber;
-          textLayer.appendChild(overlayDiv);
+          const { width, height, png } = await workerRequest('renderPage', { pageIndex, scale });
+          // Create ImageBitmap for fast drawImage clips
+          const blob = new Blob([png], { type: 'image/png' });
+          const imgBitmap = await createImageBitmap(blob);
+          state.pageImages[pageNumber] = { scale, image: imgBitmap };
+          // Reset tiles rendered set when image changes
+          tilesState.rendered = new Set();
         } catch (e) {
-          console.error('StructuredText creation failed:', e);
+          console.error('Failed to render page image:', e);
         }
+      }
+      const pageImg = state.pageImages[pageNumber]?.image;
 
-        page.destroy();
-      } catch (error) {
-        console.error(`Error extracting text from page ${pageIndex + 1}:`, error);
-        console.error('Error stack:', error.stack);
+      const canvasRect = pageContainer.getBoundingClientRect();
+      const containerRect = elements.canvasContainer.getBoundingClientRect();
+      const leftCss = Math.max(0, containerRect.left - canvasRect.left);
+      const topCss = Math.max(0, containerRect.top - canvasRect.top);
+      const rightCss = Math.min(canvasRect.width, containerRect.right - canvasRect.left);
+      const bottomCss = Math.min(canvasRect.height, containerRect.bottom - canvasRect.top);
+      if (rightCss <= leftCss || bottomCss <= topCss) return;
+
+      const visLeft = Math.floor(leftCss * dpr);
+      const visTop = Math.floor(topCss * dpr);
+      const visRight = Math.ceil(rightCss * dpr);
+      const visBottom = Math.ceil(bottomCss * dpr);
+
+      const pagePixW = Math.floor(view.widthPts * scale);
+      const pagePixH = Math.floor(view.heightPts * scale);
+      const tileSize = tilesState.tileSize;
+      const startX = Math.max(0, Math.floor(visLeft / tileSize));
+      const startY = Math.max(0, Math.floor(visTop / tileSize));
+      const endX = Math.min(Math.ceil(visRight / tileSize), Math.ceil(pagePixW / tileSize));
+      const endY = Math.min(Math.ceil(visBottom / tileSize), Math.ceil(pagePixH / tileSize));
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      for (let ty = startY; ty < endY; ty++) {
+        for (let tx = startX; tx < endX; tx++) {
+          const x = tx * tileSize;
+          const y = ty * tileSize;
+          const w = Math.min(tileSize, pagePixW - x);
+          const h = Math.min(tileSize, pagePixH - y);
+          if (w <= 0 || h <= 0) continue;
+          const key = `${tx}:${ty}:${tilesState.scale}`;
+          if (tilesState.rendered.has(key)) continue;
+          tilesState.rendered.add(key);
+          try {
+            if (pageImg) {
+              // Draw subsection of the page image directly
+              ctx.clearRect(x, y, w, h);
+              ctx.drawImage(pageImg, x, y, w, h, x, y, w, h);
+            } else {
+              // Fallback to tile request if page image not available
+              workerRequest('renderTile', { pageIndex, scale, tileRect: { x, y, width: w, height: h } })
+                .then(({ width, height, rgba }) => {
+                  const img = new ImageData(new Uint8ClampedArray(rgba), width, height);
+                  ctx.putImageData(img, x, y);
+                })
+                .catch((err) => {
+                  console.error('Tile render error', err);
+                  tilesState.rendered.delete(key);
+                });
+            }
+          } catch (err) {
+            console.error('Tile draw error', err);
+            tilesState.rendered.delete(key);
+          }
+        }
       }
     }
 
-    function cleanupStructuredTexts() {
+    // Ensure page sizing info and align text layer
+    async function ensurePageView(pageIndex, textLayer, displayScale) {
+      const pageNumber = pageIndex + 1;
+      if (state.pageViews[pageNumber]) return;
       try {
-        if (state.structuredTexts) {
-          Object.values(state.structuredTexts).forEach((st) => {
-            try { st?.destroy?.(); } catch {}
-          });
-        }
-      } catch {}
-      state.structuredTexts = {};
+        // Prefetch display list for faster render
+        workerRequest('buildDisplayList', { pageIndex }).catch(() => {});
+        const { widthPts, heightPts } = await workerRequest('getPageInfo', { pageIndex });
+        state.pageViews[pageNumber] = { displayScale, widthPts, heightPts };
+        textLayer.style.width = `${widthPts * displayScale}px`;
+        textLayer.style.height = `${heightPts * displayScale}px`;
+        const overlayDiv = document.createElement('div');
+        overlayDiv.dataset.pageNumber = String(pageNumber);
+        textLayer.appendChild(overlayDiv);
+      } catch (e) {
+        console.error('Failed to get page info:', e);
+      }
+    }
+
+    function prefetchAround(pageIndex) {
+      const span = 2;
+      for (let i = Math.max(0, pageIndex - span); i <= Math.min(state.totalPages - 1, pageIndex + span); i++) {
+        if (i === pageIndex) continue;
+        workerRequest('buildDisplayList', { pageIndex: i }).catch(() => {});
+      }
+    }
+
+    function cleanupPageViews() {
       state.pageViews = {};
+      state.tiles = {};
     }
 
     // Text selection handling using MuPDF StructuredText
@@ -896,14 +939,16 @@
       return [xPts, yPts];
     }
 
-    function handleSelectionStart(e) {
+    async function handleSelectionStart(e) {
       if (e.button !== 0) return; // Only left click
       const pageContainer = getPageContainerFromEvent(e);
       if (!pageContainer) return;
 
       const pageNumber = parseInt(pageContainer.dataset.pageNumber, 10);
-      const st = state.structuredTexts[pageNumber];
-      if (!st) return;
+      const textLayer = pageContainer.querySelector('.text-layer');
+      const dpr = window.devicePixelRatio || 1;
+      const displayScale = state.zoom * (96 / 72) * (1); // text layer uses CSS pixels
+      await ensurePageView(pageNumber - 1, textLayer, displayScale);
 
       const p = clientToPagePoint(pageNumber, e.clientX, e.clientY);
       if (!p) return;
@@ -918,7 +963,7 @@
       state.selection.quads = [];
     }
 
-    function handleSelectionMove(e) {
+    async function handleSelectionMove(e) {
       if (!state.selection.active) return;
       const pageContainer = getPageContainerFromEvent(e);
       if (!pageContainer) return;
@@ -929,17 +974,17 @@
       state.selection.endPoint = { x: p[0], y: p[1] };
 
       // Preview selection using quads
-      const st = state.structuredTexts[pageNumber];
       try {
-        const quads = st.highlight(
-          [state.selection.startPoint.x, state.selection.startPoint.y],
-          [state.selection.endPoint.x, state.selection.endPoint.y],
-        ) || [];
+        const quads = await workerRequest('stHighlight', {
+          pageIndex: pageNumber - 1,
+          p: [state.selection.startPoint.x, state.selection.startPoint.y],
+          q: [state.selection.endPoint.x, state.selection.endPoint.y],
+        });
         drawSelectionPreview(pageNumber, quads);
       } catch {}
     }
 
-    function handleSelectionEnd(e) {
+    async function handleSelectionEnd(e) {
       if (!state.selection.active) return;
       state.selection.active = false;
 
@@ -952,16 +997,19 @@
       state.selection.endPoint = { x: p[0], y: p[1] };
 
       // Finalize text and quads
-      const st = state.structuredTexts[pageNumber];
       try {
-        const text = st.copy(
-          [state.selection.startPoint.x, state.selection.startPoint.y],
-          [state.selection.endPoint.x, state.selection.endPoint.y],
-        ) || '';
-        const quads = st.highlight(
-          [state.selection.startPoint.x, state.selection.startPoint.y],
-          [state.selection.endPoint.x, state.selection.endPoint.y],
-        ) || [];
+        const [text, quads] = await Promise.all([
+          workerRequest('stCopy', {
+            pageIndex: pageNumber - 1,
+            p: [state.selection.startPoint.x, state.selection.startPoint.y],
+            q: [state.selection.endPoint.x, state.selection.endPoint.y],
+          }),
+          workerRequest('stHighlight', {
+            pageIndex: pageNumber - 1,
+            p: [state.selection.startPoint.x, state.selection.startPoint.y],
+            q: [state.selection.endPoint.x, state.selection.endPoint.y],
+          }),
+        ]);
         state.selection.text = (text || '').trim();
         state.selection.quads = quads;
         if (!state.selection.text) {
@@ -1218,16 +1266,16 @@
       renderAllPages();
     });
 
-    elements.zoomSelect.addEventListener('change', (e) => {
+    elements.zoomSelect.addEventListener('change', async (e) => {
       const value = e.target.value;
       if (value === 'fit-width' || value === 'fit-page') {
         const container = elements.canvasContainer;
-        if (!container || !state.pdfDocument) return;
-        const page = state.pdfDocument.loadPage(0);
-        const bounds = page.getBounds();
-        const pageWidthPts = bounds[2] - bounds[0];
-        const pageHeightPts = bounds[3] - bounds[1];
-        page.destroy();
+        if (!container || !state.totalPages) return;
+        let pageWidthPts = 612, pageHeightPts = 792;
+        try {
+          const info = await workerRequest('getPageInfo', { pageIndex: 0 });
+          pageWidthPts = info.widthPts; pageHeightPts = info.heightPts;
+        } catch {}
 
         const containerRect = container.getBoundingClientRect();
         const padding = 40; // total horizontal padding in container
@@ -1287,29 +1335,25 @@
       }
     });
 
-    function performSearch(query) {
-      if (!state.pdfDocument) return;
-
+    async function performSearch(query) {
       state.searchResults = [];
       let totalMatches = 0;
-
       try {
+        const tasks = [];
         for (let i = 0; i < state.totalPages; i++) {
-          const page = state.pdfDocument.loadPage(i);
-          const results = page.search(query);
-
+          tasks.push(
+            workerRequest('search', { pageIndex: i, query }).then((results) => ({ i, results }))
+          );
+        }
+        const all = await Promise.all(tasks);
+        all.forEach(({ i, results }) => {
           if (results && results.length > 0) {
-            results.forEach(quadArray => {
-              state.searchResults.push({
-                page: i + 1,
-                quads: quadArray,
-              });
+            results.forEach((quadArray) => {
+              state.searchResults.push({ page: i + 1, quads: quadArray });
               totalMatches++;
             });
           }
-
-          page.destroy();
-        }
+        });
 
         if (totalMatches > 0) {
           state.currentSearchIndex = 0;
@@ -1360,18 +1404,35 @@
           if (!canvas) return;
           const dpr = window.devicePixelRatio || 1;
           const scale = state.zoom * (96 / 72) * dpr;
-          const matrix = mupdf.Matrix.scale(scale, scale);
           if (entry.isIntersecting) {
-            renderPage(pageNumber, canvas, matrix, dpr);
+            scheduleVisibleTiles(pageNumber, canvas, scale, dpr);
             const textLayer = el.querySelector('.text-layer');
-            if (textLayer && !state.structuredTexts[pageNumber + 1]) {
-              extractStructuredText(pageNumber, textLayer, scale / dpr);
+            if (textLayer) {
+              ensurePageView(pageNumber, textLayer, scale / dpr);
             }
+            prefetchAround(pageNumber);
           }
         });
       },
       { root: elements.canvasContainer, rootMargin: '600px 0px', threshold: 0.01 },
     );
+
+    function scheduleVisiblePages() {
+      const dpr = window.devicePixelRatio || 1;
+      const scale = state.zoom * (96 / 72) * dpr;
+      document.querySelectorAll('.page-container').forEach((el) => {
+        const pageNumber = parseInt(el.getAttribute('data-page-number') || '0', 10);
+        if (!pageNumber) return;
+        const rect = el.getBoundingClientRect();
+        const cont = elements.canvasContainer.getBoundingClientRect();
+        const overlap = !(rect.bottom < cont.top || rect.top > cont.bottom);
+        if (!overlap) return;
+        const canvas = el.querySelector('canvas.page-canvas');
+        if (canvas) scheduleVisibleTiles(pageNumber - 1, canvas, scale, dpr);
+      });
+    }
+    elements.canvasContainer.addEventListener('scroll', () => scheduleVisiblePages());
+    window.addEventListener('resize', () => scheduleVisiblePages());
 
     // Re-render on container resize for fit modes
     const resizeObserver = new ResizeObserver(() => {
@@ -1575,7 +1636,7 @@
       });
     }).observe(elements.pagesWrapper, { childList: true });
 
-    console.log('PDF Reader initialized with mupdf.js');
+    console.log('PDF Reader initialized with worker-based tiled rendering');
   </script>
 </body>
 </html>
