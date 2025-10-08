@@ -24,7 +24,10 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "Perch Researchers",
+    "email": "contact@perchresearchers.com"
+  },
   "license": "MIT",
   "type": "module",
   "build": {
@@ -62,7 +65,8 @@
         "AppImage",
         "deb",
         "zip"
-      ]
+      ],
+      "category": "Office"
     }
   },
   "dependencies": {
