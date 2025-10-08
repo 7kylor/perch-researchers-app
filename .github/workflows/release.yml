@@ -1,119 +1,130 @@
 name: Release
 
 on:
-    push:
-        branches: [main]
-        tags:
-            - "v*"
+  push:
+    branches: [main]
+    tags:
+      - "v*"
 
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
+  build:
+    runs-on: ${{ matrix.os }}
 
-        strategy:
-            matrix:
-                include:
-                    - os: ubuntu-22.04
-                      platform: linux
-                      arch: x64
-                    - os: windows-latest
-                      platform: win
-                      arch: x64
-                    - os: macos-latest
-                      platform: mac
-                      arch: x64
-                    - os: macos-latest
-                      platform: mac
-                      arch: arm64
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux
+            arch: x64
+          - os: windows-latest
+            platform: win
+            arch: x64
+          - os: macos-latest
+            platform: mac
+            arch: x64
+          - os: macos-latest
+            platform: mac
+            arch: arm64
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
-                  cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Build application (main process)
-              run: npm run build:main
+      - name: Build application (main process)
+        run: npm run build:main
 
-            - name: Build renderer process
-              run: npm run build:renderer
+      - name: Build renderer process
+        run: npm run build:renderer
 
-            - name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
-              run: npx electron-builder --publish=never --${{ matrix.platform }} --${{ matrix.arch }}
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
+        run: npx electron-builder --publish=never --${{ matrix.platform }} --${{ matrix.arch }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: List dist files
-              run: ls -la dist/
-              shell: bash
+      - name: List dist files
+        run: ls -la dist/
+        shell: bash
 
-            - name: Upload build artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: perch-app-${{ matrix.platform }}-${{ matrix.arch }}
-                  path: |
-                      dist/*-1.0.0.*
-                      dist/make/**/*.*
-                  if-no-files-found: error
-                  retention-days: 30
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: perch-app-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist/*-1.0.0.*
+            dist/make/**/*.*
+          if-no-files-found: error
+          retention-days: 30
 
-    create-release:
-        needs: build
-        runs-on: ubuntu-latest
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Get version and release info
-              id: version
+      - name: Get version and release info
+        id: version
               run: |
                   if [[ $GITHUB_REF == refs/tags/* ]]; then
                     VERSION=${GITHUB_REF#refs/tags/}
                     IS_PRERELEASE=false
                     RELEASE_NAME="Release $VERSION"
                   else
-                    VERSION="main-$(date +'%Y%m%d%H%M%S')"
+                    # Create a more readable version for main branch
+                    COMMIT_SHORT=$(git rev-parse --short HEAD)
+                    VERSION="main-$(date +'%Y%m%d')-$COMMIT_SHORT"
                     IS_PRERELEASE=true
-                    RELEASE_NAME="Development Build $(date +'%Y-%m-%d %H:%M')"
+                    RELEASE_NAME="Development Build $(date +'%Y-%m-%d')"
                   fi
-                  echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-                  echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
-                  echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
-                  echo "Version: $VERSION, Prerelease: $IS_PRERELEASE"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION, Prerelease: $IS_PRERELEASE"
 
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: artifacts
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-            - name: List downloaded artifacts
-              run: find artifacts/ -type f -name "*" | head -20
+      - name: List downloaded artifacts
+        run: find artifacts/ -type f -name "*" | head -20
+
+            - name: Create git tag for main branch
+              if: github.ref == 'refs/heads/main'
+              run: |
+                git config --local user.email "action@github.com"
+                git config --local user.name "GitHub Action"
+                git tag "${{ steps.version.outputs.VERSION }}" -m "Development build ${{ steps.version.outputs.RELEASE_NAME }}"
+                git push origin "${{ steps.version.outputs.VERSION }}"
 
             - name: Create Release
               id: create_release
               uses: softprops/action-gh-release@v1
               with:
-                  tag_name: ${{ github.ref == 'refs/heads/main' && format('main-{0}', steps.version.outputs.VERSION) || github.ref }}
-                  name: ${{ steps.version.outputs.RELEASE_NAME }}
-                  draft: false
-                  prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
-                  generate_release_notes: true
-                  files: |
-                      artifacts/perch-app-linux-x64/*.AppImage
-                      artifacts/perch-app-linux-x64/*.deb
-                      artifacts/perch-app-linux-x64/*.zip
-                      artifacts/perch-app-win-x64/*.exe
-                      artifacts/perch-app-win-x64/*.zip
-                      artifacts/perch-app-mac-x64/*.dmg
-                      artifacts/perch-app-mac-x64/*.zip
-                      artifacts/perch-app-mac-arm64/*.dmg
-                      artifacts/perch-app-mac-arm64/*.zip
+                tag_name: ${{ steps.version.outputs.VERSION }}
+                name: ${{ steps.version.outputs.RELEASE_NAME }}
+                draft: false
+                prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
+                generate_release_notes: true
+                make_latest: ${{ steps.version.outputs.IS_PRERELEASE == 'false' }}
+                files: |
+                  artifacts/perch-app-linux-x64/*.AppImage
+                  artifacts/perch-app-linux-x64/*.deb
+                  artifacts/perch-app-linux-x64/*.zip
+                  artifacts/perch-app-win-x64/*.exe
+                  artifacts/perch-app-win-x64/*.zip
+                  artifacts/perch-app-mac-x64/*.dmg
+                  artifacts/perch-app-mac-x64/*.zip
+                  artifacts/perch-app-mac-arm64/*.dmg
+                  artifacts/perch-app-mac-arm64/*.zip
