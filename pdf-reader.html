@@ -42,6 +42,7 @@
       --primary-hover: #0056b3;
       --border: #dee2e6;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --pdf-page-bg: #ffffff;
     }
 
     :root[data-theme="dark"] {
@@ -55,6 +56,7 @@
       --primary-hover: #339af0;
       --border: #404040;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+      --pdf-page-bg: #0f0f10;
     }
 
     body {
@@ -199,7 +201,7 @@
 
     .page-canvas {
       box-shadow: var(--shadow-md);
-      background: white;
+      background: var(--pdf-page-bg);
       display: block;
     }
 
@@ -1260,12 +1262,20 @@
               // Draw subsection of the page image directly
               ctx.clearRect(x, y, w, h);
               ctx.drawImage(pageImg, x, y, w, h, x, y, w, h);
+              if ((document.documentElement.getAttribute('data-theme') || 'light') === 'dark') {
+                darkenPaperBackgroundInRect(canvas, x, y, w, h);
+                whitenDarkTextInRect(canvas, x, y, w, h);
+              }
             } else {
               // Fallback to tile request if page image not available
               workerRequest('renderTile', { pageIndex, scale, tileRect: { x, y, width: w, height: h } })
                 .then(({ width, height, rgba }) => {
                   const img = new ImageData(new Uint8ClampedArray(rgba), width, height);
                   ctx.putImageData(img, x, y);
+                  if ((document.documentElement.getAttribute('data-theme') || 'light') === 'dark') {
+                    darkenPaperBackgroundInRect(canvas, x, y, width, height);
+                    whitenDarkTextInRect(canvas, x, y, width, height);
+                  }
                 })
                 .catch((err) => {
                   console.error('Tile render error', err);
@@ -1278,6 +1288,71 @@
           }
         }
       }
+    }
+
+    // In dark mode, convert dark/gray, low-saturation pixels (likely text) to white within a rect.
+    function whitenDarkTextInRect(canvas, x, y, w, h) {
+      try {
+        const ctx = canvas.getContext('2d');
+        if (!ctx || w <= 0 || h <= 0) return;
+        const imgData = ctx.getImageData(x, y, w, h);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          // include anti-aliased edges as text by not discarding low alpha fully, only ignore very transparent
+          const a = data[i + 3];
+          if (a < 24) continue;
+          const maxC = r > g ? (r > b ? r : b) : (g > b ? g : b);
+          const minC = r < g ? (r < b ? r : b) : (g < b ? g : b);
+          const luma = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          const sat = maxC === 0 ? 0 : (maxC - minC) / maxC;
+          // treat dark to medium-gray low-sat pixels as text strokes
+          if (luma < 0.55 && sat < 0.25) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
+          }
+        }
+        ctx.putImageData(imgData, x, y);
+      } catch {}
+    }
+
+    // In dark mode, nudge near-white page background toward the dark paper background color without affecting content.
+    function darkenPaperBackgroundInRect(canvas, x, y, w, h) {
+      try {
+        const ctx = canvas.getContext('2d');
+        if (!ctx || w <= 0 || h <= 0) return;
+        const imgData = ctx.getImageData(x, y, w, h);
+        const data = imgData.data;
+        // Parse --pdf-page-bg to RGB once
+        const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--pdf-page-bg').trim();
+        let bgR = 15, bgG = 15, bgB = 16; // default fallback #0f0f10
+        if (cssVar.startsWith('#')) {
+          const v = cssVar.slice(1);
+          const n = parseInt(v.length === 3 ? v.split('').map(c=>c+c).join('') : v, 16);
+          bgR = (n >> 16) & 255; bgG = (n >> 8) & 255; bgB = n & 255;
+        }
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          if (a < 255) continue; // skip non-opaque; paper is fully opaque in most PDFs
+          const maxC = r > g ? (r > b ? r : b) : (g > b ? g : b);
+          const minC = r < g ? (r < b ? r : b) : (g < b ? g : b);
+          const luma = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          const sat = maxC === 0 ? 0 : (maxC - minC) / maxC;
+          // Treat near-pure white and very low-sat as page background; avoid touching images
+          if (luma > 0.97 && sat < 0.05) {
+            data[i] = bgR;
+            data[i + 1] = bgG;
+            data[i + 2] = bgB;
+          }
+        }
+        ctx.putImageData(imgData, x, y);
+      } catch {}
     }
 
     // Ensure page sizing info and align text layer
