@@ -24,6 +24,12 @@
       flex-direction: row-reverse;
     }
 
+    /* In RTL, offset the right side instead of the left for window controls */
+    [dir="rtl"] .header {
+      padding-right: 100px;
+      padding-left: 24px;
+    }
+
     :root {
       --bg: #ffffff;
       --surface: #f8f9fa;
@@ -67,50 +73,55 @@
     .header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 12px 20px;
+      padding: 6px 24px;
+      /* Offset for macOS traffic-light window controls to avoid overlap */
+      padding-left: 100px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-height: 60px;
+      min-height: 36px;
       flex-shrink: 0;
-      gap: 16px;
+      gap: 8px;
     }
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 8px;
       flex: 1;
+      min-width: 0; /* Allow shrinking */
     }
 
     .title {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 400px;
+      flex: 1;
+      min-width: 200px;
     }
 
     .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .btn {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 8px 12px;
+      padding: 6px 8px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       transition: all 0.2s;
+      white-space: nowrap;
     }
 
     .btn:hover:not(:disabled) {
@@ -1094,19 +1105,14 @@
         }
 
         // Read the file through Electron IPC
-        console.log('Reading PDF file:', filePath);
         const arrayBuffer = await window.api.file.read(filePath);
         if (!arrayBuffer) {
           throw new Error('Failed to read PDF file');
         }
 
-        console.log('PDF file loaded, size:', arrayBuffer.byteLength, 'bytes');
-
         // Open the document in worker
         const openRes = await workerRequest('open', { bytes: arrayBuffer });
         state.totalPages = openRes.pageCount || 0;
-
-        console.log('PDF document opened successfully, pages:', state.totalPages);
 
         elements.pageCount.textContent = `/ ${state.totalPages}`;
         elements.pageInput.max = state.totalPages;
@@ -1514,7 +1520,6 @@
       if (state.selection.text) {
         try {
           await navigator.clipboard.writeText(state.selection.text);
-          console.log('Text copied to clipboard');
         } catch (err) {
           console.error('Failed to copy text:', err);
         }
@@ -1658,7 +1663,6 @@
       try {
         await window.api['pdf-reader']['save-annotations'](state.paper.id, state.annotations);
         renderAnnotationsList();
-        console.log('Annotations saved');
       } catch (error) {
         console.error('Error saving annotations:', error);
       }
@@ -1827,7 +1831,6 @@
       // Rotate document clockwise by 90 degrees
       state.rotation = (state.rotation + 90) % 360;
       renderAllPages();
-      console.log('Document rotated to:', state.rotation, 'degrees');
     });
 
     elements.fullscreenBtn.addEventListener('click', () => {
@@ -2283,7 +2286,8 @@
     // Listen for paper data from main process
     window.api.pdfReader.onPaperLoaded((paper) => {
       state.paper = paper;
-      elements.documentTitle.textContent = paper.title || 'Untitled Paper';
+      const title = paper.title || 'Untitled Paper';
+      elements.documentTitle.textContent = title;
 
       if (paper.filePath) {
         loadPDF(paper.filePath);
@@ -2332,8 +2336,6 @@
         intersectionObserver.observe(el);
       });
     }).observe(elements.pagesWrapper, { childList: true });
-
-    console.log('PDF Reader initialized with worker-based tiled rendering');
   </script>
 </body>
 </html>

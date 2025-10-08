@@ -40,6 +40,9 @@ export class PDFReaderWindowManager {
         sandbox: false,
         nodeIntegration: false,
         webSecurity: true,
+        // Add Content Security Policy to fix security warning
+        webSecurity: true,
+        allowRunningInsecureContent: false,
       },
       titleBarStyle: 'hiddenInset',
       show: false, // Don't show until ready
