@@ -49,7 +49,7 @@ jobs:
         run: npm run build:renderer
 
       - name: Build for ${{ matrix.platform }} (${{ matrix.arch }})
-        run: npx electron-builder --publish=never --${{ matrix.platform }} --${{ matrix.arch }} --output=dist/${{ matrix.platform }}-${{ matrix.arch }}
+        run: npx electron-builder --publish=always --${{ matrix.platform }} --${{ matrix.arch }} --output=dist/${{ matrix.platform }}-${{ matrix.arch }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WIN_CSC_LINK: ""

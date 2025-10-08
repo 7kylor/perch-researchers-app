@@ -43,6 +43,13 @@
       "output": "build",
       "buildResources": "build"
     },
+    "publish": {
+      "provider": "github",
+      "owner": "7kylor",
+      "repo": "perch-researchers-app",
+      "private": false,
+      "releaseType": "release"
+    },
     "mac": {
       "category": "public.app-category.productivity",
       "target": [

@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Notification, dialog } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { autoUpdater } from 'electron-updater';
 import { PDFReaderWindowManager } from './pdf-reader-window.js';
 import { PDFImportManager } from './ingest/pdf-import.js';
 
@@ -13,6 +14,65 @@ const pdfReaderManager = PDFReaderWindowManager.getInstance();
 const _pdfImportManager = PDFImportManager.getInstance();
 
 pdfReaderManager.setupIPCHandlers();
+
+// Auto-update setup
+function setupAutoUpdater(): void {
+  // Configure auto-updater
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = false; // We'll handle restart manually
+
+  // Check for updates on app start
+  autoUpdater.checkForUpdatesAndNotify();
+
+  // Update available
+  autoUpdater.on('update-available', (info) => {
+    const notification = new Notification({
+      title: 'Update Available',
+      body: `Version ${info.version} is available. Downloading...`,
+      icon: path.join(__dirname, '../renderer/assets/icon.png'), // Adjust path as needed
+      urgency: 'normal'
+    });
+
+    notification.show();
+
+    // Send update info to renderer
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send('update-available', info);
+    }
+  });
+
+  // Update downloaded
+  autoUpdater.on('update-downloaded', (info) => {
+    const notification = new Notification({
+      title: 'Update Downloaded',
+      body: `Version ${info.version} downloaded. Restart to install.`,
+      icon: path.join(__dirname, '../renderer/assets/icon.png'),
+      urgency: 'normal',
+      actions: [{ type: 'button', text: 'Restart Now' }]
+    });
+
+    notification.show();
+
+    notification.on('action', () => {
+      autoUpdater.quitAndInstall(false, true);
+    });
+
+    // Send update info to renderer
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send('update-downloaded', info);
+    }
+  });
+
+  // Update not available
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('No updates available');
+  });
+
+  // Error
+  autoUpdater.on('error', (err) => {
+    console.error('Update error:', err);
+  });
+}
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -49,6 +109,10 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   createWindow();
+
+  // Set up auto-updater after window is created
+  setupAutoUpdater();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -59,3 +123,27 @@ app.on('window-all-closed', () => {
 });
 
 ipcMain.handle('app:version', () => app.getVersion());
+
+// Auto-update IPC handlers
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { success: true, updateInfo: result.updateInfo };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('download-update', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('quit-and-install', async () => {
+  autoUpdater.quitAndInstall(false, true);
+  return { success: true };
+});
