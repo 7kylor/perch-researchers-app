@@ -94,30 +94,6 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
         <div className="reader-content">
           {/* PDF Viewer */}
           <div className="pdf-viewer-container">
-            <div className="pdf-toolbar">
-              <button
-                type="button"
-                className="toolbar-btn"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage <= 1}
-                title="Previous Page"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span className="page-info">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                className="toolbar-btn"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage >= totalPages}
-                title="Next Page"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-
             <div className="pdf-content">
               {paper.filePath ? (
                 <div className="pdf-viewer-options">
@@ -188,6 +164,31 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
                 </div>
               )}
             </div>
+
+            {/* PDF Toolbar - Moved to bottom */}
+            <div className="pdf-toolbar">
+              <button
+                type="button"
+                className="toolbar-btn"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage <= 1}
+                title="Previous Page"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <span className="page-info">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                className="toolbar-btn"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage >= totalPages}
+                title="Next Page"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -197,6 +198,61 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
 
 // CSS styles for the PDF viewer options
 const styles = `
+  .pdf-viewer-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .pdf-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .pdf-toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .toolbar-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+
+  .toolbar-btn:hover:not(:disabled) {
+    background: var(--surface);
+    border-color: var(--primary);
+  }
+
+  .toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .page-info {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 80px;
+    text-align: center;
+  }
+
   .pdf-viewer-options {
     display: flex;
     flex-direction: column;

@@ -71,6 +71,44 @@ type WorkerRequest =
       type: 'stCopy';
       payload: { pageIndex: number; p: [number, number]; q: [number, number] };
     }
+  | {
+      id: number;
+      type: 'embedAnnotations';
+      payload: {
+        annotations: Record<string, unknown[]>; // per-page annotations from UI
+      };
+    }
+  | {
+      id: number;
+      type: 'pageOps';
+      payload: { op: 'delete' | 'insertBlank'; index: number };
+    }
+  | {
+      id: number;
+      type: 'annot:create-link';
+      payload: { pageIndex: number; rect: [number, number, number, number]; uri: string };
+    }
+  | {
+      id: number;
+      type: 'annot:stamp';
+      payload: { pageIndex: number; rect: [number, number, number, number]; icon?: string };
+    }
+  | {
+      id: number;
+      type: 'annot:file-attach';
+      payload: {
+        pageIndex: number;
+        rect: [number, number, number, number];
+        filename: string;
+        mimetype?: string;
+        bytes: Uint8Array | ArrayBuffer;
+      };
+    }
+  | {
+      id: number;
+      type: 'doc:set-metadata';
+      payload: { key: string; value: string };
+    }
   | { id: number; type: 'destroy'; payload?: Record<string, never> };
 
 type WorkerResponse =
@@ -366,9 +404,143 @@ globalThis.onmessage = async (e: unknown) => {
         post({ id, result: text });
         break;
       }
+      case 'embedAnnotations': {
+        // Minimal implementation: save incremental without embedding (placeholder for full mapping)
+        try {
+          if (!doc) throw new Error('Document not opened');
+          const buf = (
+            doc as unknown as { saveToBuffer: (o: unknown) => { asUint8Array: () => Uint8Array } }
+          )
+            .saveToBuffer('incremental')
+            .asUint8Array();
+          post({ id, result: { ok: true, bytes: buf } }, [buf.buffer as unknown as ArrayBuffer]);
+        } catch (e) {
+          post({ id, error: String(e) });
+        }
+        break;
+      }
+      case 'pageOps': {
+        try {
+          if (!doc) throw new Error('Document not opened');
+          const _m = await ensureMuPDF();
+          if (payload.op === 'delete') {
+            (doc as unknown as { deletePage: (i: number) => void }).deletePage(payload.index);
+          } else if (payload.op === 'insertBlank') {
+            const mediabox: MuTypes.Rect = [0, 0, 612, 792];
+            (
+              doc as unknown as {
+                addPage: (
+                  mb: MuTypes.Rect,
+                  rot: number,
+                  res: unknown,
+                  contents: MuTypes.Buffer,
+                ) => MuTypes.PDFPage;
+              }
+            ).addPage(
+              mediabox,
+              0,
+              (doc as unknown as { newDictionary: () => unknown }).newDictionary?.() ||
+                ({} as unknown),
+              (await ensureMuPDF()).Buffer
+                ? new (await ensureMuPDF()).Buffer(new Uint8Array())
+                : ({} as unknown as MuTypes.Buffer),
+            );
+          }
+          // Clear display list cache; caller will rebuild as needed
+          displayListCache.clear(destroyDisplayList);
+          post({ id, result: { ok: true } });
+        } catch (e) {
+          post({ id, error: String(e) });
+        }
+        break;
+      }
       case 'destroy': {
         destroyDoc();
         post({ id, result: true });
+        break;
+      }
+      case 'annot:create-link': {
+        try {
+          if (!doc) throw new Error('Document not opened');
+          const page = doc.loadPage(payload.pageIndex);
+          page.createLink(payload.rect as unknown as MuTypes.Rect, payload.uri);
+          page.destroy();
+          post({ id, result: { ok: true } });
+        } catch (e) {
+          post({ id, error: String(e) });
+        }
+        break;
+      }
+      case 'annot:stamp': {
+        try {
+          if (!doc) throw new Error('Document not opened');
+          const page = (doc as unknown as { loadPage: (i: number) => MuTypes.PDFPage }).loadPage(
+            payload.pageIndex,
+          ) as unknown as MuTypes.PDFPage;
+          const annot = (
+            page as unknown as { createAnnotation: (t: string) => MuTypes.PDFAnnotation }
+          ).createAnnotation('Stamp') as unknown as MuTypes.PDFAnnotation;
+          annot.setRect(payload.rect as unknown as MuTypes.Rect);
+          if (payload.icon) annot.setIcon(payload.icon);
+          annot.update?.();
+          (page as unknown as { destroy: () => void }).destroy();
+          post({ id, result: { ok: true } });
+        } catch (e) {
+          post({ id, error: String(e) });
+        }
+        break;
+      }
+      case 'annot:file-attach': {
+        try {
+          if (!doc) throw new Error('Document not opened');
+          const page = (doc as unknown as { loadPage: (i: number) => MuTypes.PDFPage }).loadPage(
+            payload.pageIndex,
+          ) as unknown as MuTypes.PDFPage;
+          const annot = (
+            page as unknown as { createAnnotation: (t: string) => MuTypes.PDFAnnotation }
+          ).createAnnotation('FileAttachment') as unknown as MuTypes.PDFAnnotation;
+          annot.setRect(payload.rect as unknown as MuTypes.Rect);
+          const _m = await ensureMuPDF();
+          const buf = new _m.Buffer(payload.bytes as ArrayBuffer);
+          const filespec = (
+            doc as unknown as {
+              addEmbeddedFile: (
+                filename: string,
+                mimetype: string,
+                contents: MuTypes.Buffer | Uint8Array,
+                createdAt: Date,
+                modifiedAt: Date,
+                checksum: boolean,
+              ) => unknown;
+            }
+          ).addEmbeddedFile(
+            payload.filename,
+            payload.mimetype || 'application/octet-stream',
+            buf as unknown as MuTypes.Buffer,
+            new Date(),
+            new Date(),
+            false,
+          );
+          (annot as unknown as { setFileSpec: (fs: unknown) => void }).setFileSpec(filespec);
+          annot.update?.();
+          (page as unknown as { destroy: () => void }).destroy();
+          post({ id, result: { ok: true } });
+        } catch (e) {
+          post({ id, error: String(e) });
+        }
+        break;
+      }
+      case 'doc:set-metadata': {
+        try {
+          if (!doc) throw new Error('Document not opened');
+          (doc as unknown as { setMetaData: (k: string, v: string) => void }).setMetaData(
+            payload.key,
+            payload.value,
+          );
+          post({ id, result: { ok: true } });
+        } catch (e) {
+          post({ id, error: String(e) });
+        }
         break;
       }
       default:
