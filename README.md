@@ -172,7 +172,7 @@ perch-researchers-app/
 └── docs/                        # Documentation (planned)
 ```
 
-## 🚀 Usage Guide
+## Usage Guide
 
 ### Adding Research Papers
 
@@ -209,7 +209,7 @@ perch-researchers-app/
 3. **Semantic Search**: Find related papers using content similarity
 4. **Smart Recommendations**: Discover relevant papers based on your reading history
 
-## ⚙️ Configuration
+## Configuration
 
 ### Database Configuration
 - **Storage**: SQLite database stored in user data directory
@@ -266,7 +266,7 @@ npm run dist         # Create distribution packages
 - **Minimum Coverage**: 80% code coverage requirement
 - **Test Categories**: Unit, integration, and accessibility tests
 
-## 🚀 Releases & Distribution
+## Releases & Distribution
 
 ### Automated Release Process
 
@@ -310,7 +310,7 @@ The project uses GitHub Actions for fully automated multi-platform releases:
 - **Build Testing**: Multi-platform build verification
 - **Security Scanning**: Dependency vulnerability checks
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the research community! Here's how to get involved:
 
@@ -350,7 +350,7 @@ git commit -m "feat: add support for new embedding model"
 git push origin feature/new-ai-model
 ```
 
-## 🗺️ Roadmap
+## Roadmap
 
 ### Short Term (v1.1 - v1.3)
 - [ ] **Vector Search Enhancement**: Improved semantic search with multiple embedding models
@@ -370,7 +370,7 @@ git push origin feature/new-ai-model
 - [ ] **Research Metrics**: Track reading patterns and research productivity
 - [ ] **Institutional Integration**: LDAP/SSO integration for university environments
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -395,21 +395,21 @@ git push origin feature/new-ai-model
 
 ### Getting Help
 
-- **📖 Documentation**: Check this README and inline code documentation
-- **🐛 Issues**: [Create an issue](https://github.com/7kylor/perch-researchers-app/issues) with:
+- **Documentation**: Check this README and inline code documentation
+- **Issues**: [Create an issue](https://github.com/7kylor/perch-researchers-app/issues) with:
   - Detailed description of the problem
   - Steps to reproduce
   - System information (OS, Node.js version)
   - Relevant error logs
-- **💬 Discussions**: Use GitHub Discussions for questions and feature requests
+- **Discussions**: Use GitHub Discussions for questions and feature requests
 
-## 📄 License
+## License
 
 **MIT License** - See [LICENSE](LICENSE) file for full details.
 
 You are free to use, modify, and distribute this software under the terms of the MIT License. The software is provided "as is" without warranty of any kind.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 **Built with Modern Technologies:**
 - **Electron** - Cross-platform desktop applications
@@ -440,8 +440,8 @@ You are free to use, modify, and distribute this software under the terms of the
 
 **Perch Researchers App** - *Empowering researchers with intelligent, local-first knowledge management*
 
-*Built by researchers, for researchers* 🦜📚
+*Built by researchers, for researchers*
 
-[⭐ Star on GitHub](https://github.com/7kylor/perch-researchers-app) • [🐛 Report Issues](https://github.com/7kylor/perch-researchers-app/issues) • [💬 Join Discussion](https://github.com/7kylor/perch-researchers-app/discussions)
+[Star on GitHub](https://github.com/7kylor/perch-researchers-app) • [Report Issues](https://github.com/7kylor/perch-researchers-app/issues) • [Join Discussion](https://github.com/7kylor/perch-researchers-app/discussions)
 
 </div>
