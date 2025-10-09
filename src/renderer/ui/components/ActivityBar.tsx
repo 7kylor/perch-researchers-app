@@ -21,10 +21,6 @@ type ActivityBarProps = {
   isSidebarCollapsed: boolean;
   onSidebarToggle: () => void;
 
-  // Debug props
-  debug?: {
-    renderCount?: number;
-  };
   // Search props
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -47,7 +43,6 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   onSettingsClick,
   isSidebarCollapsed,
   onSidebarToggle,
-  debug,
   searchQuery,
   onSearchChange,
   sortBy,
@@ -62,13 +57,6 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
 }) => {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
-
-  // Debug logging to track props
-  console.log('🔄 ACTIVITYBAR RENDER:', {
-    isSidebarCollapsed,
-    renderCount: renderCount.current,
-    debug: debug?.renderCount,
-  });
 
   const [showSortDropdown, setShowSortDropdown] = React.useState(false);
   const sortRef = React.useRef<HTMLDivElement>(null);

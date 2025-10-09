@@ -16,14 +16,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   const [renameValue, setRenameValue] = React.useState('');
   const [categoriesExpanded, setCategoriesExpanded] = React.useState(true);
 
-  // Debug logging to track re-renders
-  console.log(
-    '🔄 SIDEBAR RENDER: collapsed =',
-    prefs?.sidebarCollapsed,
-    'selectedId =',
-    selectedId,
-  );
-
   // Count the actual number of categories (folders and labels)
   const categoryCount = React.useMemo(() => {
     return nodes.filter((node: SidebarNode) => node.type === 'folder' || node.type === 'label')
@@ -64,10 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     }
   };
 
-  console.log('🔄 SIDEBAR: Checking collapsed state:', prefs?.sidebarCollapsed);
-
   if (prefs?.sidebarCollapsed === true) {
-    console.log('🔄 SIDEBAR: Rendering collapsed view');
     return (
       <nav
         className="library-sidebar collapsed"
@@ -116,7 +105,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     );
   }
 
-  console.log('🔄 SIDEBAR: Rendering expanded view');
   return (
     <nav
       className="library-sidebar"

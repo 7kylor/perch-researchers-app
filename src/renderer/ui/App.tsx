@@ -74,28 +74,13 @@ export const App: React.FC = () => {
   };
 
   const handleSidebarToggle = React.useCallback(() => {
-    console.log('=== SIDEBAR TOGGLE START ===');
-    console.log('Current store state:', prefs?.sidebarCollapsed);
-
     if (!actions?.setSidebarCollapsed) {
-      console.log('❌ Actions not available yet');
       return;
     }
 
     const newCollapsed = !sidebarCollapsed;
-    console.log('New state will be:', newCollapsed);
-
-    // Update store state directly - this triggers immediate re-render
-    try {
-      console.log('✅ Calling store action...');
-      actions.setSidebarCollapsed(newCollapsed);
-      console.log('✅ Store updated successfully');
-    } catch (error) {
-      console.error('❌ Failed to update store:', error);
-    }
-
-    console.log('=== SIDEBAR TOGGLE END ===');
-  }, [sidebarCollapsed, actions, prefs]);
+    actions.setSidebarCollapsed(newCollapsed);
+  }, [sidebarCollapsed, actions]);
 
   const handlePaperClick = (paperId: string) => {
     openPaper(paperId);
@@ -389,13 +374,6 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showSimpleAddModal, showSettings, handleSidebarToggle]);
 
-  console.log(
-    '🔄 APP RENDER: sidebarCollapsed =',
-    prefs?.sidebarCollapsed,
-    'main class =',
-    `library-main ${prefs?.sidebarCollapsed ? 'sidebar-collapsed' : ''}`,
-  );
-
   return (
     <ThemeProvider>
       <div className="app-root">
@@ -403,7 +381,6 @@ export const App: React.FC = () => {
           onSettingsClick={handleSettingsClick}
           isSidebarCollapsed={sidebarCollapsed}
           onSidebarToggle={handleSidebarToggle}
-          debug={{ renderCount: 1 }}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           sortBy={sortBy}
