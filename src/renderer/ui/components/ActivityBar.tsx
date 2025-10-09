@@ -10,7 +10,6 @@ import {
   User,
   X,
   Bot,
-  Brain,
 } from 'lucide-react';
 
 type SortOption = 'recent' | 'title' | 'author' | 'year';
@@ -30,9 +29,6 @@ type ActivityBarProps = {
   // AI chat props
   onAIChatToggle: () => void;
   showAIChat: boolean;
-  // Merged Hub props
-  onHubToggle: () => void;
-  showHub: boolean;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
@@ -46,8 +42,6 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   onAddItem,
   onAIChatToggle,
   showAIChat,
-  onHubToggle,
-  showHub,
 }) => {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
@@ -152,16 +146,6 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             </div>
           )}
         </div>
-
-        {/* Research & Analytics Hub Button */}
-        <button
-          type="button"
-          className={`activity-compact-btn ${showHub ? 'active' : ''}`}
-          onClick={onHubToggle}
-          title={showHub ? 'Hide Research Hub' : 'Show Research Hub'}
-        >
-          <Brain size={18} />
-        </button>
 
         {/* AI Chat Button */}
         <button

@@ -1,16 +1,18 @@
 import React from 'react';
 import { useSidebarStore } from '../../sidebar/store';
 import { SidebarTree } from './SidebarTree';
-import { BookOpen, Clock, FolderOpen, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { BookOpen, Clock, FolderOpen, Plus, ChevronDown, ChevronRight, Brain } from 'lucide-react';
 import { SidebarFooter } from './SidebarFooter';
 import type { SidebarNode } from '../../../../shared/sidebar';
 
 type SidebarProps = {
   selectedId: string;
   onSelect: (id: string) => void;
+  showHub: boolean;
+  onHubToggle: () => void;
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect, showHub, onHubToggle }) => {
   const { nodes, prefs, counts, actions } = useSidebarStore();
   const [renamingId, setRenamingId] = React.useState<string | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
@@ -64,6 +66,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
         style={{ width: '60px', minWidth: '60px' }}
       >
         <div className="sidebar-collapsed-content">
+          {/* Research Hub Button - Top */}
+          <div className="sidebar-collapsed-nav">
+            <button
+              type="button"
+              className={`sidebar-collapsed-item ${showHub ? 'selected' : ''}`}
+              onClick={onHubToggle}
+              data-tooltip={showHub ? 'Hide Research Hub' : 'Show Research Hub'}
+              title={showHub ? 'Hide Research Hub' : 'Show Research Hub'}
+            >
+              <Brain size={18} />
+            </button>
+          </div>
+
           {/* Main Navigation Icons */}
           <div className="sidebar-collapsed-nav">
             <button
@@ -112,6 +127,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
       style={{ width: '250px', minWidth: '250px' }}
     >
       <div className="sidebar-grid">
+        {/* Research Hub Section - Top */}
+        <div className="sidebar-section">
+          <ul className="section-items">
+            <li>
+              <button
+                type="button"
+                className={`sidebar-item ${showHub ? 'selected' : ''}`}
+                onClick={onHubToggle}
+              >
+                <span className="item-icon" aria-hidden="true">
+                  <Brain size={16} />
+                </span>
+                <span className="item-text">Research Hub</span>
+                <span className="item-count">
+                  {/* Research Hub doesn't need a count display */}
+                </span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
         {/* Main Navigation Section */}
         <div className="sidebar-section categories-section">
           <ul className="section-items">

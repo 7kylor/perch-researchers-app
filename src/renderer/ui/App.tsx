@@ -387,14 +387,14 @@ export const App: React.FC = () => {
           onAddItem={() => setShowSimpleAddModal(true)}
           onAIChatToggle={() => setShowAIChat(!showAIChat)}
           showAIChat={showAIChat}
-          onHubToggle={() => setShowHub(!showHub)}
-          showHub={showHub}
         />
         <div className="library-layout">
           <NewSidebar
             key={`sidebar-${prefs?.sidebarCollapsed}`}
             selectedId={selectedCategory}
             onSelect={setSelectedCategory}
+            showHub={showHub}
+            onHubToggle={() => setShowHub(!showHub)}
           />
           <div className={`library-main ${prefs?.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <div className="library-content">

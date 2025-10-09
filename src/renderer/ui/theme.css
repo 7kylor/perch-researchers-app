@@ -425,20 +425,20 @@ body {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
-	gap: 8px;
+	gap: 2px;
 	min-height: 0;
 }
 
 .sidebar-collapsed-nav {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 2px;
 	flex: 1;
 }
 
 .sidebar-collapsed-item {
 	width: 100%;
-	height: 44px;
+	height: 40px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -460,10 +460,11 @@ body {
 }
 
 .sidebar-collapsed-item.selected {
-	background: rgba(59, 130, 246, 0.1);
+	background: var(--surface-elevated);
 	color: var(--primary);
 	font-weight: 600;
 	border-left: 3px solid var(--primary);
+	box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
 }
 
 .sidebar-collapsed-item:focus-visible {
@@ -487,16 +488,17 @@ body {
 
 .sidebar-collapsed-profile {
 	width: 100%;
-	height: 44px;
+	height: 40px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	background: none;
 	border: none;
 	border-radius: 8px;
+	color: var(--text-secondary);
 	cursor: pointer;
 	transition: all 0.1s ease;
-	padding: 8px;
+	padding: 6px;
 	-webkit-app-region: no-drag;
 }
 
@@ -626,12 +628,12 @@ body {
 	}
 
 	.sidebar-collapsed-item {
-		height: 40px;
+		height: 36px;
 	}
 
 	.sidebar-collapsed-profile {
-		height: 40px;
-		padding: 6px;
+		height: 36px;
+		padding: 5px;
 	}
 
 	.sidebar-collapsed-avatar {
@@ -656,11 +658,11 @@ body {
 	}
 
 	.sidebar-collapsed-item {
-		height: 36px;
+		height: 32px;
 	}
 
 	.sidebar-collapsed-profile {
-		height: 36px;
+		height: 32px;
 		padding: 4px;
 	}
 
@@ -687,8 +689,8 @@ body {
 .sidebar-grid {
 	display: flex;
 	flex-direction: column;
-	gap: 8px; /* Consistent gap between sections */
-	padding: 8px 12px; /* Consistent padding */
+	gap: 4px; /* Reduced gap between sections */
+	padding: 6px 8px; /* Reduced padding */
 	height: 100%; /* Full height */
 	min-height: 0; /* Allow shrinking */
 }
@@ -1097,12 +1099,12 @@ body {
 	}
 
 	.sidebar-grid {
-		gap: 6px; /* Slightly reduced gap */
-		padding: 6px 8px;
+		gap: 3px; /* Slightly reduced gap */
+		padding: 4px 6px;
 	}
 
 	.sidebar-item {
-		padding: 6px 10px;
+		padding: 4px 8px;
 		font-size: 12px;
 	}
 
@@ -1131,14 +1133,14 @@ body {
 	}
 
 	.sidebar-grid {
-		gap: 4px; /* Reduced gap */
-		padding: 4px 6px;
+		gap: 2px; /* Reduced gap */
+		padding: 3px 4px;
 	}
 
 	.sidebar-item {
-		padding: 5px 8px;
+		padding: 3px 6px;
 		font-size: 12px;
-		gap: 6px;
+		gap: 4px;
 	}
 
 	.section-title {
@@ -1167,14 +1169,14 @@ body {
 	}
 
 	.sidebar-grid {
-		gap: 3px; /* Minimal gap */
-		padding: 3px 4px;
+		gap: 2px; /* Minimal gap */
+		padding: 2px 3px;
 	}
 
 	.sidebar-item {
-		padding: 4px 6px;
+		padding: 3px 5px;
 		font-size: 11px;
-		gap: 4px;
+		gap: 3px;
 	}
 
 	.section-title {
@@ -1214,7 +1216,7 @@ body {
 
 .sidebar-section {
 	flex-shrink: 0; /* Don't shrink by default */
-	padding: 8px 0;
+	padding: 4px 0;
 }
 
 .sidebar-section.categories-section {
@@ -1300,8 +1302,8 @@ body {
 	display: grid;
 	grid-template-columns: auto 1fr auto auto;
 	align-items: center;
-	gap: 8px; /* Consistent gap */
-	padding: 8px 12px; /* Consistent padding */
+	gap: 6px; /* Reduced gap */
+	padding: 6px 10px; /* Reduced padding */
 	margin: 0;
 	cursor: pointer;
 	transition: all 0.15s ease;
@@ -1321,17 +1323,7 @@ body {
 
 /* Removed dropdown arrows from all sidebar items */
 
-.sidebar-item:hover {
-	background: var(--card-hover);
-	color: var(--text);
-}
-
-.sidebar-item.selected {
-	background: rgba(59, 130, 246, 0.1);
-	color: var(--text);
-	font-weight: 500;
-	border-left: 3px solid var(--primary);
-}
+/* Hover state removed - using enhanced hover below */
 
 .sidebar-item:focus-visible {
 	outline: 2px solid var(--ring);
@@ -3190,14 +3182,16 @@ textarea:focus-visible {
 	color: var(--text);
 	transform: translateX(2px);
 	transition: all 0.1s ease;
+	box-shadow: var(--shadow-sm);
 }
 
 .sidebar-item.selected {
 	background: var(--surface-elevated);
-	color: var(--text);
-	font-weight: 500;
+	color: var(--primary);
+	font-weight: 600;
 	transform: translateX(2px);
 	border-left: 3px solid var(--primary);
+	box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
 }
 
 /* Category count badges */
