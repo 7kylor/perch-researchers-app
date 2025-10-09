@@ -7,6 +7,9 @@ import { EmptyState } from './components/EmptyState';
 import { EnhancedAddPaper } from './components/EnhancedAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
+import { AIChat } from './components/AIChat';
+import { CitationManager } from './components/CitationManager';
+import { ResearchAnalytics } from './components/ResearchAnalytics';
 
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
@@ -21,6 +24,13 @@ export const App: React.FC = () => {
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortOption>('recent');
+  const [showAIChat, setShowAIChat] = React.useState(false);
+  const [selectedPapersForAI, setSelectedPapersForAI] = React.useState<string[]>([]);
+  const [showAnalytics, setShowAnalytics] = React.useState(false);
+  const [showCitationManager, setShowCitationManager] = React.useState(false);
+  const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
+    null,
+  );
 
   const { prefs, actions } = useSidebarStore();
 
@@ -65,6 +75,11 @@ export const App: React.FC = () => {
 
   const handlePaperClick = (paperId: string) => {
     openPaper(paperId);
+  };
+
+  const handleShowCitations = (paperId: string) => {
+    setSelectedPaperForCitations(paperId);
+    setShowCitationManager(true);
   };
 
   const handleSimpleAddPaper = async (input: string, type: 'url' | 'pdf') => {
@@ -357,6 +372,10 @@ export const App: React.FC = () => {
           sortBy={sortBy}
           onSortChange={handleSortChange}
           onAddItem={() => setShowSimpleAddModal(true)}
+          onAIChatToggle={() => setShowAIChat(!showAIChat)}
+          showAIChat={showAIChat}
+          onAnalyticsToggle={() => setShowAnalytics(!showAnalytics)}
+          showAnalytics={showAnalytics}
         />
         <div className="library-layout">
           {!prefs.sidebarCollapsed && (
@@ -377,9 +396,24 @@ export const App: React.FC = () => {
                   category={selectedCategory}
                   onPaperSelect={handlePaperClick}
                   onRefresh={refreshPapers}
+                  onShowCitations={handleShowCitations}
                 />
               )}
             </div>
+            {showAIChat && (
+              <div className="ai-chat-panel">
+                <AIChat
+                  availablePapers={sortedResults}
+                  selectedPapers={selectedPapersForAI}
+                  onPapersChange={setSelectedPapersForAI}
+                />
+              </div>
+            )}
+            {showAnalytics && (
+              <div className="analytics-panel">
+                <ResearchAnalytics />
+              </div>
+            )}
           </div>
         </div>
 
@@ -391,6 +425,18 @@ export const App: React.FC = () => {
         />
 
         {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+
+        {showCitationManager && (
+          <div className="citation-manager-overlay">
+            <CitationManager
+              paperId={selectedPaperForCitations}
+              onClose={() => {
+                setShowCitationManager(false);
+                setSelectedPaperForCitations(null);
+              }}
+            />
+          </div>
+        )}
 
         {toast && (
           <Toast

@@ -62,3 +62,68 @@ export const sidebarPrefs = sqliteTable('sidebar_prefs', {
   payload: text('payload').notNull(), // JSON of SidebarPrefs
   updatedAt: text('updatedAt').notNull(),
 });
+
+// Citation management tables
+export const citations = sqliteTable('citations', {
+  id: text('id').primaryKey().notNull(),
+  paperId: text('paperId').notNull(), // Paper that contains this citation
+  citedPaperId: text('citedPaperId'), // If citing another paper in the library
+  title: text('title').notNull(),
+  authors: text('authors').notNull(), // JSON string array
+  year: integer('year'),
+  venue: text('venue'),
+  doi: text('doi'),
+  url: text('url'),
+  citationStyle: text('citationStyle').notNull(), // 'apa', 'mla', 'ieee', etc.
+  formattedCitation: text('formattedCitation').notNull(),
+  rawCitation: text('rawCitation'), // Original citation text found in paper
+  context: text('context'), // Surrounding text where citation was found
+  pageNumber: integer('pageNumber'),
+  createdAt: text('createdAt').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
+export const citationStyles = sqliteTable('citation_styles', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  format: text('format').notNull(), // Template for formatting citations
+  example: text('example').notNull(),
+  createdAt: text('createdAt').notNull(),
+});
+
+// Bibliography collections
+export const bibliographies = sqliteTable('bibliographies', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  citationStyle: text('citationStyle').notNull(),
+  paperIds: text('paperIds').notNull(), // JSON string array of paper IDs
+  generatedContent: text('generatedContent'), // Generated bibliography text
+  createdAt: text('createdAt').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
+// Citation extraction jobs
+export const citationExtractionJobs = sqliteTable('citation_extraction_jobs', {
+  id: text('id').primaryKey().notNull(),
+  paperId: text('paperId').notNull(),
+  status: text('status').notNull(), // 'pending', 'processing', 'completed', 'failed'
+  progress: integer('progress').notNull().default(0),
+  totalCitations: integer('totalCitations').default(0),
+  extractedCitations: integer('extractedCitations').default(0),
+  error: text('error'),
+  startedAt: text('startedAt'),
+  completedAt: text('completedAt'),
+});
+
+// Reading session tracking for analytics
+export const readingSessions = sqliteTable('reading_sessions', {
+  id: text('id').primaryKey().notNull(),
+  paperId: text('paperId').notNull(),
+  startedAt: text('startedAt').notNull(),
+  endedAt: text('endedAt'),
+  duration: integer('duration'), // in minutes
+  pagesRead: integer('pagesRead'),
+  annotationsCreated: integer('annotationsCreated'),
+  status: text('status').notNull(), // 'active', 'completed', 'abandoned'
+});

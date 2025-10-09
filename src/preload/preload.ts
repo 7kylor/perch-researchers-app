@@ -75,9 +75,22 @@ export interface PreloadAPI {
     }) => Promise<string>;
     stop: () => Promise<boolean>;
     status: () => Promise<{ running: boolean; url: string | null }>;
-    downloadModel: (payload: { url: string; destDir: string }) => Promise<string>;
+    downloadModel: (payload: { url: string; destDir?: string }) => Promise<string>;
     listModels: () => Promise<Array<{ fileName: string; filePath: string }>>;
     detectBinary: () => Promise<{ binaryPath: string | null }>;
+    getConfig: () => Promise<{
+      embeddingProviderUrl: string | null;
+      embeddingModel: 'BAAI/bge-base-en-v1.5' | 'thenlper/gte-small';
+    }>;
+    setConfig: (
+      cfg: Partial<{
+        embeddingProviderUrl: string | null;
+        embeddingModel: 'BAAI/bge-base-en-v1.5' | 'thenlper/gte-small';
+      }>,
+    ) => Promise<{
+      embeddingProviderUrl: string | null;
+      embeddingModel: 'BAAI/bge-base-en-v1.5' | 'thenlper/gte-small';
+    }>;
   };
   localEmb: {
     start: (port?: number) => Promise<string>;
@@ -236,10 +249,12 @@ contextBridge.exposeInMainWorld('api', {
     start: (cfg: unknown) => ipcRenderer.invoke('local-ai:start', cfg),
     stop: () => ipcRenderer.invoke('local-ai:stop'),
     status: () => ipcRenderer.invoke('local-ai:status'),
-    downloadModel: (payload: { url: string; destDir: string }) =>
+    downloadModel: (payload: { url: string; destDir?: string }) =>
       ipcRenderer.invoke('local-ai:download-model', payload),
     listModels: () => ipcRenderer.invoke('local-ai:list-models'),
     detectBinary: () => ipcRenderer.invoke('local-ai:detect-binary'),
+    getConfig: () => ipcRenderer.invoke('local-ai:get-config'),
+    setConfig: (cfg: unknown) => ipcRenderer.invoke('local-ai:set-config', cfg),
   },
   localEmb: {
     start: (port?: number) => ipcRenderer.invoke('local-emb:start', port),

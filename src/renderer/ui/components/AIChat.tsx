@@ -1,4 +1,6 @@
 import React from 'react';
+import { PaperSelector } from './PaperSelector';
+import type { Paper } from '../../../shared/types';
 
 type Role = 'system' | 'user' | 'assistant';
 type Message = { role: Role; content: string };
@@ -6,11 +8,17 @@ type Message = { role: Role; content: string };
 type AIChatProps = {
   defaultMode?: 'openai' | 'local';
   defaultTemperature?: number;
+  selectedPapers?: string[];
+  onPapersChange?: (papers: string[]) => void;
+  availablePapers?: Paper[];
 };
 
 export const AIChat: React.FC<AIChatProps> = ({
   defaultMode = 'local',
   defaultTemperature = 0.2,
+  selectedPapers = [],
+  onPapersChange,
+  availablePapers = [],
 }) => {
   const [mode, setMode] = React.useState<'openai' | 'local'>(defaultMode);
   const [temperature, setTemperature] = React.useState<number>(defaultTemperature);
@@ -78,7 +86,7 @@ export const AIChat: React.FC<AIChatProps> = ({
     setIsStreaming(false);
   };
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
     const text = streamBufferRef.current || lastAssistant?.content || '';
     if (!text) return;
@@ -96,6 +104,102 @@ export const AIChat: React.FC<AIChatProps> = ({
     const apiKey = mode === 'openai' ? localStorage.getItem('openaiKey') || undefined : undefined;
     const id = await window.api.ai.chat.start({ mode, apiKey, messages: base, temperature });
     setChatId(id);
+  };
+
+  const handleAdvancedFeature = async (feature: 'review' | 'methodology' | 'gaps' | 'proposal') => {
+    if (isStreaming) return;
+
+    try {
+      let result: string = '';
+      let userMessage = '';
+
+      switch (feature) {
+        case 'review':
+          if (selectedPapers.length === 0) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: 'assistant',
+                content: 'Please select papers first to synthesize a literature review.',
+              },
+            ]);
+            return;
+          }
+          userMessage = `Synthesize a literature review from ${selectedPapers.length} selected papers`;
+          result = await window.api.ai['synthesize-review'](selectedPapers);
+          break;
+        case 'methodology':
+          if (selectedPapers.length === 0) {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: 'Please select a paper first to extract methodology.' },
+            ]);
+            return;
+          }
+          userMessage = `Extract methodology from selected paper`;
+          result = await window.api.ai['extract-methodology'](selectedPapers[0]);
+          break;
+        case 'gaps':
+          if (selectedPapers.length === 0) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: 'assistant',
+                content: 'Please select papers first to identify research gaps.',
+              },
+            ]);
+            return;
+          }
+          userMessage = `Identify research gaps from ${selectedPapers.length} selected papers`;
+          result = await window.api.ai['identify-gaps'](selectedPapers);
+          break;
+        case 'proposal': {
+          if (selectedPapers.length === 0) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: 'assistant',
+                content:
+                  'Please select papers first and identify gaps to generate a research proposal.',
+              },
+            ]);
+            return;
+          }
+          const gaps = await window.api.ai['identify-gaps'](selectedPapers);
+          if (!gaps.includes('research gaps') && !gaps.includes('gaps')) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: 'assistant',
+                content:
+                  'No clear research gaps identified. Please try with different papers or identify gaps manually first.',
+              },
+            ]);
+            return;
+          }
+          userMessage = `Generate research proposal based on identified gaps`;
+          result = await window.api.ai['generate-proposal'](
+            selectedPapers,
+            'Identified research gaps from literature',
+          );
+          break;
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: userMessage },
+        { role: 'assistant', content: result },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        },
+      ]);
+    }
   };
 
   const renderContent = (text: string) => {
@@ -120,6 +224,14 @@ export const AIChat: React.FC<AIChatProps> = ({
 
   return (
     <div className="ai-chat-container">
+      {availablePapers.length > 0 && onPapersChange && (
+        <PaperSelector
+          papers={availablePapers}
+          selectedPapers={selectedPapers}
+          onSelectionChange={onPapersChange}
+          maxSelections={10}
+        />
+      )}
       <div className="ai-chat-header">
         <select value={mode} onChange={(e) => setMode(e.target.value as 'openai' | 'local')}>
           <option value="local">Local (llama.cpp)</option>
@@ -149,6 +261,42 @@ export const AIChat: React.FC<AIChatProps> = ({
             Stop
           </button>
         </div>
+        {selectedPapers && selectedPapers.length > 0 && (
+          <div className="ai-advanced-actions">
+            <button
+              type="button"
+              onClick={() => handleAdvancedFeature('review')}
+              disabled={isStreaming}
+              title="Synthesize literature review from selected papers"
+            >
+              Literature Review
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAdvancedFeature('methodology')}
+              disabled={isStreaming}
+              title="Extract methodology from selected paper"
+            >
+              Extract Methodology
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAdvancedFeature('gaps')}
+              disabled={isStreaming}
+              title="Identify research gaps from selected papers"
+            >
+              Research Gaps
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAdvancedFeature('proposal')}
+              disabled={isStreaming}
+              title="Generate research proposal based on gaps"
+            >
+              Research Proposal
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="ai-chat-messages">

@@ -11,10 +11,13 @@ import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pip
 import { llamaServerManager, type LlamaServerConfig } from './local-ai/llama-server.js';
 import { createRAGSystem } from './ai/rag.js';
 import { processPaperOCR } from './ocr/batch.js';
+import { citationExtractor } from './services/citations/citation-extractor.js';
+import { researchAnalytics } from './services/analytics/research-analytics.js';
 import path from 'node:path';
 import https from 'node:https';
 import { TextDecoder } from 'node:util';
 import { localEmbeddingsServer } from './local-ai/embeddings-server.js';
+import { getLocalAIConfig, setLocalAIConfig } from './local-ai/config.js';
 import {
   BUILTIN_ALL,
   BUILTIN_RECENT,
@@ -274,6 +277,99 @@ ipcMain.handle('ai:related', async (_e, query: string) => {
   return await ragSystem.generateRelatedPapers(query);
 });
 
+ipcMain.handle('ai:synthesize-review', async (_e, paperIds: string[]) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.synthesizeLiteratureReview(paperIds);
+});
+
+ipcMain.handle('ai:extract-methodology', async (_e, paperId: string) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.extractMethodology(paperId);
+});
+
+ipcMain.handle('ai:identify-gaps', async (_e, paperIds: string[]) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.identifyResearchGaps(paperIds);
+});
+
+ipcMain.handle('ai:generate-proposal', async (_e, currentPapers: string[], gap: string) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.generateResearchProposal(currentPapers, gap);
+});
+
+// Citation Management Handlers
+ipcMain.handle('citations:extract', async (_e, paperId: string) => {
+  const citations = await citationExtractor.extractCitationsFromPaper(paperId);
+  await citationExtractor.saveCitations(citations);
+  return citations;
+});
+
+ipcMain.handle('citations:getForPaper', async (_e, paperId: string) => {
+  return await citationExtractor.getCitationsForPaper(paperId);
+});
+
+ipcMain.handle(
+  'citations:generateBibliography',
+  async (_e, paperIds: string[], style: string = 'apa') => {
+    return await citationExtractor.generateBibliography(paperIds, style);
+  },
+);
+
+ipcMain.handle(
+  'citations:createCollection',
+  async (_e, name: string, description: string, paperIds: string[], style: string = 'apa') => {
+    return await citationExtractor.createBibliographyCollection(name, description, paperIds, style);
+  },
+);
+
+ipcMain.handle('citations:getCollections', async () => {
+  return await citationExtractor.getBibliographyCollections();
+});
+
+ipcMain.handle('citations:getCollectionContent', async (_e, bibliographyId: string) => {
+  return await citationExtractor.getBibliographyContent(bibliographyId);
+});
+
+// Research Analytics Handlers
+ipcMain.handle(
+  'analytics:trackSession',
+  async (
+    _e,
+    paperId: string,
+    action: 'start' | 'end' | 'update',
+    data?: Record<string, unknown>,
+  ) => {
+    return await researchAnalytics.trackReadingSession(paperId, action, data);
+  },
+);
+
+ipcMain.handle('analytics:getMetrics', async () => {
+  return await researchAnalytics.getResearchMetrics();
+});
+
+ipcMain.handle('analytics:getTopicAnalysis', async () => {
+  return await researchAnalytics.getTopicAnalysis();
+});
+
+ipcMain.handle('analytics:getProductivityInsights', async () => {
+  return await researchAnalytics.getProductivityInsights();
+});
+
+ipcMain.handle(
+  'analytics:getReadingHistory',
+  async (_e, timeframe: 'week' | 'month' | 'year' = 'month') => {
+    return await researchAnalytics.getReadingHistory(timeframe);
+  },
+);
+
+ipcMain.handle('analytics:export', async (_e, format: 'json' | 'csv' = 'json') => {
+  return await researchAnalytics.exportAnalytics(format);
+});
+
 ipcMain.handle('ai:usage', () => {
   return ragSystem?.getUsageCount() || 0;
 });
@@ -331,10 +427,10 @@ ipcMain.handle('local-ai:list-models', async () => {
     await fs.promises.mkdir(dir, { recursive: true });
     const entries = await fs.promises.readdir(dir);
     const files = await Promise.all(
-      entries.map(async (name) => {
+      entries.map(async (name): Promise<{ fileName: string; filePath: string } | null> => {
         const full = path.join(dir, name);
-        const stat = await fs.promises.stat(full).catch(() => null);
-        return stat && stat.isFile() ? { fileName: name, filePath: full } : null;
+        const stat = await fs.promises.stat(full).catch(() => null as fs.Stats | null);
+        return stat?.isFile() ? { fileName: name, filePath: full } : null;
       }),
     );
     return files.filter((x): x is { fileName: string; filePath: string } => !!x);
@@ -349,7 +445,7 @@ ipcMain.handle('local-ai:detect-binary', async () => {
     '/usr/local/bin/llama-server',
     '/usr/bin/llama-server',
   ];
-  const pathEnv = process.env.PATH || '';
+  const pathEnv: string = process.env['PATH'] ?? '';
   for (const dir of pathEnv.split(':')) {
     if (dir) candidates.push(path.join(dir, 'llama-server'));
   }
@@ -363,6 +459,19 @@ ipcMain.handle('local-ai:detect-binary', async () => {
   }
   return { binaryPath: null };
 });
+
+// Local AI config get/set
+ipcMain.handle('local-ai:get-config', async () => {
+  return getLocalAIConfig();
+});
+
+ipcMain.handle(
+  'local-ai:set-config',
+  async (_e, cfg: Partial<import('./local-ai/config.js').LocalAIConfig>) => {
+    setLocalAIConfig(cfg);
+    return getLocalAIConfig();
+  },
+);
 
 // Local AI: download GGUF model
 ipcMain.handle(
@@ -515,7 +624,7 @@ async function streamSSE(
   res: globalThis.Response,
   onDelta: (delta: string) => void,
 ): Promise<void> {
-  if (!res.ok || !res.body) {
+  if (!res?.ok || !res?.body) {
     const errText = await res.text().catch(() => '');
     throw new Error(`Stream error: ${res.status} ${res.statusText} ${errText}`);
   }
@@ -550,7 +659,7 @@ async function streamSSE(
 
 // Licensing (placeholder) - allow disabling in dev automatically
 ipcMain.handle('license:set', (_e, pro: boolean) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env['NODE_ENV'] === 'development') {
     isPro = true;
   } else {
     isPro = !!pro;

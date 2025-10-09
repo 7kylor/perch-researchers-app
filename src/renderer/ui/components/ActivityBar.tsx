@@ -11,6 +11,8 @@ import {
   Calendar,
   User,
   X,
+  Bot,
+  BarChart3,
 } from 'lucide-react';
 
 type SortOption = 'recent' | 'title' | 'author' | 'year';
@@ -31,6 +33,12 @@ type ActivityBarProps = {
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   onAddItem: () => void;
+  // AI chat props
+  onAIChatToggle: () => void;
+  showAIChat: boolean;
+  // Analytics props
+  onAnalyticsToggle: () => void;
+  showAnalytics: boolean;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
@@ -42,6 +50,10 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   sortBy,
   onSortChange,
   onAddItem,
+  onAIChatToggle,
+  showAIChat,
+  onAnalyticsToggle,
+  showAnalytics,
 }) => {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
@@ -154,6 +166,26 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             </div>
           )}
         </div>
+
+        {/* Analytics Button */}
+        <button
+          type="button"
+          className={`activity-compact-btn ${showAnalytics ? 'active' : ''}`}
+          onClick={onAnalyticsToggle}
+          title={showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+        >
+          <BarChart3 size={18} />
+        </button>
+
+        {/* AI Chat Button */}
+        <button
+          type="button"
+          className={`activity-compact-btn ${showAIChat ? 'active' : ''}`}
+          onClick={onAIChatToggle}
+          title={showAIChat ? 'Hide AI Assistant' : 'Show AI Assistant'}
+        >
+          <Bot size={18} />
+        </button>
 
         {/* Add Paper Button */}
         <button

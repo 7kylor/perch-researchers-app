@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Edit, Trash2, FileText } from 'lucide-react';
+import { BookOpen, Edit, Trash2, FileText, Quote } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 
 type LibraryCardProps = {
@@ -18,6 +18,7 @@ type LibraryCardProps = {
   onClick: (id: string) => void;
   onRefresh?: () => void;
   dateAdded?: string;
+  onShowCitations?: (paperId: string) => void;
 };
 
 export const LibraryCard: React.FC<LibraryCardProps> = ({
@@ -35,6 +36,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   onClick,
   onRefresh,
   dateAdded,
+  onShowCitations,
 }) => {
   const [contextMenu, setContextMenu] = React.useState<{
     isOpen: boolean;
@@ -86,6 +88,15 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
       icon: <BookOpen size={16} />,
       onClick: () => onClick(id),
     },
+    ...(onShowCitations
+      ? [
+          {
+            label: 'Citations',
+            icon: <Quote size={16} />,
+            onClick: () => onShowCitations(id),
+          },
+        ]
+      : []),
     {
       label: 'Rename',
       icon: <Edit size={16} />,

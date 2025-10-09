@@ -23,6 +23,7 @@ type LibraryGridProps = {
   onPaperSelect: (id: string) => void;
   onRefresh?: () => void;
   viewMode?: ViewMode;
+  onShowCitations?: (paperId: string) => void;
 };
 
 export const LibraryGrid: React.FC<LibraryGridProps> = ({
@@ -31,6 +32,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   onPaperSelect,
   onRefresh,
   viewMode = 'grid',
+  onShowCitations,
 }) => {
   const [animatedPapers, setAnimatedPapers] = React.useState<Set<string>>(new Set());
 
@@ -83,6 +85,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
             onClick={onPaperSelect}
             onRefresh={onRefresh}
             dateAdded={paper.filePath ? new Date().toISOString() : undefined}
+            onShowCitations={onShowCitations}
           />
         </div>
       ))}
