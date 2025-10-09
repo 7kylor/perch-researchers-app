@@ -13,6 +13,7 @@ import { ResearchAnalytics } from './components/ResearchAnalytics';
 
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
+import { ResearchModal } from './components/ResearchModal';
 
 type SortOption = 'recent' | 'title' | 'author' | 'year';
 
