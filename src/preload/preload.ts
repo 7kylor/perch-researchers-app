@@ -26,7 +26,9 @@ export interface PreloadAPI {
   };
   settings: {
     get: () => Promise<{ autoUpdateEnabled: boolean }>;
-    set: (partial: Partial<{ autoUpdateEnabled: boolean }>) => Promise<{ autoUpdateEnabled: boolean }>;
+    set: (
+      partial: Partial<{ autoUpdateEnabled: boolean }>,
+    ) => Promise<{ autoUpdateEnabled: boolean }>;
   };
   updates: {
     check: () => Promise<{ success: boolean; updateInfo?: unknown | null; error?: string }>;
@@ -55,6 +57,7 @@ export interface PreloadAPI {
       onDone: (listener: (payload: { chatId: string }) => void) => void;
       onError: (listener: (payload: { chatId: string; error: string }) => void) => void;
     };
+    testOpenAI: (apiKey: string) => Promise<boolean>;
   };
   license: {
     set: (pro: boolean) => Promise<void>;
@@ -73,6 +76,13 @@ export interface PreloadAPI {
     stop: () => Promise<boolean>;
     status: () => Promise<{ running: boolean; url: string | null }>;
     downloadModel: (payload: { url: string; destDir: string }) => Promise<string>;
+    listModels: () => Promise<Array<{ fileName: string; filePath: string }>>;
+    detectBinary: () => Promise<{ binaryPath: string | null }>;
+  };
+  localEmb: {
+    start: (port?: number) => Promise<string>;
+    stop: () => Promise<boolean>;
+    status: () => Promise<{ running: boolean; url: string | null }>;
   };
   ingest: {
     pdf: (filePath: string) => Promise<string>;
@@ -216,6 +226,7 @@ contextBridge.exposeInMainWorld('api', {
         ipcRenderer.on('ai:chat:error', (_e, payload) => listener(payload));
       },
     },
+    testOpenAI: (apiKey: string) => ipcRenderer.invoke('ai:test-openai', apiKey),
   },
   license: {
     set: (pro: boolean) => ipcRenderer.invoke('license:set', pro),
@@ -227,6 +238,13 @@ contextBridge.exposeInMainWorld('api', {
     status: () => ipcRenderer.invoke('local-ai:status'),
     downloadModel: (payload: { url: string; destDir: string }) =>
       ipcRenderer.invoke('local-ai:download-model', payload),
+    listModels: () => ipcRenderer.invoke('local-ai:list-models'),
+    detectBinary: () => ipcRenderer.invoke('local-ai:detect-binary'),
+  },
+  localEmb: {
+    start: (port?: number) => ipcRenderer.invoke('local-emb:start', port),
+    stop: () => ipcRenderer.invoke('local-emb:stop'),
+    status: () => ipcRenderer.invoke('local-emb:status'),
   },
   ingest: {
     pdf: (filePath: string) => ipcRenderer.invoke('import:pdf', filePath),

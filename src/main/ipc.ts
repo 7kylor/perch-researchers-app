@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import { openDatabase } from './db.js';
+import { app } from 'electron';
 import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types.js';
 import { importByDOI, importPDF } from './ingest/importer.js';
@@ -13,6 +14,7 @@ import { processPaperOCR } from './ocr/batch.js';
 import path from 'node:path';
 import https from 'node:https';
 import { TextDecoder } from 'node:util';
+import { localEmbeddingsServer } from './local-ai/embeddings-server.js';
 import {
   BUILTIN_ALL,
   BUILTIN_RECENT,
@@ -276,6 +278,21 @@ ipcMain.handle('ai:usage', () => {
   return ragSystem?.getUsageCount() || 0;
 });
 
+// Test OpenAI connectivity with provided API key
+ipcMain.handle('ai:test-openai', async (_e, apiKey: string) => {
+  try {
+    const res = await fetch('https://api.openai.com/v1/models', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+});
+
 // Local AI: llama.cpp server controls
 ipcMain.handle('local-ai:start', async (_e, cfg: LlamaServerConfig) => {
   if (!isPro) throw new Error('Pro required for local AI');
@@ -292,6 +309,61 @@ ipcMain.handle('local-ai:status', async () => {
   return { running: llamaServerManager.isRunning(), url: llamaServerManager.url };
 });
 
+// Local Embeddings service controls (dev-friendly)
+ipcMain.handle('local-emb:start', async (_e, port?: number) => {
+  const url = await localEmbeddingsServer.start({ port });
+  return url;
+});
+
+ipcMain.handle('local-emb:stop', async () => {
+  await localEmbeddingsServer.stop();
+  return true;
+});
+
+ipcMain.handle('local-emb:status', async () => {
+  return { running: localEmbeddingsServer.isRunning(), url: localEmbeddingsServer.url };
+});
+
+// Local models listing and llama-server binary detection
+ipcMain.handle('local-ai:list-models', async () => {
+  const dir = path.join(app.getPath('userData'), 'models');
+  try {
+    await fs.promises.mkdir(dir, { recursive: true });
+    const entries = await fs.promises.readdir(dir);
+    const files = await Promise.all(
+      entries.map(async (name) => {
+        const full = path.join(dir, name);
+        const stat = await fs.promises.stat(full).catch(() => null);
+        return stat && stat.isFile() ? { fileName: name, filePath: full } : null;
+      }),
+    );
+    return files.filter((x): x is { fileName: string; filePath: string } => !!x);
+  } catch {
+    return [] as Array<{ fileName: string; filePath: string }>;
+  }
+});
+
+ipcMain.handle('local-ai:detect-binary', async () => {
+  const candidates: string[] = [
+    '/opt/homebrew/bin/llama-server',
+    '/usr/local/bin/llama-server',
+    '/usr/bin/llama-server',
+  ];
+  const pathEnv = process.env.PATH || '';
+  for (const dir of pathEnv.split(':')) {
+    if (dir) candidates.push(path.join(dir, 'llama-server'));
+  }
+  for (const p of candidates) {
+    try {
+      await fs.promises.access(p, fs.constants.X_OK);
+      return { binaryPath: p };
+    } catch {
+      // continue
+    }
+  }
+  return { binaryPath: null };
+});
+
 // Local AI: download GGUF model
 ipcMain.handle(
   'local-ai:download-model',
@@ -299,14 +371,16 @@ ipcMain.handle(
     e,
     payload: {
       url: string;
-      destDir: string;
+      destDir?: string;
     },
   ) => {
     const { url, destDir } = payload;
+    const targetDir =
+      destDir && destDir.length > 0 ? destDir : path.join(app.getPath('userData'), 'models');
     const downloadId = randomUUID();
     const fileName = path.basename(new URL(url).pathname);
-    await fs.promises.mkdir(destDir, { recursive: true });
-    const destPath = path.join(destDir, fileName);
+    await fs.promises.mkdir(targetDir, { recursive: true });
+    const destPath = path.join(targetDir, fileName);
 
     const webContents = e.sender;
     webContents.send('local-ai:download:started', { id: downloadId, fileName, destPath });
@@ -323,7 +397,7 @@ ipcMain.handle(
         })
         .on('error', (err) => reject(err));
 
-      function handleStream(res: any) {
+      function handleStream(res: import('node:http').IncomingMessage) {
         if (res.statusCode !== 200) {
           reject(new Error(`Download failed: ${res.statusCode}`));
           return;
@@ -474,9 +548,13 @@ async function streamSSE(
   }
 }
 
-// Licensing (placeholder)
+// Licensing (placeholder) - allow disabling in dev automatically
 ipcMain.handle('license:set', (_e, pro: boolean) => {
-  isPro = !!pro;
+  if (process.env.NODE_ENV === 'development') {
+    isPro = true;
+  } else {
+    isPro = !!pro;
+  }
 });
 
 ipcMain.handle('license:get', () => {
