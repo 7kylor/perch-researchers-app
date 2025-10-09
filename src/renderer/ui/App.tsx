@@ -9,7 +9,6 @@ import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
 import { AIChat } from './components/AIChat';
 import { CitationManager } from './components/CitationManager';
-import { ResearchAnalytics } from './components/ResearchAnalytics';
 import { ResearchModal } from './components/ResearchModal';
 
 import { ThemeProvider } from './components/ThemeProvider';
