@@ -7,6 +7,8 @@
 
 // Use runtime dynamic import to set locateFile for WASM in Vite/web worker
 import type * as MuTypes from 'mupdf';
+// URL provided by main thread (computed relative to the HTML file)
+let wasmPublicUrl: string | undefined;
 
 // Store original console methods
 const originalConsole = {
@@ -53,16 +55,9 @@ async function ensureMuPDF(): Promise<typeof import('mupdf')> {
   ).$libmupdf_wasm_Module = {
     locateFile: (p: string, prefix?: string) => {
       if (p.endsWith('.wasm')) {
-        // In Vite dev, serve from /@fs absolute path to ensure correct MIME and availability
-        const isHttp = (
-          globalThis as unknown as { location?: { protocol?: string } }
-        ).location?.protocol?.startsWith('http');
-        if (isHttp) {
-          const devFs = '/@fs/Users/taher/researchers-app/node_modules/mupdf/dist/mupdf-wasm.wasm';
-          const origin =
-            (globalThis as unknown as { location?: { origin?: string } }).location?.origin || '';
-          return new URL(devFs, origin).href;
-        }
+        // Prefer URL provided from the main thread so we can load from
+        // the same directory as the HTML in dev and prod builds.
+        if (wasmPublicUrl) return wasmPublicUrl;
         try {
           return new URL(p, prefix || import.meta.url).href;
         } catch {
@@ -78,6 +73,7 @@ async function ensureMuPDF(): Promise<typeof import('mupdf')> {
 
 type WorkerRequest =
   | { id: number; type: 'open'; payload: { bytes: ArrayBuffer } }
+  | { id: number; type: 'setWasmUrl'; payload: { url: string } }
   | { id: number; type: 'getPageInfo'; payload: { pageIndex: number } }
   | { id: number; type: 'buildDisplayList'; payload: { pageIndex: number } }
   | {
@@ -376,6 +372,11 @@ globalThis.onmessage = async (e: unknown) => {
   const { id, type, payload } = data;
   try {
     switch (type) {
+      case 'setWasmUrl': {
+        wasmPublicUrl = (payload as { url: string }).url;
+        post({ id, result: true });
+        break;
+      }
       case 'open': {
         destroyDoc();
         {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; img-src 'self' data: blob:; connect-src 'self' ws: wss: http: https:; font-src 'self' data:; media-src 'self' data: blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:; img-src 'self' data: blob:; connect-src 'self' ws: wss: http: https:; font-src 'self' data:; media-src 'self' data: blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self';">
   <title>PDF Reader</title>
   <style>
     * {
@@ -979,6 +979,26 @@
   <script type="module">
     // PDF worker RPC setup (moves MuPDF work off UI thread)
     const pdfWorker = new Worker(new URL('./src/renderer/workers/pdf.worker.ts', import.meta.url), { type: 'module' });
+    // Provide MuPDF WASM url relative to the HTML file so it works in dev (http)
+    // and when packaged (file://). The file is placed in the public root.
+    const mupdfWasmUrl = new URL('mupdf-wasm.wasm', location.href).href;
+    // Configure worker before any rendering requests
+    await (async () => {
+      let _id = 0;
+      function _req(type, payload) {
+        const id = ++_id;
+        return new Promise((resolve, reject) => {
+          const handler = (e) => {
+            if (!e?.data || e.data.id !== id) return;
+            pdfWorker.removeEventListener('message', handler);
+            if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.result);
+          };
+          pdfWorker.addEventListener('message', handler);
+          pdfWorker.postMessage({ id, type, payload });
+        });
+      }
+      await _req('setWasmUrl', { url: mupdfWasmUrl });
+    })();
     let __rpcId = 1;
     const __pending = new Map();
     pdfWorker.onmessage = (e) => {
