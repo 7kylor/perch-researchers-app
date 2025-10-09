@@ -54,8 +54,8 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
 
   // Calculate stagger delay for animations
   const getStaggerDelay = (index: number) => {
-    const maxDelay = 0.5; // Maximum delay in seconds
-    const delayIncrement = 0.03;
+    const maxDelay = 0.2; // Maximum delay in seconds
+    const delayIncrement = 0.02;
     return Math.min(index * delayIncrement, maxDelay);
   };
 

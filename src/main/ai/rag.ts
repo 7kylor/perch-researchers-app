@@ -238,7 +238,7 @@ ${context}
 **GAP ANALYSIS FRAMEWORK:**
 
 1. **Temporal Evolution Gaps**
-   - Compare recent papers [${recentPapers.map((_, i) => papers.indexOf(recentPapers[i]) + 1).join(', ')}] with earlier work
+   - Compare recent papers [${recentPapers.map((_, i) => papers.indexOf(recentPapers[i]!) + 1).join(', ')}] with earlier work
    - Identify stalled research directions or outdated approaches
 
 2. **Methodological Limitations**

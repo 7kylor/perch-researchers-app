@@ -12,7 +12,7 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({ count = 6 }) =
           key={`skeleton-${index}`}
           className="book-card loading-skeleton"
           style={{
-            animationDelay: `${index * 0.1}s`,
+            animationDelay: `${index * 0.05}s`,
             animationFillMode: 'both',
           }}
         >

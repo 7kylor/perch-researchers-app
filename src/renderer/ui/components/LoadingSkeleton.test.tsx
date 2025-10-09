@@ -47,7 +47,7 @@ describe('LoadingSkeleton', () => {
     // Check that each item has animation delay applied
     skeletonItems.forEach((item, index) => {
       const style = window.getComputedStyle(item);
-      expect(style.animationDelay).toBe(`${index * 0.1}s`);
+      expect(style.animationDelay).toBe(`${index * 0.05}s`);
     });
   });
 });

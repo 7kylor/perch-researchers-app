@@ -94,18 +94,18 @@ export class AcademicDatabaseService {
       const results = document.querySelectorAll('.gs_ri');
 
       for (const result of Array.from(results).slice(0, limit)) {
-        const titleElement = result.querySelector('.gs_rt a, .gs_rt');
-        const authorsElement = result.querySelector('.gs_a');
-        const abstractElement = result.querySelector('.gs_rs');
+        const titleElement = (result as Element).querySelector('.gs_rt a, .gs_rt');
+        const authorsElement = (result as Element).querySelector('.gs_a');
+        const abstractElement = (result as Element).querySelector('.gs_rs');
 
         if (titleElement) {
           const title = titleElement.textContent?.trim() || '';
-          const url = titleElement.href || '';
+          const url = (titleElement as HTMLAnchorElement).href || '';
 
           // Parse authors and year from gs_a element
           const authorsText = authorsElement?.textContent || '';
           const yearMatch = authorsText.match(/(\d{4})/);
-          const year = yearMatch ? parseInt(yearMatch[1]) : undefined;
+          const year = yearMatch ? parseInt(yearMatch[1]!) : undefined;
 
           // Extract authors (everything before the year)
           const authorsTextClean = authorsText.replace(/-\s*\d{4}.*/, '').trim();
@@ -155,7 +155,7 @@ export class AcademicDatabaseService {
         throw new Error(`Semantic Scholar API error: ${response.status}`);
       }
 
-      const data: SemanticScholarResponse = await response.json();
+      const data = (await response.json()) as SemanticScholarResponse;
 
       const papers: AcademicPaper[] = data.data.map((paper: SemanticScholarPaper) => ({
         title: paper.title,
@@ -197,7 +197,9 @@ export class AcademicDatabaseService {
         throw new Error(`PubMed search error: ${searchResponse.status}`);
       }
 
-      const searchData = await searchResponse.json();
+      const searchData = (await searchResponse.json()) as {
+        esearchresult?: { idlist?: string[]; count?: string };
+      };
       const pmids = searchData.esearchresult?.idlist || [];
 
       if (pmids.length === 0) {
@@ -280,14 +282,14 @@ export class AcademicDatabaseService {
       const results = document.querySelectorAll('.List-results .List-item');
 
       for (const result of Array.from(results).slice(0, limit)) {
-        const titleElement = result.querySelector('.List-item-title a');
-        const authorsElement = result.querySelector('.List-item-authors');
-        const abstractElement = result.querySelector('.List-item-description');
-        const yearElement = result.querySelector('.List-item-year');
+        const titleElement = (result as Element).querySelector('.List-item-title a');
+        const authorsElement = (result as Element).querySelector('.List-item-authors');
+        const abstractElement = (result as Element).querySelector('.List-item-description');
+        const yearElement = (result as Element).querySelector('.List-item-year');
 
         if (titleElement) {
           const title = titleElement.textContent?.trim() || '';
-          const url = titleElement.href || '';
+          const url = (titleElement as HTMLAnchorElement).href || '';
 
           const authors =
             authorsElement?.textContent
@@ -403,7 +405,7 @@ export class AcademicDatabaseService {
       );
 
       if (semanticResponse.ok) {
-        const data: SemanticScholarPaper = await semanticResponse.json();
+        const data = (await semanticResponse.json()) as SemanticScholarPaper;
         return {
           title: data.title,
           authors: data.authors.map((author: SemanticScholarAuthor) => author.name),
