@@ -10,7 +10,6 @@ import {
   User,
   X,
   Bot,
-  BarChart3,
   Brain,
 } from 'lucide-react';
 
@@ -31,12 +30,9 @@ type ActivityBarProps = {
   // AI chat props
   onAIChatToggle: () => void;
   showAIChat: boolean;
-  // Analytics props
-  onAnalyticsToggle: () => void;
-  showAnalytics: boolean;
-  // Research Modal props
-  onResearchModalToggle: () => void;
-  showResearchModal: boolean;
+  // Merged Hub props
+  onHubToggle: () => void;
+  showHub: boolean;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
@@ -50,10 +46,8 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   onAddItem,
   onAIChatToggle,
   showAIChat,
-  onAnalyticsToggle,
-  showAnalytics,
-  onResearchModalToggle,
-  showResearchModal,
+  onHubToggle,
+  showHub,
 }) => {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
@@ -159,14 +153,14 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           )}
         </div>
 
-        {/* Analytics Button */}
+        {/* Research & Analytics Hub Button */}
         <button
           type="button"
-          className={`activity-compact-btn ${showAnalytics ? 'active' : ''}`}
-          onClick={onAnalyticsToggle}
-          title={showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+          className={`activity-compact-btn ${showHub ? 'active' : ''}`}
+          onClick={onHubToggle}
+          title={showHub ? 'Hide Research Hub' : 'Show Research Hub'}
         >
-          <BarChart3 size={18} />
+          <Brain size={18} />
         </button>
 
         {/* AI Chat Button */}
@@ -179,15 +173,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           <Bot size={18} />
         </button>
 
-        {/* Research Modal Button */}
-        <button
-          type="button"
-          className={`activity-compact-btn ${showResearchModal ? 'active' : ''}`}
-          onClick={onResearchModalToggle}
-          title={showResearchModal ? 'Hide Research & Analytics' : 'Show Research & Analytics'}
-        >
-          <Brain size={18} />
-        </button>
+        {/* Deprecated: Research Modal Button removed in favor of merged hub */}
 
         {/* Add Paper Button */}
         <button

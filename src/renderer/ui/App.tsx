@@ -9,7 +9,7 @@ import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
 import { AIChat } from './components/AIChat';
 import { CitationManager } from './components/CitationManager';
-import { ResearchModal } from './components/ResearchModal';
+import { ResearchAnalyticsHub } from './components/ResearchAnalyticsHub';
 
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
@@ -26,12 +26,12 @@ export const App: React.FC = () => {
   const [sortBy, setSortBy] = React.useState<SortOption>('recent');
   const [showAIChat, setShowAIChat] = React.useState(false);
   const [selectedPapersForAI, setSelectedPapersForAI] = React.useState<string[]>([]);
-  const [showAnalytics, setShowAnalytics] = React.useState(false);
+  const [showHub, setShowHub] = React.useState(false);
   const [showCitationManager, setShowCitationManager] = React.useState(false);
   const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
     null,
   );
-  const [showResearchModal, setShowResearchModal] = React.useState(false);
+  // merged hub replaces separate research modal
 
   const { prefs, actions } = useSidebarStore();
 
@@ -387,10 +387,8 @@ export const App: React.FC = () => {
           onAddItem={() => setShowSimpleAddModal(true)}
           onAIChatToggle={() => setShowAIChat(!showAIChat)}
           showAIChat={showAIChat}
-          onAnalyticsToggle={() => setShowAnalytics(!showAnalytics)}
-          showAnalytics={showAnalytics}
-          onResearchModalToggle={() => setShowResearchModal(!showResearchModal)}
-          showResearchModal={showResearchModal}
+          onHubToggle={() => setShowHub(!showHub)}
+          showHub={showHub}
         />
         <div className="library-layout">
           <NewSidebar
@@ -407,6 +405,8 @@ export const App: React.FC = () => {
                   category={selectedCategory}
                   onAddItem={() => setShowSimpleAddModal(true)}
                 />
+              ) : showHub ? (
+                <ResearchAnalyticsHub />
               ) : (
                 <LibraryGrid
                   papers={sortedResults}
@@ -426,12 +426,7 @@ export const App: React.FC = () => {
                 />
               </div>
             )}
-            {showAnalytics && (
-              <div className="analytics-panel">
-                <ResearchAnalytics />
-              </div>
-            )}
-            {showResearchModal && <ResearchModal onClose={() => setShowResearchModal(false)} />}
+            {/* merged hub replaces separate right-side analytics and modal */}
           </div>
         </div>
 
