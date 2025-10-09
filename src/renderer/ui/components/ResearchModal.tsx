@@ -10,25 +10,23 @@ import {
   Lightbulb,
   TrendingUp,
   Award,
-  Clock,
   Loader2,
   Database,
-  Users,
   Filter,
   ChevronDown,
   ChevronRight,
-  Eye,
-  FolderOpen,
-  AlertCircle,
   Info,
-  Sparkles,
   BarChart3,
   Calendar,
-  TrendingDown,
   Activity,
   BookMarked,
 } from 'lucide-react';
-import type { AcademicPaper, AcademicSearchResult } from '../../../shared/types';
+import type {
+  AcademicPaper,
+  AcademicSearchResult,
+  ResearchAnalytics,
+  ResearchTopic,
+} from '../../../shared/types';
 
 type ResearchModalProps = {
   onClose: () => void;
@@ -149,8 +147,8 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
   const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(
     new Set(['analysis', 'synthesis', 'generation']),
   );
-  const [focusArea, setFocusArea] = React.useState('');
-  const [analysisHistory, setAnalysisHistory] = React.useState<
+  const [_focusArea, _setFocusArea] = React.useState('');
+  const [_analysisHistory, _setAnalysisHistory] = React.useState<
     Array<{
       id: string;
       type: string;
@@ -161,7 +159,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
   >([]);
 
   // Analytics state
-  const [analyticsData, setAnalyticsData] = React.useState<any>(null);
+  const [analyticsData, setAnalyticsData] = React.useState<ResearchAnalytics | null>(null);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = React.useState(false);
 
   React.useEffect(() => {
@@ -219,7 +217,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
     setSelectedDatabases(newSelected);
   };
 
-  const togglePaperSelection = (paperId: string) => {
+  const _togglePaperSelection = (paperId: string) => {
     setSelectedPapers((prev) =>
       prev.includes(paperId) ? prev.filter((id) => id !== paperId) : [...prev, paperId],
     );
@@ -232,7 +230,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
       venue: paper.venue,
       year: paper.year,
       doi: paper.doi,
-      source: paper.source as any,
+      source: paper.source,
       abstract: paper.abstract,
       status: 'to_read' as const,
       filePath: undefined,
@@ -250,7 +248,8 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
   };
 
   const runAIFeature = async (featureId: AIFeature) => {
-    if (!canRunFeature(aiFeatures.find((f) => f.id === featureId)!)) return;
+    const feature = aiFeatures.find((f) => f.id === featureId);
+    if (!feature || !canRunFeature(feature)) return;
 
     setIsAnalyzing(true);
     setActiveAIFeature(featureId);
@@ -283,7 +282,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
         case 'research-questions': {
           response = await window.api.ai['generate-questions'](
             selectedPapers,
-            focusArea || undefined,
+            _focusArea || undefined,
           );
           break;
         }
@@ -292,7 +291,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
           break;
         }
         case 'research-proposal': {
-          const gapPrompt = `Based on the identified research gaps in these papers, generate a research proposal for: ${focusArea || 'an important research gap'}`;
+          const gapPrompt = `Based on the identified research gaps in these papers, generate a research proposal for: ${_focusArea || 'an important research gap'}`;
           response = await window.api.ai['generate-proposal'](selectedPapers, gapPrompt);
           break;
         }
@@ -305,7 +304,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
         papers: selectedPapers,
         result: response,
       };
-      setAnalysisHistory((prev) => [historyItem, ...prev.slice(0, 9)]);
+      _setAnalysisHistory((prev) => [historyItem, ...prev.slice(0, 9)]);
     } catch (error) {
       console.error('AI feature execution failed:', error);
     } finally {
@@ -812,14 +811,16 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
                       >
                         <h3 className="text-lg font-medium text-gray-900 mb-4">Research Topics</h3>
                         <div className="space-y-2">
-                          {analyticsData.topics.slice(0, 5).map((topic: any, index: number) => (
-                            <div key={index} className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">{topic.name}</span>
-                              <span className="text-sm font-medium text-gray-900">
-                                {topic.count} papers
-                              </span>
-                            </div>
-                          ))}
+                          {analyticsData.topics
+                            .slice(0, 5)
+                            .map((topic: ResearchTopic, index: number) => (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600">{topic.name}</span>
+                                <span className="text-sm font-medium text-gray-900">
+                                  {topic.count} papers
+                                </span>
+                              </div>
+                            ))}
                         </div>
                       </div>
                     )}

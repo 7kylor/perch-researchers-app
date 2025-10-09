@@ -59,6 +59,7 @@ export default [
         Blob: 'readonly',
         File: 'readonly',
         FileReader: 'readonly',
+        navigator: 'readonly',
         // Browser dialog functions
         prompt: 'readonly',
         confirm: 'readonly',

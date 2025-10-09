@@ -329,7 +329,7 @@ ipcMain.handle(
         })
         .on('error', (err) => reject(err));
 
-      function handleStream(res: any) {
+      function handleStream(res: import('http').IncomingMessage) {
         if (res.statusCode !== 200) {
           reject(new Error(`Download failed: ${res.statusCode}`));
           return;

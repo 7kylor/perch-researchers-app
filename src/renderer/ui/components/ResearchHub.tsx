@@ -223,7 +223,7 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ onClose }) => {
       venue: paper.venue,
       year: paper.year,
       doi: paper.doi,
-      source: paper.source as any,
+      source: paper.source,
       abstract: paper.abstract,
       status: 'to_read' as const,
       filePath: undefined,
@@ -243,7 +243,8 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ onClose }) => {
 
   // AI Analysis functions
   const runAIFeature = async (featureId: AIFeature) => {
-    if (!canRunFeature(aiFeatures.find((f) => f.id === featureId)!)) return;
+    const feature = aiFeatures.find((f) => f.id === featureId);
+    if (!feature || !canRunFeature(feature)) return;
 
     setIsAnalyzing(true);
     setActiveAIFeature(featureId);

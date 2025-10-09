@@ -54,11 +54,38 @@ export interface AcademicPaper {
   abstract?: string;
   url?: string;
   citations?: number;
-  source: 'googlescholar' | 'semanticscholar' | 'pubmed' | 'ieee';
+  source:
+    | 'googlescholar'
+    | 'semanticscholar'
+    | 'pubmed'
+    | 'ieee'
+    | 'url'
+    | 'arxiv'
+    | 'crossref'
+    | 'sciencedirect'
+    | 'jstor'
+    | 'pdf';
 }
 
 export interface AcademicSearchResult {
   papers: AcademicPaper[];
   totalResults: number;
   searchTime: number;
+}
+
+// Analytics Types
+export interface ResearchTopic {
+  name: string;
+  count: number;
+  relevance?: number;
+}
+
+export interface ResearchAnalytics {
+  totalPapers: number;
+  totalSessions: number;
+  avgSessionTime: number;
+  weeklySessions: number;
+  monthlySessions: number;
+  papersRead: number;
+  topics: ResearchTopic[];
 }

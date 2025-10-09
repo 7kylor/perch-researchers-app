@@ -218,7 +218,7 @@ Published: ${paper.year || 'Unknown'} in ${paper.venue || 'Unknown venue'}
     const papersByYear = papers.filter((p) => p.year).sort((a, b) => (a.year || 0) - (b.year || 0));
 
     const recentPapers = papersByYear.slice(-3); // Last 3 papers
-    const olderPapers = papersByYear.slice(0, -3); // All but last 3
+    const _olderPapers = papersByYear.slice(0, -3); // All but last 3
 
     if (recentPapers.length === 0) {
       return 'No temporal analysis available - insufficient paper data for comparison.';

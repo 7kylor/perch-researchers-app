@@ -1,7 +1,40 @@
 import arxivApi from 'arxiv-api-ts';
 
+// Define proper types for the arXiv API
+interface ArxivSearchParams {
+  searchQueryParams: Array<{
+    include?: Array<{
+      name: string;
+      prefix?: string;
+    }>;
+    exclude?: Array<{
+      name: string;
+      prefix?: string;
+    }>;
+  }>;
+  maxResults?: number;
+}
+
+interface ArxivSearchResult {
+  entries: Array<{
+    id: string;
+    title: string;
+    authors: string[][][];
+    summary: string;
+    published: string;
+    categories: Array<{
+      term: string;
+    }>;
+    links: Array<{
+      href: string;
+      title?: string;
+    }>;
+  }>;
+}
+
 // Type assertion to help TypeScript understand the module
-const searchFunction = arxivApi as typeof arxivApi & ((params: any) => Promise<any>);
+const searchFunction = arxivApi as typeof arxivApi &
+  ((params: ArxivSearchParams) => Promise<ArxivSearchResult>);
 
 interface ArxivLink {
   href?: string;

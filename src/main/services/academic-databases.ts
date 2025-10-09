@@ -1,6 +1,47 @@
-import { google } from 'googleapis';
+import { google as _google } from 'googleapis';
 import { JSDOM } from 'jsdom';
 import fetch from 'node-fetch';
+
+// Types for Semantic Scholar API response
+interface SemanticScholarAuthor {
+  name: string;
+}
+
+interface SemanticScholarPaper {
+  title: string;
+  authors: SemanticScholarAuthor[];
+  year?: number;
+  venue?: string;
+  abstract?: string;
+  url?: string;
+  citationCount?: number;
+  doi?: string;
+}
+
+interface SemanticScholarResponse {
+  data: SemanticScholarPaper[];
+  total?: number;
+}
+
+// Types for PubMed API response
+interface PubMedAuthor {
+  name: string;
+}
+
+interface PubMedPaper {
+  title?: string;
+  authors?: PubMedAuthor[];
+  pubdate?: string;
+  source?: string;
+  elocationid?: string;
+  doi?: string;
+  abstract?: string;
+  description?: string;
+}
+
+interface PubMedSummaryResponse {
+  result?: Record<string, PubMedPaper>;
+}
 
 export interface AcademicPaper {
   title: string;
@@ -114,11 +155,11 @@ export class AcademicDatabaseService {
         throw new Error(`Semantic Scholar API error: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data: SemanticScholarResponse = await response.json();
 
-      const papers: AcademicPaper[] = data.data.map((paper: any) => ({
+      const papers: AcademicPaper[] = data.data.map((paper: SemanticScholarPaper) => ({
         title: paper.title,
-        authors: paper.authors.map((author: any) => author.name),
+        authors: paper.authors.map((author: SemanticScholarAuthor) => author.name),
         year: paper.year,
         venue: paper.venue,
         abstract: paper.abstract,
@@ -179,14 +220,14 @@ export class AcademicDatabaseService {
       const summaryData = await summaryResponse.json();
 
       const papers: AcademicPaper[] = [];
-      const results = summaryData.result || {};
+      const results = (summaryData as PubMedSummaryResponse).result || {};
 
       for (const pmid of pmids) {
         const paper = results[pmid];
         if (paper) {
           papers.push({
-            title: paper.title,
-            authors: paper.authors?.map((author: any) => `${author.name}`) || [],
+            title: paper.title || '',
+            authors: paper.authors?.map((author: PubMedAuthor) => `${author.name}`) || [],
             year: paper.pubdate ? new Date(paper.pubdate).getFullYear() : undefined,
             venue: paper.source,
             doi: paper.elocationid || paper.doi,
@@ -362,10 +403,10 @@ export class AcademicDatabaseService {
       );
 
       if (semanticResponse.ok) {
-        const data = await semanticResponse.json();
+        const data: SemanticScholarPaper = await semanticResponse.json();
         return {
           title: data.title,
-          authors: data.authors.map((author: any) => author.name),
+          authors: data.authors.map((author: SemanticScholarAuthor) => author.name),
           year: data.year,
           venue: data.venue,
           doi: data.doi,
