@@ -24,6 +24,19 @@ export interface PreloadAPI {
     search: (query: string) => Promise<Paper[]>;
     listByCategory: (nodeId: string, limit?: number) => Promise<Paper[]>;
   };
+  settings: {
+    get: () => Promise<{ autoUpdateEnabled: boolean }>;
+    set: (partial: Partial<{ autoUpdateEnabled: boolean }>) => Promise<{ autoUpdateEnabled: boolean }>;
+  };
+  updates: {
+    check: () => Promise<{ success: boolean; updateInfo?: unknown | null; error?: string }>;
+    download: () => Promise<{ success: boolean; error?: string }>;
+    quitAndInstall: () => Promise<{ success: boolean }>;
+    onAvailable: (listener: (info: unknown) => void) => void;
+    onDownloaded: (listener: (info: unknown) => void) => void;
+    onNotAvailable: (listener: () => void) => void;
+    onError: (listener: (message: string) => void) => void;
+  };
   ai: {
     init: (type: 'openai' | 'local', apiKey?: string) => Promise<void>;
     summarize: (paperId: string) => Promise<string>;
@@ -160,6 +173,27 @@ contextBridge.exposeInMainWorld('api', {
     search: (query: string) => ipcRenderer.invoke('papers:search', query),
     listByCategory: (nodeId: string, limit?: number) =>
       ipcRenderer.invoke('papers:listByCategory', nodeId, limit),
+  },
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    set: (partial: { autoUpdateEnabled?: boolean }) => ipcRenderer.invoke('settings:set', partial),
+  },
+  updates: {
+    check: () => ipcRenderer.invoke('updates:check'),
+    download: () => ipcRenderer.invoke('updates:download'),
+    quitAndInstall: () => ipcRenderer.invoke('updates:quit-and-install'),
+    onAvailable: (listener: (info: unknown) => void) => {
+      ipcRenderer.on('update:available', (_e, info) => listener(info));
+    },
+    onDownloaded: (listener: (info: unknown) => void) => {
+      ipcRenderer.on('update:downloaded', (_e, info) => listener(info));
+    },
+    onNotAvailable: (listener: () => void) => {
+      ipcRenderer.on('update:not-available', () => listener());
+    },
+    onError: (listener: (message: string) => void) => {
+      ipcRenderer.on('update:error', (_e, message) => listener(message));
+    },
   },
   ai: {
     init: (type: 'openai' | 'local', apiKey?: string) =>

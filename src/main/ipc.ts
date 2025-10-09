@@ -302,7 +302,6 @@ ipcMain.handle(
       destDir: string;
     },
   ) => {
-    if (!isPro) throw new Error('Pro required for local AI downloads');
     const { url, destDir } = payload;
     const downloadId = randomUUID();
     const fileName = path.basename(new URL(url).pathname);

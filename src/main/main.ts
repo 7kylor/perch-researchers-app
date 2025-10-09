@@ -5,6 +5,7 @@ import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
 import { PDFReaderWindowManager } from './pdf-reader-window.js';
 import { PDFImportManager } from './ingest/pdf-import.js';
+import { getSettings, updateSettings } from './settings.js';
 
 // ES modules: get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -18,60 +19,51 @@ pdfReaderManager.setupIPCHandlers();
 
 // Auto-update setup
 function setupAutoUpdater(): void {
+  const settings = getSettings();
   // Configure auto-updater
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = false; // We'll handle restart manually
+  autoUpdater.autoDownload = settings.autoUpdateEnabled;
+  autoUpdater.autoInstallOnAppQuit = true; // install on quit automatically
 
-  // Check for updates on app start
-  autoUpdater.checkForUpdatesAndNotify();
+  // Check for updates on app start if enabled
+  if (settings.autoUpdateEnabled) {
+    autoUpdater.checkForUpdatesAndNotify();
+  }
 
   // Update available
   autoUpdater.on('update-available', (info) => {
-    const notification = new Notification({
-      title: 'Update Available',
-      body: `Version ${info.version} is available. Downloading...`,
-      icon: path.join(__dirname, '../renderer/assets/icon.png'), // Adjust path as needed
-      urgency: 'normal',
-    });
-
-    notification.show();
-
-    // Send update info to renderer
     if (mainWindow?.webContents) {
-      mainWindow.webContents.send('update-available', info);
+      mainWindow.webContents.send('update:available', info);
     }
   });
 
-  // Update downloaded
+  // Update downloaded -> notify user to restart
   autoUpdater.on('update-downloaded', (info) => {
     const notification = new Notification({
-      title: 'Update Downloaded',
-      body: `Version ${info.version} downloaded. Restart to install.`,
-      icon: path.join(__dirname, '../renderer/assets/icon.png'),
+      title: 'Update ready',
+      body: `Version ${info.version} downloaded. Restart to apply.`,
       urgency: 'normal',
-      actions: [{ type: 'button', text: 'Restart Now' }],
     });
-
     notification.show();
-
-    notification.on('action', () => {
+    notification.on('click', () => {
       autoUpdater.quitAndInstall(false, true);
     });
-
-    // Send update info to renderer
     if (mainWindow?.webContents) {
-      mainWindow.webContents.send('update-downloaded', info);
+      mainWindow.webContents.send('update:downloaded', info);
     }
   });
 
   // Update not available
   autoUpdater.on('update-not-available', (_info) => {
-    console.log('No updates available');
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send('update:not-available');
+    }
   });
 
   // Error
   autoUpdater.on('error', (err) => {
-    console.error('Update error:', err);
+    if (mainWindow?.webContents) {
+      mainWindow.webContents.send('update:error', err instanceof Error ? err.message : String(err));
+    }
   });
 }
 
@@ -126,7 +118,7 @@ app.on('window-all-closed', () => {
 ipcMain.handle('app:version', () => app.getVersion());
 
 // Auto-update IPC handlers
-ipcMain.handle('check-for-updates', async () => {
+ipcMain.handle('updates:check', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
     return {
@@ -141,7 +133,7 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
-ipcMain.handle('download-update', async () => {
+ipcMain.handle('updates:download', async () => {
   try {
     await autoUpdater.downloadUpdate();
     return { success: true };
@@ -153,7 +145,17 @@ ipcMain.handle('download-update', async () => {
   }
 });
 
-ipcMain.handle('quit-and-install', async () => {
+ipcMain.handle('updates:quit-and-install', async () => {
   autoUpdater.quitAndInstall(false, true);
   return { success: true };
+});
+
+// Settings IPC
+ipcMain.handle('settings:get', async () => {
+  return getSettings();
+});
+
+ipcMain.handle('settings:set', async (_e, partial: Partial<ReturnType<typeof getSettings>>) => {
+  const next = updateSettings(partial as { autoUpdateEnabled?: boolean });
+  return next;
 });

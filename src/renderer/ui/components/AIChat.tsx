@@ -8,7 +8,10 @@ type AIChatProps = {
   defaultTemperature?: number;
 };
 
-export const AIChat: React.FC<AIChatProps> = ({ defaultMode = 'local', defaultTemperature = 0.2 }) => {
+export const AIChat: React.FC<AIChatProps> = ({
+  defaultMode = 'local',
+  defaultTemperature = 0.2,
+}) => {
   const [mode, setMode] = React.useState<'openai' | 'local'>(defaultMode);
   const [temperature, setTemperature] = React.useState<number>(defaultTemperature);
   const [input, setInput] = React.useState('');
@@ -59,7 +62,12 @@ export const AIChat: React.FC<AIChatProps> = ({ defaultMode = 'local', defaultTe
     setInput('');
     streamBufferRef.current = '';
     setIsStreaming(true);
-    const id = await window.api.ai.chat.start({ mode, apiKey, messages: nextMessages, temperature });
+    const id = await window.api.ai.chat.start({
+      mode,
+      apiKey,
+      messages: nextMessages,
+      temperature,
+    });
     setChatId(id);
     scrollToEnd();
   };
@@ -126,7 +134,11 @@ export const AIChat: React.FC<AIChatProps> = ({ defaultMode = 'local', defaultTe
           style={{ width: 80 }}
         />
         <div className="ai-chat-actions">
-          <button type="button" onClick={handleCopy} disabled={isStreaming && !streamBufferRef.current}>
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={isStreaming && !streamBufferRef.current}
+          >
             Copy
           </button>
           <button type="button" onClick={handleRegenerate} disabled={isStreaming}>
@@ -166,5 +178,3 @@ export const AIChat: React.FC<AIChatProps> = ({ defaultMode = 'local', defaultTe
     </div>
   );
 };
-
-

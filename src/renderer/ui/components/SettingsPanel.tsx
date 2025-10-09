@@ -1,25 +1,12 @@
 import React from 'react';
-import {
-  X,
-  Palette,
-  Database,
-  Keyboard,
-  Info,
-  Monitor,
-  Sun,
-  Moon,
-  Download,
-  Upload,
-  Trash2,
-  CheckCircle,
-} from 'lucide-react';
+import { X, Palette, Database, Keyboard, Info, Monitor, Sun, Moon, Download, Upload, Trash2, CheckCircle, RefreshCw, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 type SettingsPanelProps = {
   onClose: () => void;
 };
 
-type TabId = 'appearance' | 'library' | 'ai' | 'shortcuts' | 'about';
+type TabId = 'appearance' | 'library' | 'ai' | 'updates' | 'shortcuts' | 'about';
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const { theme, setTheme } = useTheme();
@@ -29,6 +16,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
     { id: 'library', label: 'Library', icon: <Database size={16} /> },
     { id: 'ai', label: 'AI', icon: <Info size={16} /> },
+    { id: 'updates', label: 'Updates', icon: <RefreshCw size={16} /> },
     { id: 'shortcuts', label: 'Shortcuts', icon: <Keyboard size={16} /> },
     { id: 'about', label: 'About', icon: <Info size={16} /> },
   ];
@@ -56,6 +44,42 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
       alert('Failed to export data. Please try again.');
     }
   };
+
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = React.useState<boolean>(true);
+  const [updateStatus, setUpdateStatus] = React.useState<'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'>('idle');
+  const [_updateInfo, setUpdateInfo] = React.useState<unknown | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const s = await window.api.settings.get();
+        if (!mounted) return;
+        setAutoUpdateEnabled(!!s.autoUpdateEnabled);
+      } catch {
+        // ignore
+      }
+    })();
+    window.api.updates.onAvailable((info) => {
+      setUpdateInfo(info);
+      setUpdateStatus('available');
+    });
+    window.api.updates.onDownloaded((info) => {
+      setUpdateInfo(info);
+      setUpdateStatus('downloaded');
+    });
+    window.api.updates.onNotAvailable(() => {
+      setUpdateStatus('not-available');
+    });
+    window.api.updates.onError((msg) => {
+      setErrorMessage(msg);
+      setUpdateStatus('error');
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="settings-overlay">
@@ -262,6 +286,84 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                       <span>Apply</span>
                     </button>
                   </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'updates' && (
+            <>
+              <div className="settings-section">
+                <h3>Automatic Updates</h3>
+                <div className="setting-item">
+                  <div className="setting-label">Enable automatic updates</div>
+                  <button
+                    type="button"
+                    className="setting-action-btn"
+                    onClick={async () => {
+                      const next = !autoUpdateEnabled;
+                      setAutoUpdateEnabled(next);
+                      await window.api.settings.set({ autoUpdateEnabled: next });
+                    }}
+                  >
+                    {autoUpdateEnabled ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                    <span>{autoUpdateEnabled ? 'On' : 'Off'}</span>
+                  </button>
+                  <div className="setting-description">
+                    Downloads updates automatically in the background and installs on restart.
+                  </div>
+                </div>
+              </div>
+
+              <div className="settings-section">
+                <h3>Manual Update</h3>
+                <div className="setting-item">
+                  <div className="setting-label">Status</div>
+                  <div className="setting-value">
+                    {updateStatus === 'idle' && 'Idle'}
+                    {updateStatus === 'checking' && 'Checking for updates...'}
+                    {updateStatus === 'available' && 'Update available, downloading...'}
+                    {updateStatus === 'downloading' && 'Downloading update...'}
+                    {updateStatus === 'downloaded' && 'Update ready to install'}
+                    {updateStatus === 'not-available' && 'No updates available'}
+                    {updateStatus === 'error' && `Error: ${errorMessage ?? 'Unknown error'}`}
+                  </div>
+                </div>
+                <div className="setting-item" style={{ gap: 8 }}>
+                  <button
+                    type="button"
+                    className="setting-action-btn"
+                    onClick={async () => {
+                      setUpdateStatus('checking');
+                      const res = await window.api.updates.check();
+                      if (!res.success) {
+                        setErrorMessage(res.error || 'Failed to check');
+                        setUpdateStatus('error');
+                        return;
+                      }
+                      if (res.updateInfo) {
+                        setUpdateInfo(res.updateInfo);
+                        setUpdateStatus('available');
+                      } else {
+                        setUpdateStatus('not-available');
+                      }
+                    }}
+                  >
+                    <RefreshCw size={16} />
+                    <span>Check for updates</span>
+                  </button>
+
+                  {updateStatus === 'downloaded' && (
+                    <button
+                      type="button"
+                      className="setting-action-btn"
+                      onClick={async () => {
+                        await window.api.updates.quitAndInstall();
+                      }}
+                    >
+                      <span>Restart to update</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </>
