@@ -163,8 +163,6 @@ export function useSidebarStore() {
         }
       },
       setSidebarCollapsed: async (collapsed: boolean) => {
-        console.log('setSidebarCollapsed called with:', collapsed);
-        console.log('Current prefs:', prefs);
         const currentNodes = nodes;
         const currentCounts = counts;
         const next: SidebarPrefs = {
@@ -173,13 +171,10 @@ export function useSidebarStore() {
           updatedAt: new Date().toISOString(),
           version: (prefs.version ?? 1) + 1,
         };
-        console.log('New prefs object:', next);
         setPrefs(next);
-        console.log('Called setPrefs with new state');
         writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
         try {
           await window.api.sidebar.prefs.set(next);
-          console.log('Successfully saved prefs to backend');
         } catch (error) {
           console.error('Failed to save sidebar prefs:', error);
         }

@@ -30,6 +30,36 @@ export interface PreloadAPI {
     question: (question: string, paperId?: string) => Promise<string>;
     related: (query: string) => Promise<Array<{ paperId: string; title: string; score: number }>>;
     usage: () => Promise<number>;
+    chat: {
+      start: (params: {
+        mode: 'openai' | 'local';
+        apiKey?: string;
+        messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+        temperature?: number;
+      }) => Promise<string>; // chatId
+      stop: (chatId: string) => Promise<boolean>;
+      onChunk: (listener: (payload: { chatId: string; delta: string }) => void) => void;
+      onDone: (listener: (payload: { chatId: string }) => void) => void;
+      onError: (listener: (payload: { chatId: string; error: string }) => void) => void;
+    };
+  };
+  license: {
+    set: (pro: boolean) => Promise<void>;
+    get: () => Promise<{ pro: boolean }>;
+  };
+  localAI: {
+    start: (cfg: {
+      binaryPath: string;
+      modelPath: string;
+      port?: number;
+      contextSize?: number;
+      gpuLayers?: number;
+      threads?: number;
+      extraArgs?: string[];
+    }) => Promise<string>;
+    stop: () => Promise<boolean>;
+    status: () => Promise<{ running: boolean; url: string | null }>;
+    downloadModel: (payload: { url: string; destDir: string }) => Promise<string>;
   };
   ingest: {
     pdf: (filePath: string) => Promise<string>;
@@ -139,6 +169,30 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('ai:question', question, paperId),
     related: (query: string) => ipcRenderer.invoke('ai:related', query),
     usage: () => ipcRenderer.invoke('ai:usage'),
+    chat: {
+      start: (params: unknown) => ipcRenderer.invoke('ai:chat:start', params),
+      stop: (chatId: string) => ipcRenderer.invoke('ai:chat:stop', chatId),
+      onChunk: (listener: (payload: { chatId: string; delta: string }) => void) => {
+        ipcRenderer.on('ai:chat:chunk', (_e, payload) => listener(payload));
+      },
+      onDone: (listener: (payload: { chatId: string }) => void) => {
+        ipcRenderer.on('ai:chat:done', (_e, payload) => listener(payload));
+      },
+      onError: (listener: (payload: { chatId: string; error: string }) => void) => {
+        ipcRenderer.on('ai:chat:error', (_e, payload) => listener(payload));
+      },
+    },
+  },
+  license: {
+    set: (pro: boolean) => ipcRenderer.invoke('license:set', pro),
+    get: () => ipcRenderer.invoke('license:get'),
+  },
+  localAI: {
+    start: (cfg: unknown) => ipcRenderer.invoke('local-ai:start', cfg),
+    stop: () => ipcRenderer.invoke('local-ai:stop'),
+    status: () => ipcRenderer.invoke('local-ai:status'),
+    downloadModel: (payload: { url: string; destDir: string }) =>
+      ipcRenderer.invoke('local-ai:download-model', payload),
   },
   ingest: {
     pdf: (filePath: string) => ipcRenderer.invoke('import:pdf', filePath),

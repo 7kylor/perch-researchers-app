@@ -16,11 +16,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   const [renameValue, setRenameValue] = React.useState('');
   const [categoriesExpanded, setCategoriesExpanded] = React.useState(true);
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('Sidebar component re-rendered, collapsed state:', prefs.sidebarCollapsed);
-  }, [prefs.sidebarCollapsed]);
-
   // Count the actual number of categories (folders and labels)
   const categoryCount = React.useMemo(() => {
     return nodes.filter((node: SidebarNode) => node.type === 'folder' || node.type === 'label')

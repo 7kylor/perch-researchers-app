@@ -7,7 +7,6 @@ import { EmptyState } from './components/EmptyState';
 import { EnhancedAddPaper } from './components/EnhancedAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
-
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
 
@@ -24,6 +23,10 @@ export const App: React.FC = () => {
 
   const { prefs, actions } = useSidebarStore();
 
+  // Debug logging for sidebar state changes
+  React.useEffect(() => {
+    console.log('App component re-rendered, sidebar collapsed state:', prefs.sidebarCollapsed);
+  }, [prefs.sidebarCollapsed]);
   const [toast, setToast] = React.useState<{
     message: string;
     type: 'success' | 'error' | 'info';
@@ -59,8 +62,14 @@ export const App: React.FC = () => {
   };
 
   const handleSidebarToggle = () => {
+    console.log('Sidebar toggle clicked, current state:', prefs.sidebarCollapsed);
     const newCollapsed = !prefs.sidebarCollapsed;
+    console.log('Setting new state:', newCollapsed);
     actions.setSidebarCollapsed(newCollapsed);
+    // Force a re-render check
+    setTimeout(() => {
+      console.log('After toggle, state should be:', newCollapsed);
+    }, 0);
   };
 
   const handlePaperClick = (paperId: string) => {

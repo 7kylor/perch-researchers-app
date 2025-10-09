@@ -91,41 +91,45 @@ export class LocalProvider implements AIProvider {
   name = 'local';
 
   async summarize(text: string, _context?: string): Promise<string> {
-    // Simple local summarization
-    const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
-    const summary = sentences.slice(0, 3).join('. ');
-    return summary.length > 0 ? summary + '.' : 'No content to summarize.';
+    const { llamaServerManager } = await import('../local-ai/llama-server.js');
+    const prompt = _context
+      ? `Summarize the following text in 3-5 bullet points. Use the provided context to disambiguate.\n\nContext:\n${_context}\n\nText:\n${text}`
+      : `Summarize the following text in 3-5 bullet points.\n\n${text}`;
+    return await llamaServerManager.chat([
+      { role: 'system', content: 'You are a concise academic assistant.' },
+      { role: 'user', content: prompt },
+    ]);
   }
 
   async answerQuestion(question: string, _context: string): Promise<string> {
-    // Simple local Q&A
-    const lowerQuestion = question.toLowerCase();
-    if (
-      lowerQuestion.includes('what') ||
-      lowerQuestion.includes('who') ||
-      lowerQuestion.includes('when')
-    ) {
-      return `Based on the provided context, this appears to be a ${lowerQuestion.includes('what') ? 'description' : lowerQuestion.includes('who') ? 'biography' : 'timeline'} of the subject matter.`;
-    }
-    return 'I need more context to provide a detailed answer.';
+    const { llamaServerManager } = await import('../local-ai/llama-server.js');
+    const prompt = `Answer strictly from the given context. If the answer is unknown, say so.\n\nQuestion: ${question}\n\nContext:\n${_context}`;
+    return await llamaServerManager.chat([
+      { role: 'system', content: 'You are a precise research assistant.' },
+      { role: 'user', content: prompt },
+    ]);
   }
 
   async generateEmbeddings(texts: string[]): Promise<number[][]> {
-    // Simple local embeddings (same as pipeline)
-    return texts.map((text) => {
-      const hash = text.split('').reduce((a, b) => {
-        a = (a << 5) - a + b.charCodeAt(0);
-        return a & a;
-      }, 0);
-
-      const vector: number[] = [];
-      for (let i = 0; i < 384; i++) {
-        const seed = hash + i;
-        vector.push((Math.sin(seed) * 0.5 + 0.5) * 2 - 1);
-      }
-
-      return vector;
-    });
+    const { getLocalAIConfig } = await import('../local-ai/config.js');
+    const { generateEmbeddings } = await import('../local-ai/embeddings.js');
+    const cfg = getLocalAIConfig();
+    if (!cfg.embeddingProviderUrl) {
+      // fallback simple embedding if no provider configured
+      return texts.map((text) => {
+        const hash = text.split('').reduce((a, b) => {
+          a = (a << 5) - a + b.charCodeAt(0);
+          return a & a;
+        }, 0);
+        const vector: number[] = [];
+        for (let i = 0; i < 384; i++) {
+          const seed = hash + i;
+          vector.push((Math.sin(seed) * 0.5 + 0.5) * 2 - 1);
+        }
+        return vector;
+      });
+    }
+    return await generateEmbeddings(texts, cfg.embeddingProviderUrl, cfg.embeddingModel);
   }
 }
 

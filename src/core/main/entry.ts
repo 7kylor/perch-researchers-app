@@ -3,8 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
-import { PDFReaderWindowManager } from './pdf-reader-window.js';
-import { PDFImportManager } from './ingest/pdf-import.js';
+import { PDFReaderWindowManager } from '../../main/pdf-reader-window';
+import { PDFImportManager } from '../../main/ingest/pdf-import';
 
 // ES modules: get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);

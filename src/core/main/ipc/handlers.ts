@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron';
+import { TextDecoder } from 'node:util';
 import { openDatabase } from './db.js';
 import { randomUUID } from 'node:crypto';
 import type { Paper } from '../shared/types.js';
@@ -6,13 +7,13 @@ import { importByDOI, importPDF } from './ingest/importer.js';
 import { PDFImportManager } from './ingest/pdf-import.js';
 import { URLPaperDetector } from './ingest/url-paper-detector.js';
 import fs from 'node:fs';
+import path from 'node:path';
+import https from 'node:https';
 import { processPaperForEmbeddings, searchSimilarPapers } from './embeddings/pipeline.js';
 import { llamaServerManager, type LlamaServerConfig } from './local-ai/llama-server.js';
 import { createRAGSystem } from './ai/rag.js';
 import { processPaperOCR } from './ocr/batch.js';
-import path from 'node:path';
-import https from 'node:https';
-import { TextDecoder } from 'node:util';
+import { randomUUID as uuidv4 } from 'node:crypto';
 import {
   BUILTIN_ALL,
   BUILTIN_RECENT,
@@ -302,9 +303,8 @@ ipcMain.handle(
       destDir: string;
     },
   ) => {
-    if (!isPro) throw new Error('Pro required for local AI downloads');
     const { url, destDir } = payload;
-    const downloadId = randomUUID();
+    const downloadId = uuidv4();
     const fileName = path.basename(new URL(url).pathname);
     await fs.promises.mkdir(destDir, { recursive: true });
     const destPath = path.join(destDir, fileName);
@@ -315,9 +315,14 @@ ipcMain.handle(
     await new Promise<void>((resolve, reject) => {
       https
         .get(url, (res) => {
-          const redirect = res.headers.location;
-          if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && redirect) {
-            https.get(redirect, (redir) => handleStream(redir)).on('error', reject);
+          if (
+            res.statusCode &&
+            res.statusCode >= 300 &&
+            res.statusCode < 400 &&
+            res.headers.location
+          ) {
+            // Handle redirect
+            https.get(res.headers.location, (redir) => handleStream(redir)).on('error', reject);
             return;
           }
           handleStream(res);
@@ -335,12 +340,12 @@ ipcMain.handle(
         res.on('data', (chunk: Buffer) => {
           received += chunk.length;
           if (total > 0) {
-            const percent = Math.round((received / total) * 100);
+            const pct = Math.round((received / total) * 100);
             webContents.send('local-ai:download:progress', {
               id: downloadId,
               received,
               total,
-              percent,
+              percent: pct,
             });
           }
         });
@@ -374,10 +379,11 @@ ipcMain.handle(
     },
   ) => {
     if (!isPro && params.mode === 'local') throw new Error('Pro required for local chat');
-    const chatId = randomUUID();
+    const chatId = uuidv4();
     const controller = new AbortController();
     chatControllers.set(chatId, controller);
 
+    // Async stream without blocking the handler
     void (async () => {
       const webContents = e.sender;
       try {
@@ -402,6 +408,7 @@ ipcMain.handle(
           });
           webContents.send('ai:chat:done', { chatId });
         } else {
+          // local llama.cpp
           const status = { running: llamaServerManager.isRunning(), url: llamaServerManager.url };
           if (!status.running || !status.url) throw new Error('Local LLM not running');
           const res = await fetch(`${status.url}/v1/chat/completions`, {
@@ -475,7 +482,9 @@ async function streamSSE(
   }
 }
 
+// --------------------------------------
 // Licensing (placeholder)
+// --------------------------------------
 ipcMain.handle('license:set', (_e, pro: boolean) => {
   isPro = !!pro;
 });
