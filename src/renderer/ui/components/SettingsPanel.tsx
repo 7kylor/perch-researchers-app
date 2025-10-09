@@ -44,6 +44,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     Array<{ fileName: string; filePath: string }>
   >([]);
   const [detectedBinary, setDetectedBinary] = React.useState<string | null>(null);
+  const [embeddingsConfigured, setEmbeddingsConfigured] = React.useState<boolean>(
+    !!(localStorage.getItem('embedUrl') && localStorage.getItem('embedModel')),
+  );
 
   React.useEffect(() => {
     // Download events for local model
@@ -139,6 +142,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   ];
 
   const shortcuts = [
+    { keys: ['⌘', 'B'], description: 'Toggle sidebar' },
     { keys: ['⌘', ','], description: 'Open settings' },
     { keys: ['Esc'], description: 'Close modal or panel' },
     { keys: ['F2'], description: 'Rename category' },
@@ -418,7 +422,119 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                         <span>Test</span>
                       </button>
                     </div>
+                <h3>AI Assistant</h3>
+
+                <div className="ai-providers">
+                  <button
+                    type="button"
+                    className={`ai-provider ${aiMode === 'openai' ? 'active' : ''}`}
+                    onClick={async () => {
+                      const key = localStorage.getItem('openaiKey') || '';
+                      if (!key) {
+                        alert('Please set up your OpenAI API key first.');
+                        return;
+                      }
+                      localStorage.setItem('aiMode', 'openai');
+                      setAiMode('openai');
+                      await window.api.ai.init('openai', key);
+                    }}
+                  >
+                    <span className="provider-name">OpenAI</span>
+                    <span className="provider-desc">Cloud AI • Fast</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ai-provider ${aiMode === 'local' ? 'active' : ''}`}
+                    onClick={async () => {
+                      localStorage.setItem('aiMode', 'local');
+                      setAiMode('local');
+                      await window.api.ai.init('local');
+                    }}
+                  >
+                    <span className="provider-name">Local AI</span>
+                    <span className="provider-desc">Private • On-device</span>
+                  </button>
+                </div>
+
+                {aiMode === 'openai' && (
+                  <>
+                    <h3>AI Assistant</h3>
+
+                    <div className="ai-providers">
+                  <button
+                    type="button"
+                    className={`ai-provider ${aiMode === 'openai' ? 'active' : ''}`}
+                    onClick={async () => {
+                      const key = localStorage.getItem('openaiKey') || '';
+                      if (!key) {
+                        alert('Please set up your OpenAI API key first.');
+                        return;
+                      }
+                      localStorage.setItem('aiMode', 'openai');
+                      setAiMode('openai');
+                      await window.api.ai.init('openai', key);
+                    }}
+                  >
+                    <span className="provider-name">OpenAI</span>
+                    <span className="provider-desc">Cloud AI • Fast</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ai-provider ${aiMode === 'local' ? 'active' : ''}`}
+                    onClick={async () => {
+                      localStorage.setItem('aiMode', 'local');
+                      setAiMode('local');
+                      await window.api.ai.init('local');
+                    }}
+                  >
+                    <span className="provider-name">Local AI</span>
+                    <span className="provider-desc">Private • On-device</span>
+                  </button>
+                </div>
+
+                {aiMode === 'openai' && (
+                  <div className="ai-setup">
+                    <div className="input-row">
+                      <input
+                        type="password"
+                        placeholder="OpenAI API Key (sk-...)"
+                        defaultValue={localStorage.getItem('openaiKey') || ''}
+                        onChange={(e) => localStorage.setItem('openaiKey', e.target.value.trim())}
+                      />
+                      <button
+                        type="button"
+                        className="mini-btn"
+                        onClick={async () => {
+                          const key = localStorage.getItem('openaiKey') || '';
+                          if (!key) {
+                            alert('Please enter your API key first.');
+                            return;
+                          }
+                          try {
+                            await window.api.ai.init('openai', key);
+                            alert('✅ Connected');
+                          } catch {
+                            alert('❌ Failed to connect');
+                          }
+                        }}
+                      >
+                        Connect
+                      </button>
+                    </div>
+                    <p className="hint">
+                      Get your key from{' '}
+                      <a
+                        href="https://platform.openai.com/api-keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        platform.openai.com
+                      </a>
+                    </p>
                   </div>
+                  </>
                 )}
 
                 {aiMode === 'local' && (
@@ -774,6 +890,223 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                 )}
 
                 {/* Access / Pro controls removed; gating enforced automatically */}
+                  <div className="ai-setup">
+                    <div className="input-row">
+                      <select
+                        defaultValue={localStorage.getItem('llamaModelUrl') || ''}
+                        onChange={(e) => localStorage.setItem('llamaModelUrl', e.target.value)}
+                      >
+                        <option value="">Choose AI Model...</option>
+                        <option value="https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf?download=true">
+                          Qwen3-8B (Best)
+                        </option>
+                        <option value="https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true">
+                          Qwen3-1.7B (Fast)
+                        </option>
+                        <option value="https://huggingface.co/unsloth/Phi-4-mini-reasoning-GGUF/resolve/main/Phi-4-mini-reasoning-Q4_K_M.gguf?download=true">
+                          Phi-4-mini (Light)
+                        </option>
+                      </select>
+                      <button
+                        type="button"
+                        className={`mini-btn ${localReady ? 'secondary' : 'primary'}`}
+                        disabled={!localStorage.getItem('llamaModelUrl') && !localReady}
+                        onClick={async () => {
+                          if (localReady) {
+                            // Restart if already running
+                            try {
+                              await window.api.localAI.stop();
+                              setLocalReady(false);
+
+                              const bin = localStorage.getItem('llamaServerBin') || '';
+                              const model = localStorage.getItem('llamaModelPath') || '';
+                              if (bin && model) {
+                                const url = await window.api.localAI.start({
+                                  binaryPath: bin,
+                                  modelPath: model,
+                                });
+                                setLocalReady(true);
+                                alert(`✅ Restarted at ${url}`);
+                              }
+                            } catch (err) {
+                              alert(`❌ ${(err as Error).message || 'Failed to restart'}`);
+                            }
+                            return;
+                          }
+
+                          const url = localStorage.getItem('llamaModelUrl') || '';
+                          if (!url) return;
+
+                          try {
+                            setDownloadState({ id: 'model', percent: 0 });
+                            const filePath = await window.api.localAI.downloadModel({ url });
+                            localStorage.setItem('llamaModelPath', filePath);
+
+                            const bin = await window.api.localAI.detectBinary();
+                            if (bin.binaryPath) {
+                              localStorage.setItem('llamaServerBin', bin.binaryPath);
+                              const startUrl = await window.api.localAI.start({
+                                binaryPath: bin.binaryPath,
+                                modelPath: filePath,
+                              });
+                              setLocalReady(true);
+                              alert(`✅ Running at ${startUrl}`);
+                            } else {
+                              alert('❌ Server not found');
+                            }
+                          } catch (err) {
+                            alert(`❌ ${(err as Error).message || 'Failed'}`);
+                          } finally {
+                            setDownloadState(null);
+                          }
+                        }}
+                      >
+                        {downloadState
+                          ? 'Setting up...'
+                          : localReady
+                            ? 'Ready • Restart'
+                            : 'Start AI'}
+                      </button>
+                    </div>
+
+                    {downloadState && (
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${downloadState.percent}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {localReady && <div className="status-good">✓ Running</div>}
+
+                    {/* Embedding Models Section */}
+                    <div className="embeddings-section">
+                      <h4>Embedding Models</h4>
+                      <p className="section-desc">
+                        Configure embedding models for semantic search and RAG
+                      </p>
+
+                      <div className="input-row embeddings-controls">
+                        <select
+                          defaultValue={
+                            localStorage.getItem('embedModel') || 'BAAI/bge-base-en-v1.5'
+                          }
+                          onChange={(e) => {
+                            localStorage.setItem('embedModel', e.target.value);
+                            setEmbeddingsConfigured(false);
+                          }}
+                        >
+                          <option value="BAAI/bge-base-en-v1.5">BGE Base (Best Quality)</option>
+                          <option value="thenlper/gte-small">GTE Small (Faster)</option>
+                        </select>
+                        <input
+                          type="text"
+                          placeholder="Embedding server URL (e.g., http://localhost:8090)"
+                          defaultValue={localStorage.getItem('embedUrl') || ''}
+                          onChange={(e) => {
+                            localStorage.setItem('embedUrl', e.target.value.trim());
+                            setEmbeddingsConfigured(false);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className={`mini-btn ${embeddingsConfigured ? 'secondary' : ''}`}
+                          onClick={async () => {
+                            const embedModel =
+                              localStorage.getItem('embedModel') || 'BAAI/bge-base-en-v1.5';
+                            const embedUrl = localStorage.getItem('embedUrl') || '';
+
+                            if (!embedUrl) {
+                              alert('Please enter embedding server URL');
+                              return;
+                            }
+
+                            try {
+                              await window.api.localAI.setConfig({
+                                embeddingProviderUrl: embedUrl,
+                                embeddingModel: embedModel as
+                                  | 'BAAI/bge-base-en-v1.5'
+                                  | 'thenlper/gte-small',
+                              });
+                              setEmbeddingsConfigured(true);
+                              alert('✅ Embedding config saved');
+                            } catch (err) {
+                              alert(`❌ ${(err as Error).message || 'Failed to save config'}`);
+                            }
+                          }}
+                        >
+                          {embeddingsConfigured ? 'Applied' : 'Apply'}
+                        </button>
+                      </div>
+
+                      {embeddingsConfigured && <div className="status-good">✓ Configured</div>}
+                    </div>
+
+                    <details className="advanced">
+                      <summary>Advanced</summary>
+                      <div className="advanced-options">
+                        <input
+                          type="text"
+                          placeholder="Server path"
+                          defaultValue={localStorage.getItem('llamaServerBin') || ''}
+                          onChange={(e) =>
+                            localStorage.setItem('llamaServerBin', e.target.value.trim())
+                          }
+                        />
+                        <input
+                          type="text"
+                          placeholder="Model path"
+                          defaultValue={localStorage.getItem('llamaModelPath') || ''}
+                          onChange={(e) =>
+                            localStorage.setItem('llamaModelPath', e.target.value.trim())
+                          }
+                        />
+                        <input
+                          type="number"
+                          placeholder="Port (8080)"
+                          defaultValue={localStorage.getItem('llamaPort') || '8080'}
+                          onChange={(e) => localStorage.setItem('llamaPort', e.target.value.trim())}
+                        />
+                        <div className="btn-row">
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            onClick={async () => {
+                              const bin = localStorage.getItem('llamaServerBin') || '';
+                              const model = localStorage.getItem('llamaModelPath') || '';
+                              if (!bin || !model) return;
+
+                              try {
+                                const url = await window.api.localAI.start({
+                                  binaryPath: bin,
+                                  modelPath: model,
+                                });
+                                setLocalReady(true);
+                                alert(`✅ ${url}`);
+                              } catch (err) {
+                                alert(`❌ ${(err as Error).message || 'Failed'}`);
+                              }
+                            }}
+                          >
+                            Start
+                          </button>
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            onClick={async () => {
+                              await window.api.localAI.stop();
+                              setLocalReady(false);
+                              alert('⏸ Stopped');
+                            }}
+                          >
+                            Stop
+                          </button>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                )}
               </div>
             </>
           )}

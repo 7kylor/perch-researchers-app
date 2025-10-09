@@ -3,8 +3,6 @@ import {
   Settings,
   PanelLeftOpen,
   PanelLeftClose,
-  HelpCircle,
-  Command,
   Search,
   Plus,
   ArrowUpDown,
@@ -13,6 +11,7 @@ import {
   X,
   Bot,
   BarChart3,
+  Brain,
 } from 'lucide-react';
 
 type SortOption = 'recent' | 'title' | 'author' | 'year';
@@ -39,12 +38,16 @@ type ActivityBarProps = {
   // Analytics props
   onAnalyticsToggle: () => void;
   showAnalytics: boolean;
+  // Research Modal props
+  onResearchModalToggle: () => void;
+  showResearchModal: boolean;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
   onSettingsClick,
   isSidebarCollapsed,
   onSidebarToggle,
+  debug,
   searchQuery,
   onSearchChange,
   sortBy,
@@ -54,34 +57,34 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   showAIChat,
   onAnalyticsToggle,
   showAnalytics,
+  onResearchModalToggle,
+  showResearchModal,
 }) => {
   const renderCount = React.useRef(0);
   renderCount.current += 1;
 
-  const [showQuickActions, setShowQuickActions] = React.useState(false);
+  // Debug logging to track props
+  console.log('🔄 ACTIVITYBAR RENDER:', {
+    isSidebarCollapsed,
+    renderCount: renderCount.current,
+    debug: debug?.renderCount,
+  });
+
   const [showSortDropdown, setShowSortDropdown] = React.useState(false);
-  const quickActionsRef = React.useRef<HTMLDivElement>(null);
   const sortRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        quickActionsRef.current &&
-        e.target &&
-        !quickActionsRef.current.contains(e.target as HTMLElement)
-      ) {
-        setShowQuickActions(false);
-      }
       if (sortRef.current && e.target && !sortRef.current.contains(e.target as HTMLElement)) {
         setShowSortDropdown(false);
       }
     };
 
-    if (showQuickActions || showSortDropdown) {
+    if (showSortDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showQuickActions, showSortDropdown]);
+  }, [showSortDropdown]);
 
   const sortOptions = [
     {
@@ -103,6 +106,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           className="activity-sidebar-toggle"
           onClick={onSidebarToggle}
           title={isSidebarCollapsed ? 'Show sidebar (⌘B)' : 'Hide sidebar (⌘B)'}
+          aria-label={isSidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
         >
           {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
@@ -187,6 +191,15 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           <Bot size={18} />
         </button>
 
+        {/* Research Modal Button */}
+        <button
+          type="button"
+          className={`activity-compact-btn ${showResearchModal ? 'active' : ''}`}
+          onClick={onResearchModalToggle}
+          title={showResearchModal ? 'Hide Research & Analytics' : 'Show Research & Analytics'}
+        >
+          <Brain size={18} />
+        </button>
         {/* Add Paper Button */}
         <button
           type="button"
@@ -197,39 +210,6 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           <Plus size={18} />
           <span>Add Paper</span>
         </button>
-
-        <div className="activity-actions" ref={quickActionsRef}>
-          <button
-            type="button"
-            className="activity-compact-btn"
-            onClick={() => setShowQuickActions(!showQuickActions)}
-            title="Quick actions (⌘K)"
-          >
-            <Command size={18} />
-          </button>
-
-          {showQuickActions && (
-            <div className="quick-actions-menu">
-              <div className="quick-actions-section">
-                <div className="quick-action-label">Quick Actions</div>
-                <button type="button" className="quick-action-item" onClick={onSettingsClick}>
-                  <Settings className="quick-action-icon" />
-                  <div className="quick-action-content">
-                    <div className="quick-action-title">Settings</div>
-                    <div className="quick-action-shortcut">⌘,</div>
-                  </div>
-                </button>
-                <button type="button" className="quick-action-item">
-                  <HelpCircle className="quick-action-icon" />
-                  <div className="quick-action-content">
-                    <div className="quick-action-title">Help & Shortcuts</div>
-                    <div className="quick-action-shortcut">⌘?</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
         <button
           type="button"

@@ -36,7 +36,7 @@ export function useSidebarStore() {
   const [nodes, setNodes] = useState<SidebarNode[]>([]);
   const [prefs, setPrefs] = useState<SidebarPrefs>({
     collapsedNodeIds: [],
-    sidebarCollapsed: false,
+    sidebarCollapsed: true, // Default to collapsed for new users
     version: 1,
     updatedAt: new Date().toISOString(),
   });
@@ -47,12 +47,21 @@ export function useSidebarStore() {
   });
   const isHydrated = useRef(false);
 
+  // Get current state for actions (to avoid stale closures)
+  const getCurrentState = () => ({ nodes, prefs, counts });
+
   // Hydrate from cache fast
   useEffect(() => {
     const cached = readCache();
     if (cached) {
       setNodes(cached.nodes);
-      setPrefs(cached.prefs);
+      // Use cached prefs but default to collapsed if no explicit preference exists
+      const mergedPrefs = {
+        ...cached.prefs,
+        sidebarCollapsed:
+          cached.prefs.sidebarCollapsed !== undefined ? cached.prefs.sidebarCollapsed : true,
+      };
+      setPrefs(mergedPrefs);
       setCounts(cached.counts);
     }
     // Fetch from DB
@@ -61,9 +70,15 @@ export function useSidebarStore() {
       .list()
       .then((res) => {
         setNodes(res.nodes);
-        setPrefs(res.prefs);
+        // Merge preferences: use API prefs but default to collapsed if no explicit preference exists
+        const mergedPrefs = {
+          ...res.prefs,
+          sidebarCollapsed:
+            res.prefs.sidebarCollapsed !== undefined ? res.prefs.sidebarCollapsed : true, // Default to collapsed for new users
+        };
+        setPrefs(mergedPrefs);
         setCounts(res.counts);
-        writeCache({ nodes: res.nodes, prefs: res.prefs, counts: res.counts });
+        writeCache({ nodes: res.nodes, prefs: mergedPrefs, counts: res.counts });
         setState({ status: 'ready', data: res });
         isHydrated.current = true;
       })
@@ -81,6 +96,11 @@ export function useSidebarStore() {
           parentId?: string | null;
         },
       ): Promise<string> => {
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
         // optimistic
         const optimisticId = `temp-${Date.now()}`;
         const now = new Date().toISOString();
@@ -91,7 +111,8 @@ export function useSidebarStore() {
           name: partial.name,
           iconKey: partial.iconKey ?? null,
           colorHex: partial.colorHex ?? null,
-          orderIndex: nodes.filter((n) => n.parentId === (partial.parentId ?? null)).length || 0,
+          orderIndex:
+            currentNodes.filter((n) => n.parentId === (partial.parentId ?? null)).length || 0,
           createdAt: now,
           updatedAt: now,
         } as SidebarNode;
@@ -99,7 +120,7 @@ export function useSidebarStore() {
         try {
           const created = await window.api.sidebar.create(partial);
           setNodes((prev) => prev.map((n) => (n.id === optimisticId ? created : n)));
-          writeCache({ nodes: nodes, prefs, counts });
+          writeCache({ nodes: currentNodes, prefs: currentPrefs, counts: currentCounts });
           return created.id;
         } catch (e) {
           setNodes((prev) => prev.filter((n) => n.id !== optimisticId));
@@ -110,7 +131,12 @@ export function useSidebarStore() {
         id: string,
         updates: Partial<Pick<SidebarNode, 'name' | 'iconKey' | 'colorHex'>>,
       ) => {
-        const before = nodes;
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
+        const before = currentNodes;
         setNodes((prev) =>
           prev.map((n) =>
             n.id === id ? { ...n, ...updates, updatedAt: new Date().toISOString() } : n,
@@ -118,29 +144,39 @@ export function useSidebarStore() {
         );
         try {
           await window.api.sidebar.update(id, updates);
-          writeCache({ nodes: nodes, prefs, counts });
+          writeCache({ nodes: currentNodes, prefs: currentPrefs, counts: currentCounts });
         } catch (e) {
           setNodes(before);
           throw e;
         }
       },
       remove: async (id: string) => {
-        const before = nodes;
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
+        const before = currentNodes;
         setNodes((prev) => prev.filter((n) => n.id !== id && n.parentId !== id));
         try {
           await window.api.sidebar.delete(id);
-          writeCache({ nodes: nodes, prefs, counts });
+          writeCache({ nodes: currentNodes, prefs: currentPrefs, counts: currentCounts });
         } catch (e) {
           setNodes(before);
           throw e;
         }
       },
       move: async (id: string, newParentId: string | null, newIndex: number) => {
-        const before = nodes;
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
+        const before = currentNodes;
         const reordered: SidebarNode[] = [];
-        const moving = nodes.find((n) => n.id === id);
+        const moving = currentNodes.find((n) => n.id === id);
         if (!moving) return;
-        const siblings = nodes
+        const siblings = currentNodes
           .filter((n) => n.parentId === newParentId && n.id !== id)
           .sort((a, b) => a.orderIndex - b.orderIndex);
         const next = [...siblings.slice(0, newIndex), moving, ...siblings.slice(newIndex)];
@@ -152,55 +188,72 @@ export function useSidebarStore() {
             updatedAt: new Date().toISOString(),
           });
         });
-        const others = nodes.filter((n) => n.parentId !== newParentId && n.id !== id);
+        const others = currentNodes.filter((n) => n.parentId !== newParentId && n.id !== id);
         setNodes([...others, ...reordered]);
         try {
           await window.api.sidebar.move(id, newParentId, newIndex);
-          writeCache({ nodes: nodes, prefs, counts });
+          writeCache({ nodes: currentNodes, prefs: currentPrefs, counts: currentCounts });
         } catch (e) {
           setNodes(before);
           throw e;
         }
       },
-      setSidebarCollapsed: async (collapsed: boolean) => {
-        const currentNodes = nodes;
-        const currentCounts = counts;
+      setSidebarCollapsed: (collapsed: boolean) => {
+        console.log('🔄 STORE: setSidebarCollapsed called with:', collapsed);
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
+        console.log('🔄 STORE: Current prefs before update:', currentPrefs);
+
         const next: SidebarPrefs = {
-          ...prefs,
+          ...currentPrefs,
           sidebarCollapsed: collapsed,
           updatedAt: new Date().toISOString(),
-          version: (prefs.version ?? 1) + 1,
+          version: (currentPrefs.version ?? 1) + 1,
         };
+
+        console.log('🔄 STORE: New prefs after update:', next);
+
+        // Update state immediately - this should trigger re-renders
         setPrefs(next);
+        console.log('🔄 STORE: State updated, should trigger re-render');
+
+        // Write to cache and API asynchronously (don't block UI)
         writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
-        try {
-          await window.api.sidebar.prefs.set(next);
-        } catch (error) {
+        window.api.sidebar.prefs.set(next).catch((error) => {
           console.error('Failed to save sidebar prefs:', error);
-        }
+        });
       },
-      setCollapsedNodeIds: async (ids: string[]) => {
-        const currentNodes = nodes;
-        const currentCounts = counts;
+      setCollapsedNodeIds: (ids: string[]) => {
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
         const next: SidebarPrefs = {
-          ...prefs,
+          ...currentPrefs,
           collapsedNodeIds: ids,
           updatedAt: new Date().toISOString(),
-          version: (prefs.version ?? 1) + 1,
+          version: (currentPrefs.version ?? 1) + 1,
         };
         setPrefs(next);
         writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
-        try {
-          await window.api.sidebar.prefs.set(next);
-        } catch (error) {
+        // Save to API asynchronously (don't await to avoid blocking UI)
+        window.api.sidebar.prefs.set(next).catch((error) => {
           console.error('Failed to save sidebar prefs:', error);
-        }
+        });
       },
       refreshCounts: async () => {
-        const currentNodes = nodes;
+        const {
+          nodes: currentNodes,
+          prefs: currentPrefs,
+          counts: currentCounts,
+        } = getCurrentState();
         const res = await window.api.sidebar.list();
         setCounts(res.counts);
-        writeCache({ nodes: currentNodes, prefs, counts: res.counts });
+        writeCache({ nodes: currentNodes, prefs: currentPrefs, counts: res.counts });
       },
     };
   }, [nodes, prefs, counts]);

@@ -1,4 +1,4 @@
-import * as arxivApi from 'arxiv-api';
+import { search as arxivSearch } from '../services/arxiv-client.js';
 
 interface ArxivLink {
   href?: string;
@@ -126,7 +126,7 @@ export class URLPaperDetector {
       }
 
       // Search for the paper using the arXiv ID
-      const results = await arxivApi.search({
+      const results = await arxivSearch({
         searchQueryParams: [{ include: [{ name: arxivId, prefix: 'all' }] }],
         maxResults: 1,
       });
@@ -154,7 +154,8 @@ export class URLPaperDetector {
             ?.flat()
             .flat()
             .filter(
-              (author): author is string => typeof author === 'string' && author.length > 0,
+              (author: unknown): author is string =>
+                typeof author === 'string' && author.length > 0,
             ) || [];
 
         // Extract categories for venue information
@@ -419,7 +420,7 @@ export class URLPaperDetector {
 
   async detectFromArxivId(arxivId: string): Promise<PaperMetadata | null> {
     try {
-      const results = await arxivApi.search({
+      const results = await arxivSearch({
         searchQueryParams: [{ include: [{ name: arxivId, prefix: 'all' }] }],
         maxResults: 1,
       });
@@ -441,7 +442,8 @@ export class URLPaperDetector {
             ?.flat()
             .flat()
             .filter(
-              (author): author is string => typeof author === 'string' && author.length > 0,
+              (author: unknown): author is string =>
+                typeof author === 'string' && author.length > 0,
             ) || [];
 
         // Extract categories for venue information

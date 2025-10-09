@@ -10,6 +10,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { AIChat } from './components/AIChat';
 import { CitationManager } from './components/CitationManager';
 import { ResearchAnalytics } from './components/ResearchAnalytics';
+import { ResearchModal } from './components/ResearchModal';
 
 import { ThemeProvider } from './components/ThemeProvider';
 import { useSidebarStore } from './sidebar/store';
@@ -31,8 +32,12 @@ export const App: React.FC = () => {
   const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
     null,
   );
+  const [showResearchModal, setShowResearchModal] = React.useState(false);
 
   const { prefs, actions } = useSidebarStore();
+
+  // Use store state directly to avoid race conditions
+  const sidebarCollapsed = prefs?.sidebarCollapsed ?? true;
 
   const [toast, setToast] = React.useState<{
     message: string;
@@ -68,10 +73,29 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
-  const handleSidebarToggle = () => {
-    const newCollapsed = !prefs.sidebarCollapsed;
-    actions.setSidebarCollapsed(newCollapsed);
-  };
+  const handleSidebarToggle = React.useCallback(() => {
+    console.log('=== SIDEBAR TOGGLE START ===');
+    console.log('Current store state:', prefs?.sidebarCollapsed);
+
+    if (!actions?.setSidebarCollapsed) {
+      console.log('❌ Actions not available yet');
+      return;
+    }
+
+    const newCollapsed = !sidebarCollapsed;
+    console.log('New state will be:', newCollapsed);
+
+    // Update store state directly - this triggers immediate re-render
+    try {
+      console.log('✅ Calling store action...');
+      actions.setSidebarCollapsed(newCollapsed);
+      console.log('✅ Store updated successfully');
+    } catch (error) {
+      console.error('❌ Failed to update store:', error);
+    }
+
+    console.log('=== SIDEBAR TOGGLE END ===');
+  }, [sidebarCollapsed, actions, prefs]);
 
   const handlePaperClick = (paperId: string) => {
     openPaper(paperId);
@@ -349,6 +373,11 @@ export const App: React.FC = () => {
         if (showSimpleAddModal) setShowSimpleAddModal(false);
         if (showSettings) setShowSettings(false);
       }
+      // Cmd/Ctrl + B to toggle sidebar
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        handleSidebarToggle();
+      }
       // Cmd/Ctrl + , to open settings
       if ((e.metaKey || e.ctrlKey) && e.key === ',') {
         e.preventDefault();
@@ -358,15 +387,23 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSimpleAddModal, showSettings]);
+  }, [showSimpleAddModal, showSettings, handleSidebarToggle]);
+
+  console.log(
+    '🔄 APP RENDER: sidebarCollapsed =',
+    prefs?.sidebarCollapsed,
+    'main class =',
+    `library-main ${prefs?.sidebarCollapsed ? 'sidebar-collapsed' : ''}`,
+  );
 
   return (
     <ThemeProvider>
       <div className="app-root">
         <ActivityBar
           onSettingsClick={handleSettingsClick}
-          isSidebarCollapsed={prefs.sidebarCollapsed}
+          isSidebarCollapsed={sidebarCollapsed}
           onSidebarToggle={handleSidebarToggle}
+          debug={{ renderCount: 1 }}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           sortBy={sortBy}
@@ -376,12 +413,12 @@ export const App: React.FC = () => {
           showAIChat={showAIChat}
           onAnalyticsToggle={() => setShowAnalytics(!showAnalytics)}
           showAnalytics={showAnalytics}
+          onResearchModalToggle={() => setShowResearchModal(!showResearchModal)}
+          showResearchModal={showResearchModal}
         />
         <div className="library-layout">
-          {!prefs.sidebarCollapsed && (
-            <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
-          )}
-          <div className={`library-main ${prefs.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+          <NewSidebar selectedId={selectedCategory} onSelect={setSelectedCategory} />
+          <div className={`library-main ${prefs?.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <div className="library-content">
               {isLoading ? (
                 <LoadingSkeleton count={9} />
@@ -414,6 +451,7 @@ export const App: React.FC = () => {
                 <ResearchAnalytics />
               </div>
             )}
+            {showResearchModal && <ResearchModal onClose={() => setShowResearchModal(false)} />}
           </div>
         </div>
 
@@ -429,7 +467,7 @@ export const App: React.FC = () => {
         {showCitationManager && (
           <div className="citation-manager-overlay">
             <CitationManager
-              paperId={selectedPaperForCitations}
+              paperId={selectedPaperForCitations || undefined}
               onClose={() => {
                 setShowCitationManager(false);
                 setSelectedPaperForCitations(null);

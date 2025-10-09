@@ -1,4 +1,4 @@
-import type { Paper } from '../shared/types.js';
+import type { Paper, AcademicSearchResult } from '../shared/types.js';
 import type { SidebarListResponse, SidebarNode, SidebarPrefs } from '../shared/sidebar.js';
 import type { OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 
@@ -174,6 +174,14 @@ export interface PreloadAPI {
       set: (prefs: SidebarPrefs) => Promise<void>;
     };
   };
+  academic: {
+    'search-google-scholar': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'search-semantic-scholar': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'search-pubmed': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'search-ieee': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'search-all': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'get-by-doi': (doi: string) => Promise<AcademicSearchResult | null>;
+  };
 }
 
 declare global {
@@ -315,5 +323,18 @@ contextBridge.exposeInMainWorld('api', {
       get: () => ipcRenderer.invoke('sidebar:prefs:get'),
       set: (prefs: unknown) => ipcRenderer.invoke('sidebar:prefs:set', prefs),
     },
+  },
+  academic: {
+    'search-google-scholar': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-google-scholar', query, limit),
+    'search-semantic-scholar': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-semantic-scholar', query, limit),
+    'search-pubmed': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-pubmed', query, limit),
+    'search-ieee': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-ieee', query, limit),
+    'search-all': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-all', query, limit),
+    'get-by-doi': (doi: string) => ipcRenderer.invoke('academic:get-by-doi', doi),
   },
 });
