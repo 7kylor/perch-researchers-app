@@ -43,6 +43,19 @@ export interface PreloadAPI {
     'get-windows': () => Promise<string[]>;
     'focus-window': (windowId: string) => Promise<boolean>;
   };
+  annotations: {
+    add: (payload: {
+      paperId: string;
+      page: number;
+      color: string;
+      note?: string;
+      tags: string[];
+      anchors: { region?: { page: number; x: number; y: number; width: number; height: number } };
+    }) => Promise<string>;
+    getByPaper: (paperId: string) => Promise<import('../shared/types').Annotation[]>;
+    update: (id: string, updates: Partial<{ color: string; note?: string; tags: string[] }>) => Promise<void>;
+    delete: (id: string) => Promise<void>;
+  };
   file: {
     read: (filePath: string) => Promise<ArrayBuffer>;
   };
@@ -119,6 +132,12 @@ contextBridge.exposeInMainWorld('api', {
     'file-exists': (filePath: string) => ipcRenderer.invoke('pdf-reader:file-exists', filePath),
     'get-windows': () => ipcRenderer.invoke('pdf-reader:get-windows'),
     'focus-window': (windowId: string) => ipcRenderer.invoke('pdf-reader:focus-window', windowId),
+  },
+  annotations: {
+    add: (payload: unknown) => ipcRenderer.invoke('annotations:add', payload),
+    getByPaper: (paperId: string) => ipcRenderer.invoke('annotations:getByPaper', paperId),
+    update: (id: string, updates: unknown) => ipcRenderer.invoke('annotations:update', id, updates),
+    delete: (id: string) => ipcRenderer.invoke('annotations:delete', id),
   },
   file: {
     // Read file directly from preload for ArrayBuffer results (avoids IPC marshalling quirks)
