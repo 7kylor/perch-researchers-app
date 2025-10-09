@@ -1,4 +1,7 @@
-import * as arxivApi from 'arxiv-api';
+import arxivApi from 'arxiv-api-ts';
+
+// Type assertion to help TypeScript understand the module
+const searchFunction = arxivApi as typeof arxivApi & ((params: any) => Promise<any>);
 
 interface ArxivLink {
   href?: string;
@@ -126,13 +129,13 @@ export class URLPaperDetector {
       }
 
       // Search for the paper using the arXiv ID
-      const results = await arxivApi.search({
+      const results = await searchFunction({
         searchQueryParams: [{ include: [{ name: arxivId, prefix: 'all' }] }],
         maxResults: 1,
       });
 
-      if (results && results.length > 0) {
-        const entry = results[0];
+      if (results && results.entries && results.entries.length > 0) {
+        const entry = results.entries[0];
         if (!entry) return null;
 
         // Extract arXiv ID from entry.id for DOI construction
@@ -154,7 +157,8 @@ export class URLPaperDetector {
             ?.flat()
             .flat()
             .filter(
-              (author): author is string => typeof author === 'string' && author.length > 0,
+              (author: unknown): author is string =>
+                typeof author === 'string' && author.length > 0,
             ) || [];
 
         // Extract categories for venue information
@@ -419,13 +423,13 @@ export class URLPaperDetector {
 
   async detectFromArxivId(arxivId: string): Promise<PaperMetadata | null> {
     try {
-      const results = await arxivApi.search({
+      const results = await searchFunction({
         searchQueryParams: [{ include: [{ name: arxivId, prefix: 'all' }] }],
         maxResults: 1,
       });
 
-      if (results && results.length > 0) {
-        const entry = results[0];
+      if (results && results.entries && results.entries.length > 0) {
+        const entry = results.entries[0];
         if (!entry) return null;
 
         // Extract DOI from links if available, or construct from arXiv ID
@@ -441,7 +445,8 @@ export class URLPaperDetector {
             ?.flat()
             .flat()
             .filter(
-              (author): author is string => typeof author === 'string' && author.length > 0,
+              (author: unknown): author is string =>
+                typeof author === 'string' && author.length > 0,
             ) || [];
 
         // Extract categories for venue information

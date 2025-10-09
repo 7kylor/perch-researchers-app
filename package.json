@@ -90,7 +90,7 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "arxiv-api": "^1.1.1",
+    "arxiv-api-ts": "^1.0.4",
     "better-sqlite3": "^12.4.1",
     "drizzle-orm": "^0.44.6",
     "lucide-react": "^0.545.0",
