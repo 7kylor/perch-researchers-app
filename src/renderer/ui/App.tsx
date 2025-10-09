@@ -81,6 +81,23 @@ export const App: React.FC = () => {
     actions.setSidebarCollapsed(newCollapsed);
   }, [sidebarCollapsed, actions]);
 
+  const handleCategorySelect = React.useCallback(
+    (categoryId: string) => {
+      setSelectedCategory(categoryId);
+      if (showHub) {
+        setShowHub(false);
+      }
+    },
+    [showHub],
+  );
+
+  const handleHubToggle = React.useCallback(() => {
+    setShowHub(!showHub);
+    if (!showHub && selectedCategory !== 'builtin:all') {
+      setSelectedCategory('builtin:all');
+    }
+  }, [showHub, selectedCategory]);
+
   const handlePaperClick = (paperId: string) => {
     openPaper(paperId);
   };
@@ -392,9 +409,9 @@ export const App: React.FC = () => {
           <NewSidebar
             key={`sidebar-${prefs?.sidebarCollapsed}`}
             selectedId={selectedCategory}
-            onSelect={setSelectedCategory}
+            onSelect={handleCategorySelect}
             showHub={showHub}
-            onHubToggle={() => setShowHub(!showHub)}
+            onHubToggle={handleHubToggle}
           />
           <div className={`library-main ${prefs?.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <div className="library-content">
