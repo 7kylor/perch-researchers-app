@@ -24,9 +24,9 @@ export const AIChat: React.FC<AIChatProps> = ({
   const streamBufferRef = React.useRef('');
   const endRef = React.useRef<HTMLDivElement | null>(null);
 
-  const scrollToEnd = () => {
+  const scrollToEnd = React.useCallback(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   React.useEffect(() => {
     const onChunk = ({ chatId: id, delta }: { chatId: string; delta: string }) => {
@@ -51,7 +51,7 @@ export const AIChat: React.FC<AIChatProps> = ({
     window.api.ai.chat.onChunk(onChunk);
     window.api.ai.chat.onDone(onDone);
     window.api.ai.chat.onError(onError);
-  }, [chatId]);
+  }, [chatId, scrollToEnd]);
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -102,17 +102,18 @@ export const AIChat: React.FC<AIChatProps> = ({
     const parts = text.split('```');
     return (
       <>
-        {parts.map((part, i) =>
-          i % 2 === 1 ? (
-            <pre key={`code-${i}`} style={{ whiteSpace: 'pre-wrap' }}>
+        {parts.map((part, i) => {
+          const key = `${i}-${part.slice(0, 16)}`;
+          return i % 2 === 1 ? (
+            <pre key={`code-${key}`} style={{ whiteSpace: 'pre-wrap' }}>
               {part}
             </pre>
           ) : (
-            <p key={`txt-${i}`} style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+            <p key={`txt-${key}`} style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
               {part}
             </p>
-          ),
-        )}
+          );
+        })}
       </>
     );
   };

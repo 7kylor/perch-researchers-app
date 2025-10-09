@@ -1,5 +1,21 @@
 import React from 'react';
-import { X, Palette, Database, Keyboard, Info, Monitor, Sun, Moon, Download, Upload, Trash2, CheckCircle, RefreshCw, ToggleLeft, ToggleRight } from 'lucide-react';
+import {
+  X,
+  Palette,
+  Database,
+  Keyboard,
+  Info,
+  Monitor,
+  Sun,
+  Moon,
+  Download,
+  Upload,
+  Trash2,
+  CheckCircle,
+  RefreshCw,
+  ToggleLeft,
+  ToggleRight,
+} from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 
 type SettingsPanelProps = {
@@ -11,6 +27,33 @@ type TabId = 'appearance' | 'library' | 'ai' | 'updates' | 'shortcuts' | 'about'
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = React.useState<TabId>('appearance');
+  const [downloadState, setDownloadState] = React.useState<{
+    id: string;
+    percent: number;
+    filePath?: string;
+    fileName?: string;
+    destPath?: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    // Download events for local model
+    window.api.on('local-ai:download:started', (payload: unknown) => {
+      const p = payload as { id: string; fileName?: string; destPath?: string };
+      setDownloadState({ id: p.id, percent: 0, fileName: p.fileName, destPath: p.destPath });
+    });
+    window.api.on('local-ai:download:progress', (payload: unknown) => {
+      const p = payload as { id: string; percent?: number };
+      setDownloadState((prev) =>
+        prev && prev.id === p.id ? { ...prev, percent: p.percent ?? 0 } : prev,
+      );
+    });
+    window.api.on('local-ai:download:done', (payload: unknown) => {
+      const p = payload as { id: string; filePath: string };
+      setDownloadState((prev) =>
+        prev && prev.id === p.id ? { ...prev, percent: 100, filePath: p.filePath } : prev,
+      );
+    });
+  }, []);
 
   const tabs: { id: TabId; label: string; icon: React.ReactElement }[] = [
     { id: 'appearance', label: 'Appearance', icon: <Palette size={16} /> },
@@ -46,7 +89,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
   };
 
   const [autoUpdateEnabled, setAutoUpdateEnabled] = React.useState<boolean>(true);
-  const [updateStatus, setUpdateStatus] = React.useState<'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'>('idle');
+  const [updateStatus, setUpdateStatus] = React.useState<
+    'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'
+  >('idle');
   const [_updateInfo, setUpdateInfo] = React.useState<unknown | null>(null);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
@@ -284,6 +329,278 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
                       }}
                     >
                       <span>Apply</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Local LLM advanced setup */}
+                <div className="setting-item">
+                  <div className="setting-label">Local LLM (llama.cpp)</div>
+                  <div className="setting-description">
+                    Configure Unsloth GGUF + llama.cpp server
+                  </div>
+                  <details>
+                    <summary>Advanced setup</summary>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      <input
+                        type="text"
+                        placeholder="/absolute/path/to/llama-server"
+                        defaultValue={localStorage.getItem('llamaServerBin') || ''}
+                        onChange={(e) =>
+                          localStorage.setItem('llamaServerBin', e.target.value.trim())
+                        }
+                      />
+                      <input
+                        type="text"
+                        placeholder="/absolute/path/to/model.gguf (e.g., Q4_K_M.gguf)"
+                        defaultValue={localStorage.getItem('llamaModelPath') || ''}
+                        onChange={(e) =>
+                          localStorage.setItem('llamaModelPath', e.target.value.trim())
+                        }
+                      />
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          type="number"
+                          placeholder="Port (8080)"
+                          defaultValue={localStorage.getItem('llamaPort') || '8080'}
+                          onChange={(e) => localStorage.setItem('llamaPort', e.target.value.trim())}
+                          style={{ width: 120 }}
+                        />
+                        <input
+                          type="number"
+                          placeholder="Context (8192)"
+                          defaultValue={localStorage.getItem('llamaCtx') || '8192'}
+                          onChange={(e) => localStorage.setItem('llamaCtx', e.target.value.trim())}
+                          style={{ width: 140 }}
+                        />
+                        <input
+                          type="number"
+                          placeholder="GPU layers (-ngl)"
+                          defaultValue={localStorage.getItem('llamaNgl') || ''}
+                          onChange={(e) => localStorage.setItem('llamaNgl', e.target.value.trim())}
+                          style={{ width: 160 }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          className="setting-action-btn"
+                          onClick={async () => {
+                            const bin = localStorage.getItem('llamaServerBin') || '';
+                            const model = localStorage.getItem('llamaModelPath') || '';
+                            const port = Number(localStorage.getItem('llamaPort') || '8080');
+                            const ctx = Number(localStorage.getItem('llamaCtx') || '8192');
+                            const nglStr = localStorage.getItem('llamaNgl') || '';
+                            const gpuLayers = nglStr ? Number(nglStr) : undefined;
+                            if (!bin || !model) {
+                              alert('Please set both llama-server binary and model GGUF path.');
+                              return;
+                            }
+                            try {
+                              const url = await window.api.localAI.start({
+                                binaryPath: bin,
+                                modelPath: model,
+                                port,
+                                contextSize: ctx,
+                                gpuLayers,
+                              });
+                              alert(`Local LLM started at ${url}`);
+                            } catch (err) {
+                              alert((err as Error).message || 'Failed to start local LLM.');
+                            }
+                          }}
+                        >
+                          <span>Start Server</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="setting-action-btn"
+                          onClick={async () => {
+                            await window.api.localAI.stop();
+                            alert('Local LLM stopped.');
+                          }}
+                        >
+                          <span>Stop Server</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="setting-action-btn"
+                          onClick={async () => {
+                            const s = await window.api.localAI.status();
+                            alert(s.running ? `Running at ${s.url}` : 'Not running');
+                          }}
+                        >
+                          <span>Status</span>
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          placeholder="GGUF URL (e.g., https://huggingface.co/unsloth/Qwen3-8B-GGUF/...)"
+                          defaultValue={localStorage.getItem('llamaModelUrl') || ''}
+                          onChange={(e) =>
+                            localStorage.setItem('llamaModelUrl', e.target.value.trim())
+                          }
+                          style={{ flex: 1 }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Download folder"
+                          defaultValue={localStorage.getItem('llamaModelDir') || ''}
+                          onChange={(e) =>
+                            localStorage.setItem('llamaModelDir', e.target.value.trim())
+                          }
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="setting-action-btn"
+                          onClick={async () => {
+                            const url = localStorage.getItem('llamaModelUrl') || '';
+                            const destDir = localStorage.getItem('llamaModelDir') || '';
+                            if (!url || !destDir) {
+                              alert('Please provide a GGUF URL and download folder.');
+                              return;
+                            }
+                            try {
+                              const filePath = await window.api.localAI.downloadModel({
+                                url,
+                                destDir,
+                              });
+                              localStorage.setItem('llamaModelPath', filePath);
+                              alert('Model downloaded. Model path updated.');
+                            } catch (err) {
+                              alert((err as Error).message || 'Failed to download model.');
+                            }
+                          }}
+                        >
+                          <span>Download model</span>
+                        </button>
+                      </div>
+                      {downloadState && (
+                        <div style={{ display: 'grid', gap: 8 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                            {downloadState.fileName || 'Downloading model...'}
+                          </div>
+                          <div style={{ background: 'var(--border)', height: 6, borderRadius: 4 }}>
+                            <div
+                              style={{
+                                width: `${downloadState.percent}%`,
+                                height: 6,
+                                background: 'var(--primary)',
+                                borderRadius: 4,
+                                transition: 'width 0.2s ease',
+                              }}
+                            />
+                          </div>
+                          {downloadState.filePath && (
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                              <div
+                                style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}
+                              >
+                                Saved to: {downloadState.filePath}
+                              </div>
+                              <button
+                                type="button"
+                                className="setting-action-btn"
+                                onClick={() => {
+                                  localStorage.setItem(
+                                    'llamaModelPath',
+                                    downloadState.filePath || '',
+                                  );
+                                  alert('Set as current model path.');
+                                }}
+                              >
+                                <span>Use downloaded model</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                </div>
+
+                {/* Embeddings advanced setup */}
+                <div className="setting-item">
+                  <div className="setting-label">Embeddings Provider</div>
+                  <div className="setting-description">
+                    Optional local embeddings API for BGE/GTE
+                  </div>
+                  <details>
+                    <summary>Advanced setup</summary>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <select
+                        defaultValue={localStorage.getItem('embedModel') || 'BAAI/bge-base-en-v1.5'}
+                        onChange={(e) => localStorage.setItem('embedModel', e.target.value)}
+                      >
+                        <option value="BAAI/bge-base-en-v1.5">BAAI/bge-base-en-v1.5</option>
+                        <option value="thenlper/gte-small">thenlper/gte-small</option>
+                      </select>
+                      <input
+                        type="text"
+                        placeholder="http://127.0.0.1:8000"
+                        defaultValue={localStorage.getItem('embedUrl') || ''}
+                        onChange={(e) => localStorage.setItem('embedUrl', e.target.value.trim())}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        className="setting-action-btn"
+                        onClick={async () => {
+                          const { setLocalAIConfig } = await import(
+                            '../../../main/local-ai/config.js'
+                          );
+                          setLocalAIConfig({
+                            embeddingProviderUrl: localStorage.getItem('embedUrl') || null,
+                            embeddingModel:
+                              (localStorage.getItem('embedModel') as
+                                | 'BAAI/bge-base-en-v1.5'
+                                | 'thenlper/gte-small'
+                                | null) || 'BAAI/bge-base-en-v1.5',
+                          });
+                          alert('Embeddings config applied.');
+                        }}
+                      >
+                        <span>Apply</span>
+                      </button>
+                    </div>
+                  </details>
+                </div>
+
+                {/* Access / Pro controls */}
+                <div className="setting-item">
+                  <div className="setting-label">Access</div>
+                  <div className="setting-description">
+                    Pro users can enable Local AI and advanced options
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className="setting-action-btn"
+                      onClick={async () => {
+                        await window.api.license.set(true);
+                        alert('Pro enabled for this session. Advanced options unlocked.');
+                      }}
+                    >
+                      <span>Enable Pro</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="setting-action-btn"
+                      onClick={async () => {
+                        await window.api.license.set(false);
+                        alert('Pro disabled. Settings reset to default.');
+                        localStorage.removeItem('llamaServerBin');
+                        localStorage.removeItem('llamaModelPath');
+                        localStorage.removeItem('llamaPort');
+                        localStorage.removeItem('llamaCtx');
+                        localStorage.removeItem('llamaNgl');
+                        localStorage.removeItem('embedModel');
+                        localStorage.removeItem('embedUrl');
+                      }}
+                    >
+                      <span>Disable Pro</span>
                     </button>
                   </div>
                 </div>
