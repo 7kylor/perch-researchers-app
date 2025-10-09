@@ -16,6 +16,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
   const [renameValue, setRenameValue] = React.useState('');
   const [categoriesExpanded, setCategoriesExpanded] = React.useState(true);
 
+  // Debug logging to track re-renders
+  console.log(
+    '🔄 SIDEBAR RENDER: collapsed =',
+    prefs?.sidebarCollapsed,
+    'selectedId =',
+    selectedId,
+  );
+
   // Count the actual number of categories (folders and labels)
   const categoryCount = React.useMemo(() => {
     return nodes.filter((node: SidebarNode) => node.type === 'folder' || node.type === 'label')
@@ -56,12 +64,65 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect }) => {
     }
   };
 
-  if (prefs.sidebarCollapsed) {
-    return <nav className="library-sidebar collapsed" aria-label="Sidebar" />;
+  console.log('🔄 SIDEBAR: Checking collapsed state:', prefs?.sidebarCollapsed);
+
+  if (prefs?.sidebarCollapsed === true) {
+    console.log('🔄 SIDEBAR: Rendering collapsed view');
+    return (
+      <nav
+        className="library-sidebar collapsed"
+        aria-label="Sidebar"
+        style={{ width: '60px', minWidth: '60px' }}
+      >
+        <div className="sidebar-collapsed-content">
+          {/* Main Navigation Icons */}
+          <div className="sidebar-collapsed-nav">
+            <button
+              type="button"
+              className={`sidebar-collapsed-item ${selectedId === 'builtin:all' ? 'selected' : ''}`}
+              aria-current={selectedId === 'builtin:all' ? 'page' : undefined}
+              onClick={() => onSelect('builtin:all')}
+              data-tooltip="All Papers"
+              title="All Papers"
+            >
+              <BookOpen size={18} />
+            </button>
+            <button
+              type="button"
+              className={`sidebar-collapsed-item ${selectedId === 'builtin:recent' ? 'selected' : ''}`}
+              aria-current={selectedId === 'builtin:recent' ? 'page' : undefined}
+              onClick={() => onSelect('builtin:recent')}
+              data-tooltip="Recent"
+              title="Recent"
+            >
+              <Clock size={18} />
+            </button>
+            <button
+              type="button"
+              className={`sidebar-collapsed-item ${selectedId === 'builtin:categories' ? 'selected' : ''}`}
+              aria-current={selectedId === 'builtin:categories' ? 'page' : undefined}
+              onClick={() => onSelect('builtin:categories')}
+              data-tooltip="Categories"
+              title="Categories"
+            >
+              <FolderOpen size={18} />
+            </button>
+          </div>
+
+          {/* User Profile */}
+          <SidebarFooter collapsed={true} user={{ name: 'User', email: 'user@example.com' }} />
+        </div>
+      </nav>
+    );
   }
 
+  console.log('🔄 SIDEBAR: Rendering expanded view');
   return (
-    <nav className="library-sidebar" aria-label="Sidebar">
+    <nav
+      className="library-sidebar"
+      aria-label="Sidebar"
+      style={{ width: '250px', minWidth: '250px' }}
+    >
       <div className="sidebar-grid">
         {/* Main Navigation Section */}
         <div className="sidebar-section categories-section">

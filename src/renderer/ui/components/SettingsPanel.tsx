@@ -34,16 +34,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     fileName?: string;
     destPath?: string;
   } | null>(null);
-  const [licensePro, setLicensePro] = React.useState<boolean>(false);
   const [aiMode, setAiMode] = React.useState<'local' | 'openai'>(
     (localStorage.getItem('aiMode') as 'local' | 'openai') || 'local',
   );
-  const [openAIReady, setOpenAIReady] = React.useState<boolean>(false);
   const [localReady, setLocalReady] = React.useState<boolean>(false);
-  const [downloadedModels, setDownloadedModels] = React.useState<
-    Array<{ fileName: string; filePath: string }>
-  >([]);
-  const [detectedBinary, setDetectedBinary] = React.useState<string | null>(null);
+  const [embeddingsConfigured, setEmbeddingsConfigured] = React.useState<boolean>(
+    !!(localStorage.getItem('embedUrl') && localStorage.getItem('embedModel')),
+  );
 
   React.useEffect(() => {
     // Download events for local model
@@ -65,63 +62,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
     });
   }, []);
 
-  // Ensure license is active in dev for testing; otherwise respect license lock
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const lic = await window.api.license.get();
-        if (!mounted) return;
-        if (!lic.pro && import.meta.env.MODE === 'development') {
-          await window.api.license.set(true);
-        }
-        const st = await window.api.license.get();
-        if (!mounted) return;
-        setLicensePro(!!st.pro);
-      } catch {
-        setLicensePro(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // Refresh local status, models, and binary detection when AI tab is active
+  // Refresh local status when AI tab is active
   React.useEffect(() => {
     if (activeTab !== 'ai') return;
     let mounted = true;
     (async () => {
-      try {
-        const models = await window.api.localAI.listModels();
-        if (!mounted) return;
-        setDownloadedModels(models);
-      } catch {
-        setDownloadedModels([]);
-      }
-      try {
-        const det = await window.api.localAI.detectBinary();
-        if (!mounted) return;
-        setDetectedBinary(det.binaryPath);
-      } catch {
-        setDetectedBinary(null);
-      }
       try {
         const st = await window.api.localAI.status();
         if (!mounted) return;
         setLocalReady(!!st.running);
       } catch {
         setLocalReady(false);
-      }
-      try {
-        const cfg = await window.api.localAI.getConfig();
-        if (!mounted) return;
-        if (cfg.embeddingProviderUrl) {
-          localStorage.setItem('embedUrl', cfg.embeddingProviderUrl);
-        }
-        localStorage.setItem('embedModel', cfg.embeddingModel);
-      } catch {
-        // ignore
       }
     })();
     return () => {
@@ -338,442 +289,301 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ onClose }) => {
           {activeTab === 'ai' && (
             <>
               <div className="settings-section">
-                <h3>AI Provider</h3>
-                <div className="setting-item">
-                  <div className="setting-label">Mode</div>
-                  <div className="theme-options">
-                    <button
-                      type="button"
-                      className={`theme-btn ${aiMode === 'local' ? 'active' : ''}`}
-                      onClick={async () => {
-                        localStorage.setItem('aiMode', 'local');
-                        setAiMode('local');
-                        await window.api.ai.init('local');
-                        alert('AI set to Local mode.');
-                      }}
-                    >
-                      <span>Local {localReady ? '✓' : ''}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`theme-btn ${aiMode === 'openai' ? 'active' : ''}`}
-                      onClick={async () => {
-                        const key = localStorage.getItem('openaiKey') || '';
-                        if (!key) {
-                          alert('Please set your OpenAI API key below first.');
-                          return;
-                        }
-                        localStorage.setItem('aiMode', 'openai');
-                        setAiMode('openai');
-                        await window.api.ai.init('openai', key);
-                        alert('AI set to OpenAI mode.');
-                      }}
-                    >
-                      <span>OpenAI {openAIReady ? '✓' : ''}</span>
-                    </button>
-                  </div>
+                <h3>AI Assistant</h3>
+
+                <div className="ai-providers">
+                  <button
+                    type="button"
+                    className={`ai-provider ${aiMode === 'openai' ? 'active' : ''}`}
+                    onClick={async () => {
+                      const key = localStorage.getItem('openaiKey') || '';
+                      if (!key) {
+                        alert('Please set up your OpenAI API key first.');
+                        return;
+                      }
+                      localStorage.setItem('aiMode', 'openai');
+                      setAiMode('openai');
+                      await window.api.ai.init('openai', key);
+                    }}
+                  >
+                    <span className="provider-name">OpenAI</span>
+                    <span className="provider-desc">Cloud AI • Fast</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`ai-provider ${aiMode === 'local' ? 'active' : ''}`}
+                    onClick={async () => {
+                      localStorage.setItem('aiMode', 'local');
+                      setAiMode('local');
+                      await window.api.ai.init('local');
+                    }}
+                  >
+                    <span className="provider-name">Local AI</span>
+                    <span className="provider-desc">Private • On-device</span>
+                  </button>
                 </div>
 
                 {aiMode === 'openai' && (
-                  <div className="setting-item">
-                    <div className="setting-label">OpenAI API Key</div>
-                    <div className="setting-description">Stored locally on your device.</div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <div className="ai-setup">
+                    <div className="input-row">
                       <input
                         type="password"
+                        placeholder="OpenAI API Key (sk-...)"
                         defaultValue={localStorage.getItem('openaiKey') || ''}
-                        placeholder="sk-..."
                         onChange={(e) => localStorage.setItem('openaiKey', e.target.value.trim())}
-                        style={{ flex: 1 }}
                       />
                       <button
                         type="button"
-                        className="setting-action-btn"
+                        className="mini-btn"
                         onClick={async () => {
                           const key = localStorage.getItem('openaiKey') || '';
                           if (!key) {
-                            alert('Please enter an API key.');
+                            alert('Please enter your API key first.');
                             return;
                           }
-                          await window.api.ai.init('openai', key);
-                          alert('OpenAI initialized.');
-                        }}
-                      >
-                        <span>Apply</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="setting-action-btn"
-                        onClick={async () => {
-                          const key = localStorage.getItem('openaiKey') || '';
-                          if (!key) {
-                            alert('Please enter an API key.');
-                            return;
+                          try {
+                            await window.api.ai.init('openai', key);
+                            alert('✅ Connected');
+                          } catch {
+                            alert('❌ Failed to connect');
                           }
-                          const ok = await window.api.ai.testOpenAI(key);
-                          setOpenAIReady(ok);
-                          alert(ok ? 'OpenAI connection OK' : 'OpenAI connection failed');
                         }}
                       >
-                        <span>Test</span>
+                        Connect
                       </button>
                     </div>
+                    <p className="hint">
+                      Get your key from{' '}
+                      <a
+                        href="https://platform.openai.com/api-keys"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        platform.openai.com
+                      </a>
+                    </p>
                   </div>
                 )}
 
                 {aiMode === 'local' && (
-                  <>
-                    <div className="setting-item">
-                      <div className="setting-label">Local LLM</div>
-                      <div className="setting-description">Pick, download, and start</div>
-                      <details>
-                        <summary>Setup</summary>
-                        <div style={{ display: 'grid', gap: 8 }}>
-                          <select
-                            defaultValue={localStorage.getItem('llamaModelUrl') || ''}
-                            onChange={(e) => localStorage.setItem('llamaModelUrl', e.target.value)}
-                          >
-                            <option value="">Select a model…</option>
-                            <option value="https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf?download=true">
-                              Qwen3-8B Q4_K_M (Unsloth)
-                            </option>
-                            <option value="https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true">
-                              Qwen3-1.7B Q4_K_M (Unsloth)
-                            </option>
-                            <option value="https://huggingface.co/unsloth/Phi-4-mini-reasoning-GGUF/resolve/main/Phi-4-mini-reasoning-Q4_K_M.gguf?download=true">
-                              Phi-4-mini-reasoning Q4_K_M (Unsloth)
-                            </option>
-                          </select>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                const url = localStorage.getItem('llamaModelUrl') || '';
-                                if (!url) {
-                                  alert('Please select a model first.');
-                                  return;
-                                }
-                                try {
-                                  const filePath = await window.api.localAI.downloadModel({ url });
-                                  localStorage.setItem('llamaModelPath', filePath);
-                                  alert('Model downloaded and set.');
-                                  const models = await window.api.localAI.listModels();
-                                  setDownloadedModels(models);
-                                } catch (err) {
-                                  alert((err as Error).message || 'Failed to download model.');
-                                }
-                              }}
-                            >
-                              <span>Download & Use</span>
-                            </button>
-                            <select
-                              defaultValue=""
-                              onChange={(e) =>
-                                localStorage.setItem('llamaModelPath', e.target.value)
-                              }
-                            >
-                              <option value="">Use existing…</option>
-                              {downloadedModels.map((m) => (
-                                <option key={m.filePath} value={m.filePath}>
-                                  {m.fileName}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                try {
-                                  const det = await window.api.localAI.detectBinary();
-                                  if (det.binaryPath) {
-                                    localStorage.setItem('llamaServerBin', det.binaryPath);
-                                    setDetectedBinary(det.binaryPath);
-                                    alert('Detected and set llama-server binary.');
-                                  } else {
-                                    alert('Could not detect llama-server binary.');
-                                  }
-                                } catch {
-                                  alert('Detection failed.');
-                                }
-                              }}
-                            >
-                              <span>{detectedBinary ? 'Binary detected ✓' : 'Detect binary'}</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                const modelPath = localStorage.getItem('llamaModelPath') || '';
-                                const bin = localStorage.getItem('llamaServerBin') || '';
-                                if (!bin || !modelPath) {
-                                  alert('Binary or model path missing.');
-                                  return;
-                                }
-                                try {
-                                  const url = await window.api.localAI.start({
-                                    binaryPath: bin,
-                                    modelPath,
-                                  });
-                                  setLocalReady(true);
-                                  alert(`Local LLM started at ${url}`);
-                                } catch (err) {
-                                  setLocalReady(false);
-                                  alert((err as Error).message || 'Failed to start local LLM.');
-                                }
-                              }}
-                            >
-                              <span>Start</span>
-                            </button>
-                          </div>
-                          {downloadState && (
-                            <div style={{ display: 'grid', gap: 8 }}>
-                              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                {downloadState.fileName || 'Downloading model...'}
-                              </div>
-                              <div
-                                style={{ background: 'var(--border)', height: 6, borderRadius: 4 }}
-                              >
-                                <div
-                                  style={{
-                                    width: `${downloadState.percent}%`,
-                                    height: 6,
-                                    background: 'var(--primary)',
-                                    borderRadius: 4,
-                                    transition: 'width 0.2s ease',
-                                  }}
-                                />
-                              </div>
-                              {downloadState.filePath && (
-                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                  <div
-                                    style={{
-                                      fontSize: 12,
-                                      color: 'var(--text-secondary)',
-                                      flex: 1,
-                                    }}
-                                  >
-                                    Saved to: {downloadState.filePath}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="setting-action-btn"
-                                    onClick={() => {
-                                      localStorage.setItem(
-                                        'llamaModelPath',
-                                        downloadState.filePath || '',
-                                      );
-                                      alert('Set as current model path.');
-                                    }}
-                                  >
-                                    <span>Use downloaded model</span>
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </details>
+                  <div className="ai-setup">
+                    <div className="input-row">
+                      <select
+                        defaultValue={localStorage.getItem('llamaModelUrl') || ''}
+                        onChange={(e) => localStorage.setItem('llamaModelUrl', e.target.value)}
+                      >
+                        <option value="">Choose AI Model...</option>
+                        <option value="https://huggingface.co/unsloth/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf?download=true">
+                          Qwen3-8B (Best)
+                        </option>
+                        <option value="https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf?download=true">
+                          Qwen3-1.7B (Fast)
+                        </option>
+                        <option value="https://huggingface.co/unsloth/Phi-4-mini-reasoning-GGUF/resolve/main/Phi-4-mini-reasoning-Q4_K_M.gguf?download=true">
+                          Phi-4-mini (Light)
+                        </option>
+                      </select>
+                      <button
+                        type="button"
+                        className={`mini-btn ${localReady ? 'secondary' : 'primary'}`}
+                        disabled={!localStorage.getItem('llamaModelUrl') && !localReady}
+                        onClick={async () => {
+                          if (localReady) {
+                            // Restart if already running
+                            try {
+                              await window.api.localAI.stop();
+                              setLocalReady(false);
 
-                      <details>
-                        <summary>Advanced parameters</summary>
-                        <div style={{ display: 'grid', gap: 8 }}>
-                          <input
-                            type="text"
-                            placeholder="/absolute/path/to/llama-server"
-                            defaultValue={localStorage.getItem('llamaServerBin') || ''}
-                            onChange={(e) =>
-                              localStorage.setItem('llamaServerBin', e.target.value.trim())
+                              const bin = localStorage.getItem('llamaServerBin') || '';
+                              const model = localStorage.getItem('llamaModelPath') || '';
+                              if (bin && model) {
+                                const url = await window.api.localAI.start({
+                                  binaryPath: bin,
+                                  modelPath: model,
+                                });
+                                setLocalReady(true);
+                                alert(`✅ Restarted at ${url}`);
+                              }
+                            } catch (err) {
+                              alert(`❌ ${(err as Error).message || 'Failed to restart'}`);
                             }
-                          />
-                          <input
-                            type="text"
-                            placeholder="/absolute/path/to/model.gguf (e.g., Q4_K_M.gguf)"
-                            defaultValue={localStorage.getItem('llamaModelPath') || ''}
-                            onChange={(e) =>
-                              localStorage.setItem('llamaModelPath', e.target.value.trim())
+                            return;
+                          }
+
+                          const url = localStorage.getItem('llamaModelUrl') || '';
+                          if (!url) return;
+
+                          try {
+                            setDownloadState({ id: 'model', percent: 0 });
+                            const filePath = await window.api.localAI.downloadModel({ url });
+                            localStorage.setItem('llamaModelPath', filePath);
+
+                            const bin = await window.api.localAI.detectBinary();
+                            if (bin.binaryPath) {
+                              localStorage.setItem('llamaServerBin', bin.binaryPath);
+                              const startUrl = await window.api.localAI.start({
+                                binaryPath: bin.binaryPath,
+                                modelPath: filePath,
+                              });
+                              setLocalReady(true);
+                              alert(`✅ Running at ${startUrl}`);
+                            } else {
+                              alert('❌ Server not found');
                             }
-                          />
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <input
-                              type="number"
-                              placeholder="Port (8080)"
-                              defaultValue={localStorage.getItem('llamaPort') || '8080'}
-                              onChange={(e) =>
-                                localStorage.setItem('llamaPort', e.target.value.trim())
-                              }
-                              style={{ width: 120 }}
-                            />
-                            <input
-                              type="number"
-                              placeholder="Context (8192)"
-                              defaultValue={localStorage.getItem('llamaCtx') || '8192'}
-                              onChange={(e) =>
-                                localStorage.setItem('llamaCtx', e.target.value.trim())
-                              }
-                              style={{ width: 140 }}
-                            />
-                            <input
-                              type="number"
-                              placeholder="GPU layers (-ngl)"
-                              defaultValue={localStorage.getItem('llamaNgl') || ''}
-                              onChange={(e) =>
-                                localStorage.setItem('llamaNgl', e.target.value.trim())
-                              }
-                              style={{ width: 160 }}
-                            />
-                          </div>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                const bin = localStorage.getItem('llamaServerBin') || '';
-                                const model = localStorage.getItem('llamaModelPath') || '';
-                                const port = Number(localStorage.getItem('llamaPort') || '8080');
-                                const ctx = Number(localStorage.getItem('llamaCtx') || '8192');
-                                const nglStr = localStorage.getItem('llamaNgl') || '';
-                                const gpuLayers = nglStr ? Number(nglStr) : undefined;
-                                if (!bin || !model) {
-                                  alert('Please set both llama-server binary and model GGUF path.');
-                                  return;
-                                }
-                                try {
-                                  const url = await window.api.localAI.start({
-                                    binaryPath: bin,
-                                    modelPath: model,
-                                    port,
-                                    contextSize: ctx,
-                                    gpuLayers,
-                                  });
-                                  alert(`Local LLM started at ${url}`);
-                                } catch (err) {
-                                  alert((err as Error).message || 'Failed to start local LLM.');
-                                }
-                              }}
-                            >
-                              <span>Start Server</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                await window.api.localAI.stop();
-                                alert('Local LLM stopped.');
-                              }}
-                            >
-                              <span>Stop Server</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                const s = await window.api.localAI.status();
-                                alert(s.running ? `Running at ${s.url}` : 'Not running');
-                              }}
-                            >
-                              <span>Status</span>
-                            </button>
-                          </div>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <input
-                              type="text"
-                              placeholder="GGUF URL (e.g., https://huggingface.co/...)"
-                              defaultValue={localStorage.getItem('llamaModelUrl') || ''}
-                              onChange={(e) =>
-                                localStorage.setItem('llamaModelUrl', e.target.value.trim())
-                              }
-                              style={{ flex: 1 }}
-                            />
-                            <input
-                              type="text"
-                              placeholder="Download folder"
-                              defaultValue={localStorage.getItem('llamaModelDir') || ''}
-                              onChange={(e) =>
-                                localStorage.setItem('llamaModelDir', e.target.value.trim())
-                              }
-                              style={{ flex: 1 }}
-                            />
-                            <button
-                              type="button"
-                              className="setting-action-btn"
-                              onClick={async () => {
-                                const url = localStorage.getItem('llamaModelUrl') || '';
-                                const destDir = localStorage.getItem('llamaModelDir') || '';
-                                if (!url || !destDir) {
-                                  alert('Please provide a GGUF URL and download folder.');
-                                  return;
-                                }
-                                try {
-                                  const filePath = await window.api.localAI.downloadModel({
-                                    url,
-                                    destDir,
-                                  });
-                                  localStorage.setItem('llamaModelPath', filePath);
-                                  alert('Model downloaded. Model path updated.');
-                                } catch (err) {
-                                  alert((err as Error).message || 'Failed to download model.');
-                                }
-                              }}
-                            >
-                              <span>Download model</span>
-                            </button>
-                          </div>
-                        </div>
-                      </details>
+                          } catch (err) {
+                            alert(`❌ ${(err as Error).message || 'Failed'}`);
+                          } finally {
+                            setDownloadState(null);
+                          }
+                        }}
+                      >
+                        {downloadState
+                          ? 'Setting up...'
+                          : localReady
+                            ? 'Ready • Restart'
+                            : 'Start AI'}
+                      </button>
                     </div>
 
-                    <div className="setting-item">
-                      <div className="setting-label">Embeddings Provider</div>
-                      <div className="setting-description">Optional local embeddings API</div>
-                      <details>
-                        <summary>Advanced setup</summary>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <select
-                            defaultValue={
-                              localStorage.getItem('embedModel') || 'BAAI/bge-base-en-v1.5'
+                    {downloadState && (
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${downloadState.percent}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {localReady && <div className="status-good">✓ Running</div>}
+
+                    {/* Embedding Models Section */}
+                    <div className="embeddings-section">
+                      <h4>Embedding Models</h4>
+                      <p className="section-desc">
+                        Configure embedding models for semantic search and RAG
+                      </p>
+
+                      <div className="input-row embeddings-controls">
+                        <select
+                          defaultValue={
+                            localStorage.getItem('embedModel') || 'BAAI/bge-base-en-v1.5'
+                          }
+                          onChange={(e) => {
+                            localStorage.setItem('embedModel', e.target.value);
+                            setEmbeddingsConfigured(false);
+                          }}
+                        >
+                          <option value="BAAI/bge-base-en-v1.5">BGE Base (Best Quality)</option>
+                          <option value="thenlper/gte-small">GTE Small (Faster)</option>
+                        </select>
+                        <input
+                          type="text"
+                          placeholder="Embedding server URL (e.g., http://localhost:8090)"
+                          defaultValue={localStorage.getItem('embedUrl') || ''}
+                          onChange={(e) => {
+                            localStorage.setItem('embedUrl', e.target.value.trim());
+                            setEmbeddingsConfigured(false);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className={`mini-btn ${embeddingsConfigured ? 'secondary' : ''}`}
+                          onClick={async () => {
+                            const embedModel =
+                              localStorage.getItem('embedModel') || 'BAAI/bge-base-en-v1.5';
+                            const embedUrl = localStorage.getItem('embedUrl') || '';
+
+                            if (!embedUrl) {
+                              alert('Please enter embedding server URL');
+                              return;
                             }
-                            onChange={(e) => localStorage.setItem('embedModel', e.target.value)}
-                          >
-                            <option value="BAAI/bge-base-en-v1.5">BAAI/bge-base-en-v1.5</option>
-                            <option value="thenlper/gte-small">thenlper/gte-small</option>
-                          </select>
-                          <input
-                            type="text"
-                            placeholder="http://127.0.0.1:8090"
-                            defaultValue={localStorage.getItem('embedUrl') || ''}
-                            onChange={(e) =>
-                              localStorage.setItem('embedUrl', e.target.value.trim())
+
+                            try {
+                              await window.api.localAI.setConfig({
+                                embeddingProviderUrl: embedUrl,
+                                embeddingModel: embedModel as
+                                  | 'BAAI/bge-base-en-v1.5'
+                                  | 'thenlper/gte-small',
+                              });
+                              setEmbeddingsConfigured(true);
+                              alert('✅ Embedding config saved');
+                            } catch (err) {
+                              alert(`❌ ${(err as Error).message || 'Failed to save config'}`);
                             }
-                            style={{ flex: 1 }}
-                          />
+                          }}
+                        >
+                          {embeddingsConfigured ? 'Applied' : 'Apply'}
+                        </button>
+                      </div>
+
+                      {embeddingsConfigured && <div className="status-good">✓ Configured</div>}
+                    </div>
+
+                    <details className="advanced">
+                      <summary>Advanced</summary>
+                      <div className="advanced-options">
+                        <input
+                          type="text"
+                          placeholder="Server path"
+                          defaultValue={localStorage.getItem('llamaServerBin') || ''}
+                          onChange={(e) =>
+                            localStorage.setItem('llamaServerBin', e.target.value.trim())
+                          }
+                        />
+                        <input
+                          type="text"
+                          placeholder="Model path"
+                          defaultValue={localStorage.getItem('llamaModelPath') || ''}
+                          onChange={(e) =>
+                            localStorage.setItem('llamaModelPath', e.target.value.trim())
+                          }
+                        />
+                        <input
+                          type="number"
+                          placeholder="Port (8080)"
+                          defaultValue={localStorage.getItem('llamaPort') || '8080'}
+                          onChange={(e) => localStorage.setItem('llamaPort', e.target.value.trim())}
+                        />
+                        <div className="btn-row">
                           <button
                             type="button"
-                            className="setting-action-btn"
+                            className="mini-btn"
                             onClick={async () => {
-                              const embedModel =
-                                (localStorage.getItem('embedModel') as
-                                  | 'BAAI/bge-base-en-v1.5'
-                                  | 'thenlper/gte-small'
-                                  | null) || 'BAAI/bge-base-en-v1.5';
-                              await window.api.localAI.setConfig({
-                                embeddingProviderUrl: localStorage.getItem('embedUrl') || null,
-                                embeddingModel: embedModel,
-                              });
-                              alert('Embeddings config applied.');
+                              const bin = localStorage.getItem('llamaServerBin') || '';
+                              const model = localStorage.getItem('llamaModelPath') || '';
+                              if (!bin || !model) return;
+
+                              try {
+                                const url = await window.api.localAI.start({
+                                  binaryPath: bin,
+                                  modelPath: model,
+                                });
+                                setLocalReady(true);
+                                alert(`✅ ${url}`);
+                              } catch (err) {
+                                alert(`❌ ${(err as Error).message || 'Failed'}`);
+                              }
                             }}
                           >
-                            <span>Apply</span>
+                            Start
+                          </button>
+                          <button
+                            type="button"
+                            className="mini-btn"
+                            onClick={async () => {
+                              await window.api.localAI.stop();
+                              setLocalReady(false);
+                              alert('⏸ Stopped');
+                            }}
+                          >
+                            Stop
                           </button>
                         </div>
-                      </details>
-                    </div>
-                  </>
+                      </div>
+                    </details>
+                  </div>
                 )}
-
-                {/* Access / Pro controls removed; gating enforced automatically */}
               </div>
             </>
           )}

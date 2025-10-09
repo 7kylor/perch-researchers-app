@@ -52,7 +52,44 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({ collapsed, user })
     }
   }, [showMenu]);
 
-  if (collapsed) return null;
+  if (collapsed) {
+    return (
+      <div className="sidebar-collapsed-footer">
+        <button
+          type="button"
+          className="sidebar-collapsed-profile"
+          onClick={() => setShowMenu(!showMenu)}
+          data-tooltip={`${user?.name || 'User'}`}
+          title={`${user?.name || 'User'} - ${user?.email || ''}`}
+        >
+          <div className="sidebar-collapsed-avatar">
+            {user?.avatar ? <img src={user.avatar} alt={user.name} /> : <User size={16} />}
+          </div>
+        </button>
+        {showMenu && (
+          <div className="sidebar-collapsed-menu">
+            <button type="button" className="collapsed-menu-item" onClick={handleProfile}>
+              <User className="menu-item-icon" />
+              <span>Profile</span>
+            </button>
+            <button type="button" className="collapsed-menu-item" onClick={handleSettings}>
+              <Settings className="menu-item-icon" />
+              <span>Settings</span>
+            </button>
+            <button type="button" className="collapsed-menu-item" onClick={handleHelp}>
+              <HelpCircle className="menu-item-icon" />
+              <span>Help</span>
+            </button>
+            <div className="collapsed-menu-divider" />
+            <button type="button" className="collapsed-menu-item danger" onClick={handleSignOut}>
+              <LogOut className="menu-item-icon" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="sidebar-footer" ref={menuRef}>

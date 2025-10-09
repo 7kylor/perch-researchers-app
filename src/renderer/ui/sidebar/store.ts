@@ -36,7 +36,7 @@ export function useSidebarStore() {
   const [nodes, setNodes] = useState<SidebarNode[]>([]);
   const [prefs, setPrefs] = useState<SidebarPrefs>({
     collapsedNodeIds: [],
-    sidebarCollapsed: false,
+    sidebarCollapsed: false, // Start expanded for better UX, but will be overridden by cache/API if exists
     version: 1,
     updatedAt: new Date().toISOString(),
   });
@@ -52,7 +52,12 @@ export function useSidebarStore() {
     const cached = readCache();
     if (cached) {
       setNodes(cached.nodes);
-      setPrefs(cached.prefs);
+      // Use cached prefs but default to collapsed if no explicit preference exists
+      const mergedPrefs = {
+        ...cached.prefs,
+        sidebarCollapsed: cached.prefs.sidebarCollapsed ?? true,
+      };
+      setPrefs(mergedPrefs);
       setCounts(cached.counts);
     }
     // Fetch from DB
@@ -61,9 +66,14 @@ export function useSidebarStore() {
       .list()
       .then((res) => {
         setNodes(res.nodes);
-        setPrefs(res.prefs);
+        // Merge preferences: use API prefs but default to collapsed if no explicit preference exists
+        const mergedPrefs = {
+          ...res.prefs,
+          sidebarCollapsed: res.prefs.sidebarCollapsed ?? true, // Default to collapsed for new users
+        };
+        setPrefs(mergedPrefs);
         setCounts(res.counts);
-        writeCache({ nodes: res.nodes, prefs: res.prefs, counts: res.counts });
+        writeCache({ nodes: res.nodes, prefs: mergedPrefs, counts: res.counts });
         setState({ status: 'ready', data: res });
         isHydrated.current = true;
       })
@@ -162,7 +172,7 @@ export function useSidebarStore() {
           throw e;
         }
       },
-      setSidebarCollapsed: async (collapsed: boolean) => {
+      setSidebarCollapsed: (collapsed: boolean) => {
         const currentNodes = nodes;
         const currentCounts = counts;
         const next: SidebarPrefs = {
@@ -173,13 +183,12 @@ export function useSidebarStore() {
         };
         setPrefs(next);
         writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
-        try {
-          await window.api.sidebar.prefs.set(next);
-        } catch (error) {
+        // Save to API asynchronously (don't await to avoid blocking UI)
+        window.api.sidebar.prefs.set(next).catch((error) => {
           console.error('Failed to save sidebar prefs:', error);
-        }
+        });
       },
-      setCollapsedNodeIds: async (ids: string[]) => {
+      setCollapsedNodeIds: (ids: string[]) => {
         const currentNodes = nodes;
         const currentCounts = counts;
         const next: SidebarPrefs = {
@@ -190,11 +199,10 @@ export function useSidebarStore() {
         };
         setPrefs(next);
         writeCache({ nodes: currentNodes, prefs: next, counts: currentCounts });
-        try {
-          await window.api.sidebar.prefs.set(next);
-        } catch (error) {
+        // Save to API asynchronously (don't await to avoid blocking UI)
+        window.api.sidebar.prefs.set(next).catch((error) => {
           console.error('Failed to save sidebar prefs:', error);
-        }
+        });
       },
       refreshCounts: async () => {
         const currentNodes = nodes;

@@ -43,3 +43,22 @@ export interface Annotation {
   anchors: AnnotationAnchor;
   createdAt: ISODateString;
 }
+
+// Academic Database Integration Types
+export interface AcademicPaper {
+  title: string;
+  authors: string[];
+  year?: number;
+  venue?: string;
+  doi?: string;
+  abstract?: string;
+  url?: string;
+  citations?: number;
+  source: 'googlescholar' | 'semanticscholar' | 'pubmed' | 'ieee';
+}
+
+export interface AcademicSearchResult {
+  papers: AcademicPaper[];
+  totalResults: number;
+  searchTime: number;
+}

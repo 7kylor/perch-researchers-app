@@ -13,6 +13,7 @@ import { createRAGSystem } from './ai/rag.js';
 import { processPaperOCR } from './ocr/batch.js';
 import { citationExtractor } from './services/citations/citation-extractor.js';
 import { researchAnalytics } from './services/analytics/research-analytics.js';
+import { academicDatabaseService } from './services/academic-databases.js';
 import path from 'node:path';
 import https from 'node:https';
 import { TextDecoder } from 'node:util';
@@ -299,6 +300,30 @@ ipcMain.handle('ai:generate-proposal', async (_e, currentPapers: string[], gap: 
   if (!ragSystem) return 'AI not initialized';
   ragSystem.incrementUsage();
   return await ragSystem.generateResearchProposal(currentPapers, gap);
+});
+
+ipcMain.handle('ai:topic-modeling', async (_e, paperIds: string[]) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.performTopicModeling(paperIds);
+});
+
+ipcMain.handle('ai:extract-concepts', async (_e, paperIds: string[]) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.extractKeyConcepts(paperIds);
+});
+
+ipcMain.handle('ai:generate-questions', async (_e, paperIds: string[], focusArea?: string) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.generateResearchQuestions(paperIds, focusArea);
+});
+
+ipcMain.handle('ai:analyze-trends', async (_e, paperIds: string[]) => {
+  if (!ragSystem) return 'AI not initialized';
+  ragSystem.incrementUsage();
+  return await ragSystem.analyzeResearchTrends(paperIds);
 });
 
 // Citation Management Handlers
@@ -969,4 +994,29 @@ ipcMain.handle('papers:listByCategory', (_e, nodeId: string, limit = 50) => {
       .all(...labelIds, limit) as DBPaperRow[];
   }
   return rows.map((r) => ({ ...r, authors: JSON.parse(r.authors) }) as Paper);
+});
+
+// Academic Database Integration handlers
+ipcMain.handle('academic:search-google-scholar', async (_e, query: string, limit = 20) => {
+  return await academicDatabaseService.searchGoogleScholar(query, limit);
+});
+
+ipcMain.handle('academic:search-semantic-scholar', async (_e, query: string, limit = 20) => {
+  return await academicDatabaseService.searchSemanticScholar(query, limit);
+});
+
+ipcMain.handle('academic:search-pubmed', async (_e, query: string, limit = 20) => {
+  return await academicDatabaseService.searchPubMed(query, limit);
+});
+
+ipcMain.handle('academic:search-ieee', async (_e, query: string, limit = 20) => {
+  return await academicDatabaseService.searchIEEE(query, limit);
+});
+
+ipcMain.handle('academic:search-all', async (_e, query: string, limit = 10) => {
+  return await academicDatabaseService.searchAllDatabases(query, limit);
+});
+
+ipcMain.handle('academic:get-by-doi', async (_e, doi: string) => {
+  return await academicDatabaseService.getPaperByDOI(doi);
 });
