@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen } from 'lucide-react';
 
 export type Notebook = {
   id: string;
@@ -10,8 +11,10 @@ export type Notebook = {
 
 export const RecentList: React.FC<{
   onOpen: (n: Notebook) => void;
+  onViewAll?: () => void;
   limit?: number;
-}> = ({ onOpen, limit = 10 }) => {
+  showViewAll?: boolean;
+}> = ({ onOpen, onViewAll, limit = 10, showViewAll = true }) => {
   const [items, setItems] = React.useState<Notebook[]>([]);
   const [loading, setLoading] = React.useState<boolean>(false);
 
@@ -29,38 +32,79 @@ export const RecentList: React.FC<{
     void load();
   }, [load]);
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <h4 style={{ margin: 0 }}>Recent</h4>
-      {loading && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Loading…</div>}
-      {items.map((n) => (
-        <div
-          key={n.id}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr auto',
-            alignItems: 'center',
-            padding: 8,
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 6,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{n.title}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              {n.type} •{' '}
-              {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    <div className="recent-list">
+      <div className="recent-list-header">
+        <h2>Recent</h2>
+      </div>
+
+      <div className="recent-list-items">
+        {loading && (
+          <div className="recent-loading">
+            <div className="loading-text">Loading...</div>
+          </div>
+        )}
+
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className="recent-item"
+            onClick={() => onOpen(item)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpen(item);
+              }
+            }}
+          >
+            <div className="recent-item-icon">
+              <BookOpen size={16} />
             </div>
+            <div className="recent-item-content">
+              <div className="recent-item-title">{item.title}</div>
+              <div className="recent-item-meta">
+                <span className="recent-item-type">{item.type}</span>
+                <span className="recent-item-separator">•</span>
+                <span className="recent-item-time">{formatDate(item.createdAt)}</span>
+              </div>
+            </div>
+            <div className="recent-item-arrow">
+              <span>⋯</span>
+            </div>
+          </button>
+        ))}
+
+        {!loading && items.length === 0 && (
+          <div className="recent-empty">
+            <div className="empty-text">No recent items.</div>
           </div>
-          <div>
-            <button type="button" onClick={() => onOpen(n)}>
-              Open
-            </button>
-          </div>
+        )}
+      </div>
+
+      {showViewAll && !loading && items.length > 0 && (
+        <div className="recent-view-all">
+          <button type="button" className="view-all-button" onClick={onViewAll}>
+            View all
+          </button>
         </div>
-      ))}
-      {!loading && items.length === 0 && (
-        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>No recent items.</div>
       )}
     </div>
   );

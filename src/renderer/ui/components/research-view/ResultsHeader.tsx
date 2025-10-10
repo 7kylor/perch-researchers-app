@@ -16,6 +16,8 @@ type ResultsHeaderProps = {
   onSortByChange: (sort: SortBy) => void;
   onSortOrderChange: (order: SortOrder) => void;
   onClearSelection: () => void;
+  density: 'normal' | 'dense';
+  onDensityChange: (density: 'normal' | 'dense') => void;
 };
 
 export const ResultsHeader: React.FC<ResultsHeaderProps> = ({
@@ -29,6 +31,8 @@ export const ResultsHeader: React.FC<ResultsHeaderProps> = ({
   onSortByChange,
   onSortOrderChange,
   onClearSelection,
+  density,
+  onDensityChange,
 }) => {
   const [showSortMenu, setShowSortMenu] = React.useState(false);
 
@@ -68,6 +72,36 @@ export const ResultsHeader: React.FC<ResultsHeaderProps> = ({
       </div>
 
       <div className="results-controls">
+        <fieldset className="density-toggle" aria-label="Density">
+          <legend
+            style={{
+              position: 'absolute',
+              width: 0,
+              height: 0,
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+            }}
+          >
+            Density
+          </legend>
+          <button
+            type="button"
+            className={`density-button ${density === 'normal' ? 'active' : ''}`}
+            onClick={() => onDensityChange('normal')}
+            title="Normal spacing"
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            className={`density-button ${density === 'dense' ? 'active' : ''}`}
+            onClick={() => onDensityChange('dense')}
+            title="Dense spacing"
+          >
+            Dense
+          </button>
+        </fieldset>
+
         {selectedCount > 0 && (
           <button type="button" onClick={onClearSelection} className="clear-selection-button">
             <X />

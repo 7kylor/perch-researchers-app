@@ -8,6 +8,7 @@ type SearchState = {
   selectedPapers: ReadonlyArray<string>;
   searchHistory: string[];
   viewMode: 'list';
+  density: 'normal' | 'dense';
   sortBy: 'relevance' | 'year' | 'title';
   sortOrder: 'asc' | 'desc';
   filters: {
@@ -23,6 +24,7 @@ type SearchActions = {
   togglePaperSelection: (paperId: string) => void;
   clearSelection: () => void;
   setViewMode: (mode: SearchState['viewMode']) => void;
+  setDensity: (density: SearchState['density']) => void;
   setSortBy: (sort: SearchState['sortBy']) => void;
   setSortOrder: (order: SearchState['sortOrder']) => void;
   updateFilters: (filters: Partial<SearchState['filters']>) => void;
@@ -54,6 +56,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     selectedPapers: [],
     searchHistory: JSON.parse(localStorage.getItem('search:history') || '[]'),
     viewMode: 'list',
+    density: (localStorage.getItem('search:density') as SearchState['density']) || 'normal',
     sortBy: (localStorage.getItem('search:sort') as SearchState['sortBy']) || 'relevance',
     sortOrder: (localStorage.getItem('search:sortOrder') as SearchState['sortOrder']) || 'desc',
     filters: {
@@ -113,6 +116,11 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     setState((prev) => ({ ...prev, viewMode }));
   }, []);
 
+  const setDensity = React.useCallback((density: SearchState['density']) => {
+    setState((prev) => ({ ...prev, density }));
+    localStorage.setItem('search:density', density);
+  }, []);
+
   const setSortBy = React.useCallback((sortBy: SearchState['sortBy']) => {
     setState((prev) => ({ ...prev, sortBy }));
     localStorage.setItem('search:sort', sortBy);
@@ -151,6 +159,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       togglePaperSelection,
       clearSelection,
       setViewMode,
+      setDensity,
       setSortBy,
       setSortOrder,
       updateFilters,
@@ -164,6 +173,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       togglePaperSelection,
       clearSelection,
       setViewMode,
+      setDensity,
       setSortBy,
       setSortOrder,
       updateFilters,

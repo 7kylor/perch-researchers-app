@@ -2,7 +2,11 @@ import React from 'react';
 import { RecentList } from './research-hub/RecentList';
 import type { Notebook } from './research-hub/RecentList';
 
-export const RecentView: React.FC = () => {
+type RecentViewProps = {
+  onNavigate?: (view: 'library' | 'research' | 'reports' | 'recent') => void;
+};
+
+export const RecentView: React.FC<RecentViewProps> = ({ onNavigate }) => {
   const handleOpenRecent = async (notebook: Notebook) => {
     if (notebook.type === 'report' && notebook.refId) {
       try {
@@ -15,6 +19,17 @@ export const RecentView: React.FC = () => {
         console.error('Failed to load report:', error);
       }
     }
+
+    // Navigate to research view when clicking on recent items
+    if (onNavigate) {
+      onNavigate('research');
+    }
+  };
+
+  const handleViewAll = () => {
+    if (onNavigate) {
+      onNavigate('research');
+    }
   };
 
   return (
@@ -26,7 +41,12 @@ export const RecentView: React.FC = () => {
             Your latest research activities, reports, and discoveries
           </p>
         </div>
-        <RecentList onOpen={handleOpenRecent} limit={20} />
+        <RecentList
+          onOpen={handleOpenRecent}
+          onViewAll={handleViewAll}
+          limit={20}
+          showViewAll={true}
+        />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { ResultsHeader } from './ResultsHeader';
 import { ResultsList } from './ResultsList';
 import { useSearch } from './SearchProvider';
+import { SourceChips } from './SourceChips';
 import type { AcademicSearchResult } from '../../../../shared/types';
 
 type ResultsSectionProps = {
@@ -18,6 +19,8 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
     togglePaperSelection,
     clearSelection,
     filters,
+    density,
+    setDensity,
   } = useSearch();
 
   const filteredPapers = React.useMemo(() => {
@@ -89,10 +92,14 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
         onSortByChange={setSortBy}
         onSortOrderChange={setSortOrder}
         onClearSelection={clearSelection}
+        density={density}
+        onDensityChange={setDensity}
       />
 
-      <div className="results-layout">
-        <div className={`results-container list`}>
+      <SourceChips papers={results.papers} selectedSources={filters.sources} />
+
+      <div className={`results-layout`}>
+        <div className={`results-container list ${density}`}>
           <ResultsList
             papers={sortedPapers}
             selectedPapers={selectedPapers}

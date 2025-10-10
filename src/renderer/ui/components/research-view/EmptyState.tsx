@@ -1,69 +1,79 @@
 import React from 'react';
-import { Sparkles, Database, Zap, TrendingUp } from 'lucide-react';
+import { MoreHorizontal, Filter, History, Search } from 'lucide-react';
+import { useSearch } from './SearchProvider';
 
 export const EmptyState: React.FC = () => {
-  const features = [
-    {
-      icon: Database,
-      title: 'Multi-Database Search',
-      description: 'Search across arXiv, PubMed, CrossRef, Semantic Scholar, and more',
+  const { query, isSearching, setQuery, performSearch } = useSearch();
+  const [showMenu, setShowMenu] = React.useState(false);
+
+  const onKeyPress = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        void performSearch();
+      }
     },
-    {
-      icon: Zap,
-      title: 'AI-Powered Results',
-      description: 'Semantic understanding enhances your queries for better relevance',
-    },
-    {
-      icon: TrendingUp,
-      title: 'Smart Filtering',
-      description: 'Filter by year, source, and content type to refine your search',
-    },
-  ];
+    [performSearch],
+  );
 
   return (
-    <div className="research-empty-state">
-      <div className="empty-state-hero">
-        <div className="empty-state-icon">
-          <Sparkles />
-        </div>
-        <h2>Discover Research Papers</h2>
-        <p>
-          Use AI-powered semantic search to find relevant academic papers across multiple databases.
-          Our intelligent system understands your research intent and surfaces the most relevant
-          results.
-        </p>
-      </div>
-
-      <div className="empty-state-features">
-        {features.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <div key={index} className="empty-state-feature">
-              <div className="feature-icon">
-                <Icon />
-              </div>
-              <div className="feature-content">
-                <h3>{feature.title}</h3>
-                <p>{feature.description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="empty-state-examples">
-        <h3>Try searching for:</h3>
-        <div className="search-examples">
-          {[
-            'machine learning transformers attention',
-            'protein folding AlphaFold',
-            'climate change mitigation strategies',
-            'neural networks optimization',
-          ].map((example, index) => (
-            <button key={index} type="button" className="search-example">
-              {example}
+    <div className="empty-hero">
+      <div className="hero-search">
+        <div className="hero-search-input">
+          <Search />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyPress={onKeyPress}
+            placeholder="Search arXiv, PubMed, CrossRef, Semantic Scholar..."
+            disabled={isSearching}
+          />
+          {query && (
+            <button type="button" className="hero-clear" onClick={() => setQuery('')} title="Clear">
+              ×
             </button>
-          ))}
+          )}
+        </div>
+        <div className="hero-actions">
+          <button type="button" className="hero-action" title="Filters">
+            <Filter />
+            Filters
+          </button>
+          <button type="button" className="hero-action" title="History">
+            <History />
+            History
+          </button>
+          <div className="hero-menu">
+            <button
+              type="button"
+              className="hero-action"
+              onClick={() => setShowMenu(!showMenu)}
+              aria-haspopup="menu"
+              aria-expanded={showMenu}
+              title="More"
+            >
+              <MoreHorizontal />
+              More
+            </button>
+            {showMenu && (
+              <div className="hero-menu-popover" role="menu">
+                <button type="button" role="menuitem" className="hero-menu-item">
+                  Reset filters
+                </button>
+                <button type="button" role="menuitem" className="hero-menu-item">
+                  Clear history
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className="hero-search-button"
+            onClick={() => void performSearch()}
+            disabled={isSearching || !query.trim()}
+          >
+            Search
+          </button>
         </div>
       </div>
     </div>

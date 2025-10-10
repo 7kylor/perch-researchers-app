@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityBar } from './components/ActivityBar';
+import { Navbar } from './components/Navbar';
 import { EnhancedAddPaper } from './components/EnhancedAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -344,11 +344,11 @@ export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <div className="app-root">
-        <ActivityBar
-          onSettingsClick={handleSettingsClick}
-          onAddPaperClick={handleAddPaperClick}
-          currentRoute={currentView}
+        <Navbar
+          currentView={currentView}
           onViewChange={handleViewChange}
+          onAddPaperClick={handleAddPaperClick}
+          onSettingsClick={handleSettingsClick}
         />
         <div className="main-layout">
           <main className="main-content">
@@ -364,7 +364,7 @@ export const App: React.FC = () => {
             )}
             {currentView === 'research' && <ResearchView />}
             {currentView === 'reports' && <ReportsView />}
-            {currentView === 'recent' && <RecentView />}
+            {currentView === 'recent' && <RecentView onNavigate={handleViewChange} />}
           </main>
 
           {showAIChat && (
