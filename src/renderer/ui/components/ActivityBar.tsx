@@ -51,7 +51,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   return (
     <header className="activity-bar">
       {/* Left section - Brand and Navigation */}
-      <div className="activity-left" style={{ marginLeft: '200px' }}>
+      <div className="activity-left">
         <div className="activity-brand">
           <h1 className="activity-title">Perch</h1>
         </div>
@@ -92,7 +92,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
       </div>
 
       {/* Right section - User and Settings */}
-      <div className="activity-right" style={{ marginRight: '100px' }}>
+      <div className="activity-right">
         <button
           type="button"
           className="nav-button add-paper-button"

@@ -6646,11 +6646,11 @@ textarea:focus-visible {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 10px 0 10px 32px; /* Added left padding, maintained top/bottom padding */
+	padding: 12px 24px; /* Proper left and right padding */
 	background: var(--surface);
 	border-bottom: 1px solid var(--border-subtle);
 	flex-shrink: 0;
-	height: 40px; /* Reduced height for smaller, more minimal design */
+	height: 56px; /* Increased height for better usability */
 }
 
 /* Research Hub Panel */
@@ -6694,6 +6694,7 @@ textarea:focus-visible {
 	display: flex;
 	align-items: center;
 	gap: 12px;
+	margin-left: 80px;
 }
 
 .activity-sidebar-toggle {
