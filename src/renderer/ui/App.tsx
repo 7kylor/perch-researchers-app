@@ -26,7 +26,11 @@ export const App: React.FC = () => {
   >(() => {
     // Initialize from URL hash
     const hash = window.location.hash.slice(1) || 'library';
-    return (['library', 'research', 'reports', 'alerts'].includes(hash) ? hash : 'library') as 'library' | 'research' | 'reports' | 'alerts';
+    return (['library', 'research', 'reports', 'alerts'].includes(hash) ? hash : 'library') as
+      | 'library'
+      | 'research'
+      | 'reports'
+      | 'alerts';
   });
   const [showCitationManager, setShowCitationManager] = React.useState(false);
   const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
