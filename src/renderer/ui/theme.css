@@ -8,14 +8,14 @@
 	--text: #24292f;
 	--text-secondary: #656d76;
 	--muted: #8c959f;
-	--primary: #0969da;
-	--primary-hover: #0550ae;
+	--primary: #0d9488;
+	--primary-hover: #0f766e;
 	--border: #d1d9e0;
 	--border-subtle: #f0f6fc;
-	--ring: #0969da;
+	--ring: #0d9488;
 	--sidebar-bg: #f8f9fa;
-	--card-hover: rgba(9, 105, 218, 0.04);
-	--card-hover-strong: rgba(9, 105, 218, 0.08);
+	--card-hover: rgba(13, 148, 136, 0.04);
+	--card-hover-strong: rgba(13, 148, 136, 0.08);
 	--shadow-sm: 0 1px 2px 0 rgba(27, 31, 36, 0.04);
 	--shadow-md: 0 3px 6px 0 rgba(27, 31, 36, 0.08);
 	--shadow-lg: 0 8px 24px 0 rgba(27, 31, 36, 0.12);
@@ -32,34 +32,34 @@
 		var(--surface-secondary) 50%,
 		var(--surface-elevated) 100%
 	);
-	--cover-year-bg: rgba(9, 105, 218, 0.06);
+	--cover-year-bg: rgba(13, 148, 136, 0.06);
 }
 
 :root[data-theme="dark"] {
-	--bg: #0d1117;
-	--surface: #161b22;
-	--surface-secondary: #21262d;
-	--surface-elevated: #2d333b;
-	--text: #f0f6fc;
-	--text-secondary: #8b949e;
-	--muted: #6e7681;
-	--primary: #58a6ff;
-	--primary-hover: #409eff;
-	--border: #30363d;
-	--border-subtle: #21262d;
-	--ring: #58a6ff;
-	--sidebar-bg: #151b23;
-	--card-hover: rgba(88, 166, 255, 0.06);
-	--card-hover-strong: rgba(88, 166, 255, 0.12);
+	--bg: #121212;
+	--surface: #1e1e1e;
+	--surface-secondary: #2d2d2d;
+	--surface-elevated: #2d2d2d;
+	--text: #ffffff;
+	--text-secondary: #b3b3b3;
+	--muted: #888888;
+	--primary: #4dabf7;
+	--primary-hover: #339af0;
+	--border: #404040;
+	--border-subtle: #2d2d2d;
+	--ring: #4dabf7;
+	--sidebar-bg: #1e1e1e;
+	--card-hover: rgba(77, 171, 247, 0.06);
+	--card-hover-strong: rgba(77, 171, 247, 0.12);
 	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
 	--shadow-md: 0 3px 6px 0 rgba(0, 0, 0, 0.5);
 	--shadow-lg: 0 8px 24px 0 rgba(0, 0, 0, 0.6);
 	--shadow-xl: 0 16px 48px 0 rgba(0, 0, 0, 0.7);
-	--success: #3fb950;
-	--warning: #d29922;
-	--error: #f85149;
-	--research: #14b8a6;
-	--research-hover: #0d9488;
+	--success: #1a7f37;
+	--warning: #d4a72c;
+	--error: #cf222e;
+	--research: #4dabf7;
+	--research-hover: #339af0;
 	/* Theme-aware book cover variables (dark) */
 	--cover-gradient: linear-gradient(
 		135deg,
@@ -67,7 +67,7 @@
 		var(--surface-secondary) 50%,
 		var(--surface-elevated) 100%
 	);
-	--cover-year-bg: rgba(88, 166, 255, 0.1);
+	--cover-year-bg: rgba(77, 171, 247, 0.1);
 }
 
 * {
@@ -1971,18 +1971,17 @@ body {
 
 /* Activity Bar (Top Navigation) */
 .activity-bar {
-	background: white;
-	padding: 0 0 0 32px; /* Added left padding, removed right padding */
+	background: var(--surface);
+	padding: 0 16px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	height: 48px; /* Reduced height for smaller, more minimal design */
+	height: 40px;
 	flex-shrink: 0;
 	z-index: 100;
 	position: relative;
 	-webkit-app-region: drag; /* Make draggable */
 	width: 100%;
-	border-bottom: 1px solid #e2e8f0;
 }
 
 .activity-left {
