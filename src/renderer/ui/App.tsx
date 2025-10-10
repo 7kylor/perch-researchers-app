@@ -8,7 +8,6 @@ import { CitationManager } from './components/CitationManager';
 import { ResearchView } from './components/ResearchView';
 import { LibraryView } from './components/LibraryView';
 import { ReportsView } from './components/ReportsView';
-import { RecentView } from './components/RecentView';
 
 import { ThemeProvider } from './components/ThemeProvider';
 
@@ -21,16 +20,13 @@ export const App: React.FC = () => {
   const [showSettings, setShowSettings] = React.useState(false);
   const [showAIChat, _setShowAIChat] = React.useState(false);
   const [selectedPapersForAI, setSelectedPapersForAI] = React.useState<string[]>([]);
-  const [currentView, setCurrentView] = React.useState<
-    'library' | 'research' | 'reports' | 'recent'
-  >(() => {
+  const [currentView, setCurrentView] = React.useState<'library' | 'research' | 'reports'>(() => {
     // Initialize from URL hash
     const hash = window.location.hash.slice(1) || 'library';
-    return (['library', 'research', 'reports', 'recent'].includes(hash) ? hash : 'library') as
+    return (['library', 'research', 'reports'].includes(hash) ? hash : 'library') as
       | 'library'
       | 'research'
-      | 'reports'
-      | 'recent';
+      | 'reports';
   });
   const [showCitationManager, setShowCitationManager] = React.useState(false);
   const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
@@ -75,7 +71,7 @@ export const App: React.FC = () => {
     setShowSimpleAddModal(true);
   };
 
-  const handleViewChange = (view: 'library' | 'research' | 'reports' | 'recent') => {
+  const handleViewChange = (view: 'library' | 'research' | 'reports') => {
     setCurrentView(view);
     // Update URL hash
     window.location.hash = view;
@@ -313,8 +309,8 @@ export const App: React.FC = () => {
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1) || 'library';
-      if (['library', 'research', 'reports', 'recent'].includes(hash)) {
-        setCurrentView(hash as 'library' | 'research' | 'reports' | 'recent');
+      if (['library', 'research', 'reports'].includes(hash)) {
+        setCurrentView(hash as 'library' | 'research' | 'reports');
       }
     };
 
@@ -364,7 +360,6 @@ export const App: React.FC = () => {
             )}
             {currentView === 'research' && <ResearchView />}
             {currentView === 'reports' && <ReportsView />}
-            {currentView === 'recent' && <RecentView onNavigate={handleViewChange} />}
           </main>
 
           {showAIChat && (

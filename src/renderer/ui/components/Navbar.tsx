@@ -1,9 +1,9 @@
 import React from 'react';
-import { Library, Brain, History, Plus, User, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Library, Brain, Plus, User, Settings, HelpCircle, LogOut } from 'lucide-react';
 
 type NavbarProps = {
   currentView?: string;
-  onViewChange?: (view: 'library' | 'research' | 'recent') => void;
+  onViewChange?: (view: 'library' | 'research') => void;
   onAddPaperClick?: () => void;
   onSettingsClick?: () => void;
 };
@@ -40,8 +40,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         return 'Library';
       case 'research':
         return 'Semantic Research';
-      case 'recent':
-        return 'Recent Papers';
       default:
         return 'Researchers App';
     }
@@ -81,14 +79,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Semantic Research"
             >
               <Brain size={16} />
-            </button>
-            <button
-              type="button"
-              className={getNavButtonClass('recent')}
-              onClick={() => onViewChange?.('recent')}
-              title="Recent Papers"
-            >
-              <History size={16} />
             </button>
             <button
               type="button"

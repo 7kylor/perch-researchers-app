@@ -7,10 +7,7 @@ type SearchState = {
   results: AcademicSearchResult | null;
   selectedPapers: ReadonlyArray<string>;
   searchHistory: string[];
-  viewMode: 'list';
   density: 'normal' | 'dense';
-  sortBy: 'relevance' | 'year' | 'title';
-  sortOrder: 'asc' | 'desc';
   filters: {
     yearRange: [number | null, number | null];
     sources: string[];
@@ -23,10 +20,7 @@ type SearchActions = {
   performSearch: () => Promise<void>;
   togglePaperSelection: (paperId: string) => void;
   clearSelection: () => void;
-  setViewMode: (mode: SearchState['viewMode']) => void;
   setDensity: (density: SearchState['density']) => void;
-  setSortBy: (sort: SearchState['sortBy']) => void;
-  setSortOrder: (order: SearchState['sortOrder']) => void;
   updateFilters: (filters: Partial<SearchState['filters']>) => void;
   addToHistory: (query: string) => void;
   clearHistory: () => void;
@@ -55,10 +49,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     results: null,
     selectedPapers: [],
     searchHistory: JSON.parse(localStorage.getItem('search:history') || '[]'),
-    viewMode: 'list',
     density: (localStorage.getItem('search:density') as SearchState['density']) || 'normal',
-    sortBy: (localStorage.getItem('search:sort') as SearchState['sortBy']) || 'relevance',
-    sortOrder: (localStorage.getItem('search:sortOrder') as SearchState['sortOrder']) || 'desc',
     filters: {
       yearRange: [null, null],
       sources: [],
@@ -112,23 +103,9 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
     setState((prev) => ({ ...prev, selectedPapers: [] }));
   }, []);
 
-  const setViewMode = React.useCallback((viewMode: SearchState['viewMode']) => {
-    setState((prev) => ({ ...prev, viewMode }));
-  }, []);
-
   const setDensity = React.useCallback((density: SearchState['density']) => {
     setState((prev) => ({ ...prev, density }));
     localStorage.setItem('search:density', density);
-  }, []);
-
-  const setSortBy = React.useCallback((sortBy: SearchState['sortBy']) => {
-    setState((prev) => ({ ...prev, sortBy }));
-    localStorage.setItem('search:sort', sortBy);
-  }, []);
-
-  const setSortOrder = React.useCallback((sortOrder: SearchState['sortOrder']) => {
-    setState((prev) => ({ ...prev, sortOrder }));
-    localStorage.setItem('search:sortOrder', sortOrder);
   }, []);
 
   const updateFilters = React.useCallback((filters: Partial<SearchState['filters']>) => {
@@ -158,10 +135,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       performSearch,
       togglePaperSelection,
       clearSelection,
-      setViewMode,
       setDensity,
-      setSortBy,
-      setSortOrder,
       updateFilters,
       addToHistory,
       clearHistory,
@@ -172,10 +146,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       performSearch,
       togglePaperSelection,
       clearSelection,
-      setViewMode,
       setDensity,
-      setSortBy,
-      setSortOrder,
       updateFilters,
       addToHistory,
       clearHistory,

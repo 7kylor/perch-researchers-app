@@ -2499,43 +2499,6 @@ body {
 	}
 }
 
-/* Recent View Styles */
-.recent-view {
-	width: 100%;
-	height: 100%;
-	overflow-y: auto;
-}
-
-.recent-container {
-	max-width: 1200px;
-	margin: 0 auto;
-	padding: 0 32px 32px;
-}
-
-.recent-header {
-	text-align: center;
-	padding: 40px 20px 32px;
-	margin-bottom: 32px;
-}
-
-.recent-header h1 {
-	font-size: 32px;
-	font-weight: 700;
-	color: var(--text);
-	margin: 0 0 16px 0;
-	letter-spacing: -0.02em;
-}
-
-.recent-subtitle {
-	font-size: 18px;
-	color: var(--text-secondary);
-	margin: 0;
-	line-height: 1.5;
-	max-width: 600px;
-	margin-left: auto;
-	margin-right: auto;
-}
-
 /* Library View Styles */
 .library-view {
 	width: 100%;
@@ -4584,28 +4547,32 @@ textarea:focus-visible {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: rgba(0, 0, 0, 0.6);
+	background: rgba(0, 0, 0, 0.75);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 10000;
-	backdrop-filter: blur(4px);
+	backdrop-filter: blur(8px);
+	animation: fadeIn 0.2s ease;
 }
 
 .settings-panel {
 	background: var(--surface);
-	border-radius: 12px;
-	width: 500px;
+	border-radius: 16px;
+	width: 700px;
 	max-width: 90vw;
-	max-height: 80vh;
+	max-height: 90vh;
 	display: flex;
 	flex-direction: column;
 	box-shadow: var(--shadow-xl);
+	border: 1px solid var(--border);
+	animation: slideUp 0.3s ease;
+	overflow: hidden;
 }
 
 .settings-header {
-	padding: 20px 24px 16px;
-	border-bottom: 1px solid var(--border-subtle);
+	padding: 24px 24px 20px;
+	border-bottom: 1px solid var(--border);
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -4619,14 +4586,13 @@ textarea:focus-visible {
 }
 
 .settings-close {
-	background: none;
+	background: transparent;
 	border: none;
 	color: var(--text-secondary);
-	font-size: 20px;
 	cursor: pointer;
-	padding: 6px;
-	border-radius: 6px;
-	transition: all 0.15s ease;
+	padding: 8px;
+	border-radius: 8px;
+	transition: all 0.1s ease;
 	width: 32px;
 	height: 32px;
 	display: flex;
@@ -4634,9 +4600,14 @@ textarea:focus-visible {
 	justify-content: center;
 }
 
-.settings-close:hover {
+.settings-close:hover:not(:disabled) {
 	background: var(--card-hover);
 	color: var(--text);
+}
+
+.settings-close:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .settings-content {
@@ -4658,6 +4629,10 @@ textarea:focus-visible {
 
 .setting-item {
 	margin-bottom: 16px;
+}
+
+.setting-item:last-child {
+	margin-bottom: 0;
 }
 
 .setting-item label {
@@ -4685,21 +4660,28 @@ textarea:focus-visible {
 }
 
 .theme-options {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
 	gap: 8px;
-	flex-wrap: wrap;
 }
 
 .theme-btn {
 	background: var(--surface-secondary);
 	border: 1px solid var(--border-subtle);
-	border-radius: 6px;
-	padding: 8px 12px;
+	border-radius: 8px;
+	padding: 12px 16px;
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
 	transition: all 0.15s ease;
 	color: var(--text);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 80px;
+	min-width: 100px;
 }
 
 .theme-btn:hover {
@@ -4711,6 +4693,7 @@ textarea:focus-visible {
 	background: var(--primary);
 	border-color: var(--primary);
 	color: white;
+	box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 59, 130, 246), 0.2);
 }
 
 .setting-info {
@@ -4731,12 +4714,21 @@ textarea:focus-visible {
 	}
 
 	.theme-options {
-		flex-direction: column;
+		grid-template-columns: 1fr;
+		gap: 12px;
 	}
 
 	.theme-btn {
-		width: 100%;
-		text-align: center;
+		min-height: 60px;
+		min-width: auto;
+		flex-direction: row;
+		justify-content: flex-start;
+		gap: 12px;
+		padding: 12px 16px;
+	}
+
+	.theme-btn.active {
+		box-shadow: none;
 	}
 }
 
@@ -6083,18 +6075,6 @@ textarea:focus-visible {
 }
 
 /* Settings Panel Enhanced */
-.settings-panel {
-	background: var(--bg);
-	border: 1px solid var(--border);
-	border-radius: 12px;
-	box-shadow: var(--shadow-xl);
-	width: 700px;
-	max-width: 95vw;
-	max-height: 85vh;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-}
 
 .settings-header {
 	display: flex;
@@ -6134,36 +6114,48 @@ textarea:focus-visible {
 .settings-tabs {
 	display: flex;
 	gap: 4px;
-	padding: 12px 24px 0;
-	border-bottom: 1px solid var(--border-subtle);
+	padding: 16px 24px 0;
+	border-bottom: 1px solid var(--border);
 	flex-shrink: 0;
 }
 
 .settings-tab {
+	flex: 1;
 	display: flex;
 	align-items: center;
+	justify-content: center;
 	gap: 8px;
-	background: none;
+	background: transparent;
 	border: none;
 	border-bottom: 2px solid transparent;
 	color: var(--text-secondary);
 	cursor: pointer;
-	padding: 10px 16px;
-	transition: all 0.15s ease;
+	padding: 12px 16px;
+	transition: all 0.1s ease;
 	font-size: 14px;
 	font-weight: 500;
-	border-radius: 6px 6px 0 0;
+	margin-bottom: -1px;
+	border-radius: 8px 8px 0 0;
 }
 
-.settings-tab:hover {
-	background: var(--card-hover);
+.settings-tab svg {
+	color: currentColor;
+}
+
+.settings-tab:hover:not(:disabled) {
 	color: var(--text);
+	background: var(--card-hover);
+	border-radius: 8px 8px 0 0;
 }
 
 .settings-tab.active {
-	color: var(--primary);
-	border-bottom-color: var(--primary);
-	background: none;
+	color: var(--text);
+	border-bottom-color: var(--text);
+}
+
+.settings-tab:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 /* Settings Content */
@@ -6174,7 +6166,7 @@ textarea:focus-visible {
 }
 
 .settings-section {
-	margin-bottom: 32px;
+	margin-bottom: 24px;
 }
 
 .settings-section:last-child {
@@ -6189,7 +6181,11 @@ textarea:focus-visible {
 }
 
 .setting-item {
-	margin-bottom: 20px;
+	margin-bottom: 16px;
+}
+
+.setting-item:last-child {
+	margin-bottom: 0;
 }
 
 .setting-item:last-child {
@@ -6258,42 +6254,6 @@ textarea:focus-visible {
 
 .setting-action-btn.danger:hover:not(:disabled) {
 	background: rgba(255, 0, 0, 0.05);
-}
-
-/* Theme Options Enhanced */
-.theme-options {
-	display: flex;
-	gap: 8px;
-	margin-top: 8px;
-}
-
-.theme-btn {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 8px;
-	background: var(--surface);
-	border: 2px solid var(--border);
-	border-radius: 8px;
-	padding: 16px;
-	cursor: pointer;
-	transition: all 0.15s ease;
-	color: var(--text-secondary);
-	font-size: 13px;
-	font-weight: 500;
-}
-
-.theme-btn:hover {
-	background: var(--card-hover);
-	border-color: var(--primary);
-	transform: translateY(-2px);
-}
-
-.theme-btn.active {
-	background: var(--surface-elevated);
-	border-color: var(--primary);
-	color: var(--primary);
 }
 
 /* Shortcuts List */
@@ -6461,12 +6421,6 @@ textarea:focus-visible {
 	}
 }
 
-.settings-panel {
-	width: 100%;
-	max-height: 100vh;
-	border-radius: 0;
-}
-
 .settings-tabs {
 	overflow-x: auto;
 	overflow-y: hidden;
@@ -6475,10 +6429,6 @@ textarea:focus-visible {
 
 .settings-tab {
 	flex-shrink: 0;
-}
-
-.theme-options {
-	flex-direction: column;
 }
 
 .shortcut-item {

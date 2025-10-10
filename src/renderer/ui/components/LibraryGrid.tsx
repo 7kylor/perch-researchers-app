@@ -16,7 +16,7 @@ type Paper = {
   textHash: string;
 };
 
-type SortOption = 'recent' | 'title' | 'author' | 'year' | 'category' | 'publication_date';
+type SortOption = 'title' | 'author' | 'year' | 'category' | 'publication_date';
 
 type LibraryGridProps = {
   papers: Paper[];
@@ -35,7 +35,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
 }) => {
   const [animatedPapers, setAnimatedPapers] = React.useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [sortBy, setSortBy] = React.useState<SortOption>('recent');
+  const [sortBy, setSortBy] = React.useState<SortOption>('title');
   const [showSortDropdown, setShowSortDropdown] = React.useState(false);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
 
@@ -81,7 +81,6 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
         return sorted.sort((a, b) => (a.source || '').localeCompare(b.source || ''));
       case 'publication_date':
         return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
-      case 'recent':
       default:
         // Already sorted by addedAt in backend
         return sorted;
@@ -103,7 +102,6 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   };
 
   const sortOptions = [
-    { value: 'recent' as SortOption, label: 'Recently Added' },
     { value: 'title' as SortOption, label: 'Title' },
     { value: 'author' as SortOption, label: 'Author' },
     { value: 'year' as SortOption, label: 'Publication Year' },
