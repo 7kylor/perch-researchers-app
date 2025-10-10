@@ -17,6 +17,7 @@ type SearchState = {
   selectedPapers: string[];
   expandedPaperIds: string[];
   sidePanelPaperId: string | null;
+  detailsPagePaperId: string | null; // For dedicated details page
   customColumns: CustomColumn[];
   columnVisibility: Record<string, boolean>;
   sorting: Array<{ id: string; desc: boolean }>;
@@ -37,6 +38,8 @@ type SearchActions = {
   openSidePanel: (paperId: string) => void;
   closeSidePanel: () => void;
   navigateSidePanel: (direction: 'next' | 'prev') => void;
+  openDetailsPage: (paperId: string) => void;
+  closeDetailsPage: () => void;
   addCustomColumn: (column: CustomColumn) => void;
   updateCustomColumn: (columnId: string, updates: Partial<CustomColumn>) => void;
   removeCustomColumn: (columnId: string) => void;
@@ -101,6 +104,7 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       selectedPapers: [],
       expandedPaperIds: [],
       sidePanelPaperId: null,
+      detailsPagePaperId: null,
       customColumns: savedColumns ? JSON.parse(savedColumns) : [],
       columnVisibility: savedVisibility ? JSON.parse(savedVisibility) : {},
       sorting: savedSorting ? JSON.parse(savedSorting) : [],
@@ -194,6 +198,14 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
 
   const closeSidePanel = React.useCallback(() => {
     setState((prev) => ({ ...prev, sidePanelPaperId: null }));
+  }, []);
+
+  const openDetailsPage = React.useCallback((paperId: string) => {
+    setState((prev) => ({ ...prev, detailsPagePaperId: paperId }));
+  }, []);
+
+  const closeDetailsPage = React.useCallback(() => {
+    setState((prev) => ({ ...prev, detailsPagePaperId: null }));
   }, []);
 
   const navigateSidePanel = React.useCallback((direction: 'next' | 'prev') => {
@@ -378,6 +390,8 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       openSidePanel,
       closeSidePanel,
       navigateSidePanel,
+      openDetailsPage,
+      closeDetailsPage,
       addCustomColumn,
       updateCustomColumn,
       removeCustomColumn,
@@ -403,6 +417,8 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
       openSidePanel,
       closeSidePanel,
       navigateSidePanel,
+      openDetailsPage,
+      closeDetailsPage,
       addCustomColumn,
       updateCustomColumn,
       removeCustomColumn,

@@ -250,7 +250,7 @@ type PaperRowProps = {
 };
 
 const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
-  const { selectedPapers, togglePaperSelection, openSidePanel } = useSearch();
+  const { selectedPapers, togglePaperSelection, openDetailsPage } = useSearch();
   const [showPreview, setShowPreview] = React.useState(false);
   const [previewPosition, setPreviewPosition] = React.useState({ x: 0, y: 0 });
 
@@ -285,7 +285,7 @@ const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
-    openSidePanel(paper.title);
+    openDetailsPage(paper.title);
   };
 
   return (

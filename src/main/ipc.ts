@@ -1327,3 +1327,5 @@ ipcMain.handle('reports:get-report', async (_e, reportId: string) => {
     | undefined;
   return row || null;
 });
+
+// Window dragging handlers (CSS-based dragging is handled natively by Electron)
