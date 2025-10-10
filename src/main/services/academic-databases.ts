@@ -72,7 +72,20 @@ export interface AcademicPaper {
   abstract?: string;
   url?: string;
   citations?: number;
-  source: 'googlescholar' | 'semanticscholar' | 'pubmed' | 'ieee';
+  source:
+    | 'googlescholar'
+    | 'semanticscholar'
+    | 'pubmed'
+    | 'ieee'
+    | 'url'
+    | 'arxiv'
+    | 'crossref'
+    | 'sciencedirect'
+    | 'jstor'
+    | 'googlescholar'
+    | 'pdf'
+    | 'openalex'
+    | 'clinicaltrials';
 }
 
 export interface SearchResult {

@@ -70,18 +70,19 @@ export class OpenAlexService {
     const papers: AcademicPaper[] = (data.results || []).map((r) => {
       const authors: string[] = (r.authorships || [])
         .flatMap((a) => a.authors || [])
-        .map((a) => a.display_name || '')
+        .map((a) => a?.display_name || '')
         .filter(Boolean);
       const abstract = r.abstract_inverted_index
         ? Object.entries(r.abstract_inverted_index)
-            .sort((a, b) => a[1][0] - b[1][0])
+            .sort((a, b) => (a[1]?.[0] || 0) - (b[1]?.[0] || 0))
             .map(([word]) => word)
             .join(' ')
         : undefined;
       const url =
         r.primary_location?.landing_page_url ||
         r.primary_location?.source?.url ||
-        r.host_venue?.url;
+        r.host_venue?.url ||
+        undefined;
       return {
         title: r.display_name || '',
         authors,
