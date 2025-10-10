@@ -197,24 +197,26 @@ export const ResultsTable: React.FC = () => {
           <thead>
             <tr>
               <th className="checkbox-column">
-                <input
-                  type="checkbox"
-                  checked={selectedPapers.length === papers.length && papers.length > 0}
-                  onChange={() => {
-                    if (selectedPapers.length === papers.length) {
-                      papers.forEach((p) => {
-                        togglePaperSelection(p.title);
-                      });
-                    } else {
-                      papers.forEach((p) => {
-                        if (!selectedPapers.includes(p.title)) {
+                <div className="select-all-container">
+                  <input
+                    type="checkbox"
+                    checked={selectedPapers.length === papers.length && papers.length > 0}
+                    onChange={() => {
+                      if (selectedPapers.length === papers.length) {
+                        papers.forEach((p) => {
                           togglePaperSelection(p.title);
-                        }
-                      });
-                    }
-                  }}
-                  aria-label="Select all"
-                />
+                        });
+                      } else {
+                        papers.forEach((p) => {
+                          if (!selectedPapers.includes(p.title)) {
+                            togglePaperSelection(p.title);
+                          }
+                        });
+                      }
+                    }}
+                    aria-label="Select all"
+                  />
+                </div>
               </th>
               <th className="paper-column-wide">Paper</th>
               <th className="abstract-column-wide">Abstract summary</th>
@@ -293,7 +295,6 @@ const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
         onMouseEnter={() => setShowPreview(true)}
         onMouseLeave={() => setShowPreview(false)}
         onMouseMove={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
           setPreviewPosition({ x: e.clientX, y: e.clientY });
         }}
       >
@@ -389,15 +390,18 @@ const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
           )}
         </td>
 
-        {customColumns.map((col) => (
-          <td key={col.id} className="custom-cell-elicit">
-            {col.extractedValues?.[paper.title] ? (
-              <div className="extracted-value">{String(col.extractedValues[paper.title])}</div>
-            ) : (
-              <span className="no-data">—</span>
-            )}
-          </td>
-        ))}
+        {customColumns.map((col) => {
+          const value = col.extractedValues?.[paper.title];
+          return (
+            <td key={col.id} className="custom-cell-elicit">
+              {value ? (
+                <div className="extracted-value">{String(value)}</div>
+              ) : (
+                <span className="no-data">—</span>
+              )}
+            </td>
+          );
+        })}
       </tr>
 
       {/* Instant Preview Tooltip */}
@@ -466,17 +470,17 @@ const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
                 <div className="preview-section">
                   <strong>Extractions:</strong>
                   <div className="preview-extractions">
-                    {customColumns.map(
-                      (col) =>
-                        col.extractedValues?.[paper.title] && (
+                    {customColumns
+                      .filter((col) => col.extractedValues?.[paper.title])
+                      .map((col) => {
+                        const value = col.extractedValues?.[paper.title];
+                        return (
                           <div key={col.id} className="preview-extraction">
                             <span className="extraction-label">{col.name}:</span>
-                            <span className="extraction-value">
-                              {String(col.extractedValues[paper.title])}
-                            </span>
+                            <span className="extraction-value">{value ? String(value) : ''}</span>
                           </div>
-                        ),
-                    )}
+                        );
+                      })}
                   </div>
                 </div>
               )}
