@@ -8,7 +8,7 @@ import { CitationManager } from './components/CitationManager';
 import { ResearchAnalyticsHub } from './components/ResearchAnalyticsHub';
 import { LibraryView } from './components/LibraryView';
 import { ReportsView } from './components/ReportsView';
-import { AlertsView } from './components/AlertsView';
+import { RecentView } from './components/RecentView';
 
 import { ThemeProvider } from './components/ThemeProvider';
 
@@ -22,15 +22,15 @@ export const App: React.FC = () => {
   const [showAIChat, _setShowAIChat] = React.useState(false);
   const [selectedPapersForAI, setSelectedPapersForAI] = React.useState<string[]>([]);
   const [currentView, setCurrentView] = React.useState<
-    'library' | 'research' | 'reports' | 'alerts'
+    'library' | 'research' | 'reports' | 'recent'
   >(() => {
     // Initialize from URL hash
     const hash = window.location.hash.slice(1) || 'library';
-    return (['library', 'research', 'reports', 'alerts'].includes(hash) ? hash : 'library') as
+    return (['library', 'research', 'reports', 'recent'].includes(hash) ? hash : 'library') as
       | 'library'
       | 'research'
       | 'reports'
-      | 'alerts';
+      | 'recent';
   });
   const [showCitationManager, setShowCitationManager] = React.useState(false);
   const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
@@ -71,7 +71,7 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
-  const handleViewChange = (view: 'library' | 'research' | 'reports' | 'alerts') => {
+  const handleViewChange = (view: 'library' | 'research' | 'reports' | 'recent') => {
     setCurrentView(view);
     // Update URL hash
     window.location.hash = view;
@@ -309,8 +309,8 @@ export const App: React.FC = () => {
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1) || 'library';
-      if (['library', 'research', 'reports', 'alerts'].includes(hash)) {
-        setCurrentView(hash as 'library' | 'research' | 'reports' | 'alerts');
+      if (['library', 'research', 'reports', 'recent'].includes(hash)) {
+        setCurrentView(hash as 'library' | 'research' | 'reports' | 'recent');
       }
     };
 
@@ -359,7 +359,7 @@ export const App: React.FC = () => {
             )}
             {currentView === 'research' && <ResearchAnalyticsHub />}
             {currentView === 'reports' && <ReportsView />}
-            {currentView === 'alerts' && <AlertsView />}
+            {currentView === 'recent' && <RecentView />}
           </div>
           {showAIChat && (
             <div className="ai-chat-panel">

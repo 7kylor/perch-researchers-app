@@ -1,10 +1,19 @@
 import React from 'react';
-import { Settings, User, HelpCircle, LogOut, Library, Brain, FileText, Bell } from 'lucide-react';
+import {
+  Settings,
+  User,
+  HelpCircle,
+  LogOut,
+  Library,
+  Brain,
+  FileText,
+  History,
+} from 'lucide-react';
 
 type ActivityBarProps = {
   onSettingsClick: () => void;
   currentRoute?: string;
-  onViewChange: (view: 'library' | 'research' | 'reports' | 'alerts') => void;
+  onViewChange: (view: 'library' | 'research' | 'reports' | 'recent') => void;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
@@ -68,11 +77,11 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
           </button>
           <button
             type="button"
-            className={getNavLinkClass('alerts')}
-            onClick={() => onViewChange('alerts')}
+            className={getNavLinkClass('recent')}
+            onClick={() => onViewChange('recent')}
           >
-            <Bell size={16} />
-            Alerts
+            <History size={16} />
+            Recent
           </button>
         </nav>
       </div>

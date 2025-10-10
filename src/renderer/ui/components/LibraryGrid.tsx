@@ -16,15 +16,13 @@ type Paper = {
   textHash: string;
 };
 
-type ViewMode = 'grid' | 'list' | 'compact';
-type SortOption = 'recent' | 'title' | 'author' | 'year';
+type SortOption = 'recent' | 'title' | 'author' | 'year' | 'category' | 'publication_date';
 
 type LibraryGridProps = {
   papers: Paper[];
   category: string;
   onPaperSelect: (id: string) => void;
   onRefresh?: () => void;
-  viewMode?: ViewMode;
   onShowCitations?: (paperId: string) => void;
 };
 
@@ -33,14 +31,12 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   category,
   onPaperSelect,
   onRefresh,
-  viewMode = 'grid',
   onShowCitations,
 }) => {
   const [animatedPapers, setAnimatedPapers] = React.useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortOption>('recent');
   const [showSortDropdown, setShowSortDropdown] = React.useState(false);
-  const [localViewMode, setLocalViewMode] = React.useState<ViewMode>(viewMode);
 
   // Animate new papers as they appear
   React.useEffect(() => {
@@ -80,6 +76,10 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
         });
       case 'year':
         return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case 'category':
+        return sorted.sort((a, b) => (a.source || '').localeCompare(b.source || ''));
+      case 'publication_date':
+        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
       case 'recent':
       default:
         // Already sorted by addedAt in backend
@@ -105,7 +105,9 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
     { value: 'recent' as SortOption, label: 'Recently Added' },
     { value: 'title' as SortOption, label: 'Title' },
     { value: 'author' as SortOption, label: 'Author' },
-    { value: 'year' as SortOption, label: 'Year' },
+    { value: 'year' as SortOption, label: 'Publication Year' },
+    { value: 'category' as SortOption, label: 'Category' },
+    { value: 'publication_date' as SortOption, label: 'Publication Date' },
   ];
 
   return (
@@ -153,31 +155,11 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
               </div>
             )}
           </div>
-
-          {/* View Mode Toggle */}
-          <div className="view-toggle">
-            <button
-              type="button"
-              className={`view-button ${localViewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setLocalViewMode('grid')}
-              title="Grid view"
-            >
-              <Grid size={16} className="animate-bounce" />
-            </button>
-            <button
-              type="button"
-              className={`view-button ${localViewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setLocalViewMode('list')}
-              title="List view"
-            >
-              <List size={16} className="animate-pulse" />
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Papers Grid/List */}
-      <div className={`library-grid library-grid-${localViewMode}`}>
+      {/* Papers Grid */}
+      <div className="library-grid library-grid-grid">
         {sortedPapers.map((paper, index) => (
           <div
             key={paper.id}
