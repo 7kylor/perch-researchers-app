@@ -722,8 +722,8 @@ body {
 	justify-content: space-between;
 	gap: 16px;
 	padding: 24px 24px 16px;
-	background: transparent;
-	border-bottom: none;
+	background: var(--surface);
+	border-bottom: 1px solid var(--border-subtle);
 	flex-shrink: 0;
 }
 
@@ -831,7 +831,7 @@ body {
 /* Responsive Library Controls */
 @media (max-width: 900px) {
 	.library-controls {
-		padding: 12px 16px;
+		padding: 12px 20px 12px;
 		gap: 12px;
 	}
 
@@ -857,7 +857,7 @@ body {
 		flex-direction: column;
 		align-items: stretch;
 		gap: 12px;
-		padding: 12px 12px;
+		padding: 12px 16px 12px;
 	}
 
 	.search-container {
@@ -879,7 +879,7 @@ body {
 
 @media (max-width: 600px) {
 	.library-controls {
-		padding: 10px 10px;
+		padding: 10px 12px 10px;
 		gap: 8px;
 	}
 
@@ -5921,7 +5921,7 @@ textarea:focus-visible {
 	align-items: center;
 	justify-content: space-between;
 	gap: 16px;
-	padding: 16px 20px;
+	padding: 16px 24px 16px;
 	background: var(--surface);
 	border-bottom: 1px solid var(--border-subtle);
 	flex-shrink: 0;
@@ -6523,7 +6523,7 @@ textarea:focus-visible {
 		flex-direction: column;
 		align-items: stretch;
 		gap: 12px;
-		padding: 12px 12px;
+		padding: 12px 16px 12px;
 	}
 
 	.controls-left {
