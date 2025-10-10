@@ -71,6 +71,10 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
+  const handleAddPaperClick = () => {
+    setShowSimpleAddModal(true);
+  };
+
   const handleViewChange = (view: 'library' | 'research' | 'reports' | 'recent') => {
     setCurrentView(view);
     // Update URL hash
@@ -342,6 +346,7 @@ export const App: React.FC = () => {
       <div className="app-root">
         <ActivityBar
           onSettingsClick={handleSettingsClick}
+          onAddPaperClick={handleAddPaperClick}
           currentRoute={currentView}
           onViewChange={handleViewChange}
         />

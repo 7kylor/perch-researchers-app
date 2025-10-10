@@ -2149,6 +2149,17 @@ body {
 	color: var(--bg);
 }
 
+.add-paper-button {
+	background: var(--success);
+	color: var(--bg);
+	border: 1px solid var(--success-border);
+}
+
+.add-paper-button:hover {
+	background: var(--success-hover);
+	color: var(--bg);
+}
+
 .activity-brand {
 	display: flex;
 	align-items: center;

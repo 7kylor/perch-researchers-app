@@ -8,16 +8,19 @@ import {
   Brain,
   FileText,
   History,
+  Plus,
 } from 'lucide-react';
 
 type ActivityBarProps = {
   onSettingsClick: () => void;
+  onAddPaperClick?: () => void;
   currentRoute?: string;
   onViewChange: (view: 'library' | 'research' | 'reports' | 'recent') => void;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
   onSettingsClick,
+  onAddPaperClick,
   currentRoute = 'research',
   onViewChange,
 }) => {
@@ -90,6 +93,15 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
 
       {/* Right section - User and Settings */}
       <div className="activity-right" style={{ marginRight: '100px' }}>
+        <button
+          type="button"
+          className="nav-button add-paper-button"
+          onClick={onAddPaperClick}
+          title="Add Research Paper"
+        >
+          <Plus size={16} />
+          <span>Add Paper</span>
+        </button>
         <div className="activity-user" ref={userMenuRef}>
           <button
             type="button"
