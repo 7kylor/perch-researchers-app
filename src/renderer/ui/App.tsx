@@ -5,7 +5,7 @@ import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
 import { AIChat } from './components/AIChat';
 import { CitationManager } from './components/CitationManager';
-import { ResearchAnalyticsHub } from './components/ResearchAnalyticsHub';
+import { ResearchView } from './components/ResearchView';
 import { LibraryView } from './components/LibraryView';
 import { ReportsView } from './components/ReportsView';
 import { RecentView } from './components/RecentView';
@@ -362,7 +362,7 @@ export const App: React.FC = () => {
                 onShowCitations={handleShowCitations}
               />
             )}
-            {currentView === 'research' && <ResearchAnalyticsHub />}
+            {currentView === 'research' && <ResearchView />}
             {currentView === 'reports' && <ReportsView />}
             {currentView === 'recent' && <RecentView />}
           </main>
