@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSidebarStore } from '../../sidebar/store';
 import { SidebarTree } from './SidebarTree';
-import { BookOpen, Clock, FolderOpen, Plus, ChevronDown, ChevronRight, Brain } from 'lucide-react';
+import { BookOpen, FolderOpen, Plus, ChevronDown, ChevronRight, Brain } from 'lucide-react';
 import { SidebarFooter } from './SidebarFooter';
 import type { SidebarNode } from '../../../../shared/sidebar';
 
@@ -93,16 +93,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect, showHub,
             </button>
             <button
               type="button"
-              className={`sidebar-collapsed-item ${selectedId === 'builtin:recent' ? 'selected' : ''}`}
-              aria-current={selectedId === 'builtin:recent' ? 'page' : undefined}
-              onClick={() => onSelect('builtin:recent')}
-              data-tooltip="Recent"
-              title="Recent"
-            >
-              <Clock size={18} />
-            </button>
-            <button
-              type="button"
               className={`sidebar-collapsed-item ${selectedId === 'builtin:categories' ? 'selected' : ''}`}
               aria-current={selectedId === 'builtin:categories' ? 'page' : undefined}
               onClick={() => onSelect('builtin:categories')}
@@ -164,22 +154,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ selectedId, onSelect, showHub,
                 <span className="item-text">All Papers</span>
                 <span className="item-count">
                   {counts.find((c) => c.nodeId === 'builtin:all')?.paperCount ?? 0}
-                </span>
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                className={`sidebar-item ${selectedId === 'builtin:recent' ? 'selected' : ''}`}
-                aria-current={selectedId === 'builtin:recent' ? 'page' : undefined}
-                onClick={() => onSelect('builtin:recent')}
-              >
-                <span className="item-icon" aria-hidden="true">
-                  <Clock size={16} />
-                </span>
-                <span className="item-text">Recent</span>
-                <span className="item-count">
-                  {counts.find((c) => c.nodeId === 'builtin:recent')?.paperCount ?? 0}
                 </span>
               </button>
             </li>

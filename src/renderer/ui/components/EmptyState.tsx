@@ -11,8 +11,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ category, onAddItem }) =
     switch (categoryId) {
       case 'all':
         return 'papers';
-      case 'recent':
-        return 'recent papers';
       default:
         // Try to find the category name from localStorage
         try {

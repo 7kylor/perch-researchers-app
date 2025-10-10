@@ -1,5 +1,0 @@
-/// <reference types="vite/client" />
-
-declare interface Window {
-  api: import('../preload/preload').PreloadAPI;
-}

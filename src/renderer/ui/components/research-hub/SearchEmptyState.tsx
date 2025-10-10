@@ -16,11 +16,11 @@ export const SearchEmptyState: React.FC = () => {
 
       <div className="empty-state-features">
         <div className="empty-state-feature">
-          <Database style={{ color: '#3b82f6' }} />
+          <Database className="feature-icon database" />
           <span>Multi-database</span>
         </div>
         <div className="empty-state-feature">
-          <Zap style={{ color: '#8b5cf6' }} />
+          <Zap className="feature-icon realtime" />
           <span>Real-time</span>
         </div>
       </div>

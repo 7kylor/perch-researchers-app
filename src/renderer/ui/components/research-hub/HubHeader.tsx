@@ -1,7 +1,7 @@
 import type React from 'react';
-import { Brain, TrendingUp } from 'lucide-react';
+import { Brain, TrendingUp, FileText, Bell } from 'lucide-react';
 
-type TabId = 'research' | 'analytics';
+type TabId = 'research' | 'analytics' | 'reports' | 'alerts';
 
 type HubHeaderProps = {
   activeTab: TabId;
@@ -36,6 +36,24 @@ export const HubHeader: React.FC<HubHeaderProps> = ({ activeTab, onTabChange }) 
         >
           <TrendingUp />
           Analytics
+        </button>
+        <button
+          type="button"
+          onClick={() => onTabChange('reports')}
+          className={`hub-tab ${activeTab === 'reports' ? 'hub-tab-active' : ''}`}
+          aria-pressed={activeTab === 'reports'}
+        >
+          <FileText />
+          Reports
+        </button>
+        <button
+          type="button"
+          onClick={() => onTabChange('alerts')}
+          className={`hub-tab ${activeTab === 'alerts' ? 'hub-tab-active' : ''}`}
+          aria-pressed={activeTab === 'alerts'}
+        >
+          <Bell />
+          Alerts
         </button>
       </nav>
     </header>

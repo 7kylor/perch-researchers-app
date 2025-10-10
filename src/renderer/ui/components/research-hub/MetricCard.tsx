@@ -19,8 +19,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div className="metric-card">
       <div className="metric-card-content">
-        <div className="metric-card-icon" style={{ backgroundColor: iconBg }}>
-          <Icon style={{ color: iconColor }} />
+        <div className={`metric-card-icon ${iconBg}`}>
+          <Icon className={iconColor} />
         </div>
 
         <div className="metric-card-data">

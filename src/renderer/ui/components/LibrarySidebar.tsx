@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   BookOpen,
-  Clock,
   Edit,
   Trash2,
   Layers,
@@ -54,9 +53,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
   const [categoryGroups, setCategoryGroups] = React.useState<CategoryGroup[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [viewMode, setViewMode] = React.useState<'list' | 'grid' | 'compact'>('list');
-  const [groupBy, setGroupBy] = React.useState<'alphabetical' | 'usage' | 'recent' | 'none'>(
-    'alphabetical',
-  );
+  const [groupBy, setGroupBy] = React.useState<'alphabetical' | 'usage' | 'none'>('alphabetical');
   const [showSearch, setShowSearch] = React.useState(false);
   const [contextMenu, setContextMenu] = React.useState<{
     isOpen: boolean;
@@ -168,29 +165,6 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
             categories: noUsage,
             isExpanded: false,
             count: noUsage.length,
-          });
-        }
-      } else if (groupBy === 'recent') {
-        const sorted = [...filtered].sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
-        const recent = sorted.slice(0, 10);
-        const older = sorted.slice(10);
-
-        if (recent.length > 0) {
-          groups.push({
-            id: 'group-recent',
-            name: 'Recently Used',
-            categories: recent,
-            isExpanded: true,
-            count: recent.length,
-          });
-        }
-        if (older.length > 0) {
-          groups.push({
-            id: 'group-older',
-            name: 'Older Categories',
-            categories: older,
-            isExpanded: false,
-            count: older.length,
           });
         }
       }
@@ -399,7 +373,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       name: suggestion,
       count: 0,
       icon: <Layers className="h-3 w-3" />,
-      color: '#6b7280',
+      color: 'var(--text-secondary)',
       lastUsed: Date.now(),
       usageCount: 1,
     };
@@ -416,7 +390,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         name: categoryName.trim(),
         count: 0,
         icon: <Layers className="h-3 w-3" />,
-        color: '#6b7280',
+        color: 'var(--text-secondary)',
         lastUsed: Date.now(),
         usageCount: 1,
       };
@@ -572,19 +546,6 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
                   <BookOpen className="h-3 w-3" />
                 </span>
                 <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>All Papers</span>
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                className={`sidebar-item ${selectedCategory === 'recent' ? 'selected' : ''}`}
-                aria-current={selectedCategory === 'recent' ? 'page' : undefined}
-                onClick={() => onCategorySelect('recent')}
-              >
-                <span className="item-icon" aria-hidden="true">
-                  <Clock className="h-3 w-3" />
-                </span>
-                <span className={`item-text ${isCollapsed ? 'hidden' : ''}`}>Recent</span>
               </button>
             </li>
           </ul>
@@ -802,7 +763,6 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
                       <option value="none">No Grouping</option>
                       <option value="alphabetical">Alphabetical</option>
                       <option value="usage">By Usage</option>
-                      <option value="recent">Recently Used</option>
                     </select>
 
                     <button

@@ -172,7 +172,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
     setIsLoadingAnalytics(true);
     try {
       const data = await window.api.analytics.getMetrics();
-      setAnalyticsData(data);
+      setAnalyticsData(data as ResearchAnalytics);
     } catch (error) {
       console.error('Failed to load analytics:', error);
     } finally {
@@ -264,6 +264,10 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
         }
         case 'methodology-extraction': {
           const paperId = selectedPapers[0];
+          if (!paperId) {
+            response = 'No paper selected for methodology extraction';
+            break;
+          }
           response = await window.api.ai['extract-methodology'](paperId);
           break;
         }
@@ -276,14 +280,23 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
           break;
         }
         case 'concept-extraction': {
-          response = await window.api.ai['extract-concepts'](selectedPapers);
+          const paperId = selectedPapers[0];
+          if (!paperId) {
+            response = 'No paper selected for concept extraction';
+            break;
+          }
+          const concepts = await window.api.ai['extract-concepts'](paperId);
+          response = concepts.join(', ');
           break;
         }
         case 'research-questions': {
-          response = await window.api.ai['generate-questions'](
-            selectedPapers,
-            _focusArea || undefined,
-          );
+          const paperId = selectedPapers[0];
+          if (!paperId) {
+            response = 'No paper selected for research questions generation';
+            break;
+          }
+          const questions = await window.api.ai['generate-questions'](paperId);
+          response = questions.join('\n');
           break;
         }
         case 'trend-analysis': {
@@ -322,6 +335,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
   };
 
   const getSourceColor = (source: string) => {
+    if (!source) return 'bg-gray-100 text-gray-800';
     const colors: Record<string, string> = {
       googlescholar: 'bg-blue-100 text-blue-800',
       semanticscholar: 'bg-green-100 text-green-800',
@@ -333,8 +347,9 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
 
   const featuresByCategory = aiFeatures.reduce(
     (acc, feature) => {
-      if (!acc[feature.category]) acc[feature.category] = [];
-      acc[feature.category].push(feature);
+      const category = feature.category;
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(feature);
       return acc;
     },
     {} as Record<string, AIFeatureConfig[]>,

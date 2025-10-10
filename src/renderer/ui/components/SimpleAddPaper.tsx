@@ -264,17 +264,17 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
           }
 
           .metadata-status.detecting {
-            background-color: #e3f2fd;
-            color: #1976d2;
-            border: 1px solid #bbdefb;
+            background-color: var(--surface-secondary);
+            color: var(--primary);
+            border: 1px solid var(--border);
           }
 
           .metadata-preview {
             margin-top: 12px;
             padding: 12px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border);
             border-radius: 8px;
-            background-color: #fafafa;
+            background-color: var(--surface);
           }
 
           .metadata-header {
@@ -283,7 +283,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
             gap: 8px;
             margin-bottom: 12px;
             font-weight: 500;
-            color: #2e7d32;
+            color: var(--success);
           }
 
           .status-icon {
@@ -296,8 +296,8 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
           }
 
           .status-icon.success {
-            background-color: #c8e6c9;
-            color: #2e7d32;
+            background-color: rgba(26, 127, 55, 0.1);
+            color: var(--success);
           }
 
           .metadata-content {
@@ -308,7 +308,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
             margin: 0 0 8px 0;
             font-size: 16px;
             font-weight: 600;
-            color: #333;
+            color: var(--text);
             line-height: 1.3;
           }
 
@@ -317,7 +317,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
           .metadata-year,
           .metadata-doi {
             margin: 4px 0;
-            color: #666;
+            color: var(--text-secondary);
             line-height: 1.4;
           }
 
@@ -328,13 +328,13 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
           .metadata-abstract summary {
             cursor: pointer;
             font-weight: 500;
-            color: #666;
+            color: var(--text-secondary);
             margin-bottom: 4px;
           }
 
           .metadata-abstract p {
             margin: 8px 0 0 0;
-            color: #666;
+            color: var(--text-secondary);
             line-height: 1.4;
             font-size: 13px;
           }
@@ -342,17 +342,17 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
           .metadata-source {
             margin-top: 8px;
             padding-top: 8px;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid var(--border);
             font-size: 12px;
-            color: #999;
+            color: var(--muted);
           }
 
           .bulk-progress-container {
-            background: #ffffff;
+            background: var(--surface);
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e0e0e0;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
           }
 
           .bulk-progress-header {
@@ -366,7 +366,7 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
             margin: 0;
             font-size: 18px;
             font-weight: 600;
-            color: #333;
+            color: var(--text);
           }
 
           .bulk-progress-content {
@@ -383,26 +383,26 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
 
           .progress-text {
             font-size: 14px;
-            color: #666;
+            color: var(--text-secondary);
           }
 
           .progress-percentage {
             font-size: 14px;
             font-weight: 600;
-            color: #333;
+            color: var(--text);
           }
 
           .progress-bar {
             width: 100%;
             height: 8px;
-            background: #f0f0f0;
+            background: var(--surface-secondary);
             border-radius: 4px;
             overflow: hidden;
           }
 
           .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            background: linear-gradient(90deg, var(--primary), var(--primary-hover));
             border-radius: 4px;
             transition: width 0.3s ease;
           }
@@ -412,10 +412,10 @@ export const SimpleAddPaper: React.FC<SimpleAddPaperProps> = ({
             align-items: center;
             gap: 8px;
             padding: 8px 12px;
-            background: #f8f9fa;
+            background: var(--surface-secondary);
             border-radius: 6px;
             font-size: 13px;
-            color: #666;
+            color: var(--text-secondary);
           }
 
           .current-file svg {

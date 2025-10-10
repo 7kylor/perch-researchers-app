@@ -1,6 +1,26 @@
-import { google as _google } from 'googleapis';
+// import { google as _google } from 'googleapis';
 import { JSDOM } from 'jsdom';
 import fetch from 'node-fetch';
+import { openAlexService } from './openalex-service.js';
+import { clinicalTrialsService } from './clinicaltrials-service.js';
+
+// DOM types for JSDOM
+interface NodeList {
+  forEach: (callback: (element: Element, index: number) => void) => void;
+  length: number;
+  [index: number]: Element;
+}
+
+interface Element {
+  querySelector: (selector: string) => Element | null;
+  querySelectorAll: (selector: string) => NodeList;
+  textContent: string | null;
+}
+
+interface HTMLAnchorElement extends Element {
+  href: string;
+}
+import { createAIProvider } from '../ai/providers.js';
 
 // Types for Semantic Scholar API response
 interface SemanticScholarAuthor {
@@ -52,7 +72,20 @@ export interface AcademicPaper {
   abstract?: string;
   url?: string;
   citations?: number;
-  source: 'googlescholar' | 'semanticscholar' | 'pubmed' | 'ieee';
+  source:
+    | 'googlescholar'
+    | 'semanticscholar'
+    | 'pubmed'
+    | 'ieee'
+    | 'url'
+    | 'arxiv'
+    | 'crossref'
+    | 'sciencedirect'
+    | 'jstor'
+    | 'googlescholar'
+    | 'pdf'
+    | 'openalex'
+    | 'clinicaltrials';
 }
 
 export interface SearchResult {
@@ -105,7 +138,7 @@ export class AcademicDatabaseService {
           // Parse authors and year from gs_a element
           const authorsText = authorsElement?.textContent || '';
           const yearMatch = authorsText.match(/(\d{4})/);
-          const year = yearMatch ? parseInt(yearMatch[1]!) : undefined;
+          const year = yearMatch ? parseInt(yearMatch[1] || '', 10) || undefined : undefined;
 
           // Extract authors (everything before the year)
           const authorsTextClean = authorsText.replace(/-\s*\d{4}.*/, '').trim();
@@ -332,13 +365,22 @@ export class AcademicDatabaseService {
     const startTime = Date.now();
 
     try {
-      const [scholarResults, semanticResults, pubmedResults, ieeeResults] =
-        await Promise.allSettled([
-          this.searchGoogleScholar(query, Math.floor(limit / 4)),
-          this.searchSemanticScholar(query, Math.floor(limit / 4)),
-          this.searchPubMed(query, Math.floor(limit / 4)),
-          this.searchIEEE(query, Math.floor(limit / 4)),
-        ]);
+      const perSource = Math.max(1, Math.floor(limit / 5));
+      const [
+        scholarResults,
+        semanticResults,
+        pubmedResults,
+        ieeeResults,
+        openAlexResults,
+        clinicalTrialsResults,
+      ] = await Promise.allSettled([
+        this.searchGoogleScholar(query, perSource),
+        this.searchSemanticScholar(query, perSource),
+        this.searchPubMed(query, perSource),
+        this.searchIEEE(query, perSource),
+        openAlexService.search(query, perSource, 1),
+        clinicalTrialsService.search(query, perSource, 1),
+      ]);
 
       const allPapers: AcademicPaper[] = [];
 
@@ -354,9 +396,18 @@ export class AcademicDatabaseService {
       if (ieeeResults.status === 'fulfilled') {
         allPapers.push(...ieeeResults.value.papers);
       }
+      if (openAlexResults.status === 'fulfilled') {
+        allPapers.push(...openAlexResults.value.papers);
+      }
+      if (clinicalTrialsResults.status === 'fulfilled') {
+        allPapers.push(...clinicalTrialsResults.value.papers);
+      }
 
-      // Remove duplicates based on title similarity and sort by relevance
-      const uniquePapers = this.deduplicatePapers(allPapers);
+      // Remove duplicates (prefer DOI match, then normalized title)
+      let uniquePapers = this.deduplicatePapers(allPapers);
+
+      // Semantic re-ranking using lightweight embeddings on titles (and abstracts if available)
+      uniquePapers = await this.semanticReRank(query, uniquePapers);
 
       return {
         papers: uniquePapers.slice(0, limit),
@@ -378,7 +429,8 @@ export class AcademicDatabaseService {
     const unique: AcademicPaper[] = [];
 
     for (const paper of papers) {
-      const key = paper.title.toLowerCase().trim();
+      const normTitle = paper.title.toLowerCase().replace(/\s+/g, ' ').trim();
+      const key = paper.doi ? `doi:${paper.doi.toLowerCase()}` : `title:${normTitle}`;
       if (!seen.has(key)) {
         seen.add(key);
         unique.push(paper);
@@ -386,14 +438,53 @@ export class AcademicDatabaseService {
     }
 
     return unique.sort((a, b) => {
-      // Sort by year (newest first) and then by title
-      if (a.year && b.year) {
-        return b.year - a.year;
-      }
-      if (a.year) return -1;
-      if (b.year) return 1;
+      if (a.year && b.year && a.year !== b.year) return b.year - a.year;
+      if (!!a.citations && !!b.citations && a.citations !== b.citations)
+        return (b.citations || 0) - (a.citations || 0);
       return a.title.localeCompare(b.title);
     });
+  }
+
+  private async semanticReRank(query: string, papers: AcademicPaper[]): Promise<AcademicPaper[]> {
+    if (papers.length === 0) return papers;
+    try {
+      const ai = createAIProvider('local');
+      const toEmbed = [query, ...papers.map((p) => `${p.title} ${p.abstract ?? ''}`.slice(0, 512))];
+      const vectors = await ai.generateEmbeddings(toEmbed);
+      const queryVec = vectors[0] ?? [];
+      const paperVecs = vectors.slice(1);
+
+      function cosine(a: number[], b: number[]): number {
+        let dot = 0;
+        let na = 0;
+        let nb = 0;
+        const len = Math.min(a.length, b.length);
+        for (let i = 0; i < len; i++) {
+          const x = a[i] as number;
+          const y = b[i] as number;
+          dot += x * y;
+          na += x * x;
+          nb += y * y;
+        }
+        const denom = Math.sqrt(na) * Math.sqrt(nb);
+        return denom > 0 ? dot / denom : 0;
+      }
+
+      const scored = papers.map((p, i) => {
+        const sim = cosine(queryVec, paperVecs[i] ?? []);
+        // Combine with simple recency and citations for stability
+        const recency = p.year ? 1 / (1 + Math.max(0, new Date().getFullYear() - p.year)) : 0.5;
+        const cites = Math.min((p.citations ?? 0) / 100, 1);
+        const score = sim * 0.7 + recency * 0.2 + cites * 0.1;
+        return { p, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      return scored.map((s) => s.p);
+    } catch {
+      // Fallback to existing order on failure
+      return papers;
+    }
   }
 
   // Get paper details by DOI

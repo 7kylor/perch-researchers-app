@@ -58,6 +58,14 @@ export interface PreloadAPI {
       onError: (listener: (payload: { chatId: string; error: string }) => void) => void;
     };
     testOpenAI: (apiKey: string) => Promise<boolean>;
+    'synthesize-review': (paperIds: string[]) => Promise<string>;
+    'extract-methodology': (paperId: string) => Promise<string>;
+    'identify-gaps': (paperIds: string[]) => Promise<string>;
+    'topic-modeling': (paperIds: string[]) => Promise<string>;
+    'extract-concepts': (paperId: string) => Promise<string[]>;
+    'generate-questions': (paperId: string) => Promise<string[]>;
+    'analyze-trends': (paperIds: string[]) => Promise<string>;
+    'generate-proposal': (paperIds: string[], gapPrompt?: string) => Promise<string>;
   };
   license: {
     set: (pro: boolean) => Promise<void>;
@@ -149,6 +157,7 @@ export interface PreloadAPI {
   };
   file: {
     read: (filePath: string) => Promise<ArrayBuffer>;
+    write: (filePath: string, data: ArrayBuffer | string) => Promise<void>;
   };
   dialog: {
     showOpenDialog: (options?: OpenDialogOptions) => Promise<OpenDialogReturnValue>;
@@ -179,8 +188,154 @@ export interface PreloadAPI {
     'search-semantic-scholar': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'search-pubmed': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'search-ieee': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'search-clinicaltrials': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'search-all': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'get-by-doi': (doi: string) => Promise<AcademicSearchResult | null>;
+  };
+  search: {
+    saveQuery: (payload: {
+      name: string;
+      query: string;
+      filters?: Record<string, unknown>;
+    }) => Promise<string>;
+    listQueries: () => Promise<Array<{ id: string; name: string; query: string }>>;
+  };
+  alerts: {
+    runNow: (alertId: string) => Promise<boolean>;
+    create: (payload: {
+      queryId: string;
+      frequency: 'daily' | 'weekly' | 'monthly';
+      enabled: boolean;
+    }) => Promise<string>;
+    update: (
+      id: string,
+      updates: Partial<{ frequency: 'daily' | 'weekly' | 'monthly'; enabled: boolean }>,
+    ) => Promise<void>;
+    delete: (id: string) => Promise<void>;
+    getResults: (alertId: string) => Promise<Array<{ id: string; paper: unknown; read: boolean }>>;
+    markRead: (alertResultId: string, read: boolean) => Promise<void>;
+  };
+  alertsList: {
+    list: () => Promise<Array<{ id: string; name: string; frequency: string; enabled: boolean }>>;
+  };
+  extraction: {
+    templates: {
+      list: () => Promise<Array<{ id: string; name: string; columns: unknown[] }>>;
+    };
+    extractPaper: (paperId: string, templateId: string) => Promise<unknown>;
+    batch: (jobId: string, paperIds: string[], templateId: string) => Promise<string>;
+    jobStatus: (jobId: string) => Promise<{ status: string; progress: number }>;
+    getResults: (params?: { templateId?: string; paperIds?: string[] }) => Promise<unknown[]>;
+  };
+  reports: {
+    generate: (paperIds: string[], options?: { sections?: string[] }) => Promise<string>;
+    getReport: (reportId: string) => Promise<{ id: string; content: string; generatedAt: string }>;
+  };
+  screening: {
+    decide: (payload: {
+      paperId: string;
+      stage: 'title_abstract' | 'full_text';
+      decision: 'include' | 'exclude' | 'maybe';
+      reason?: string;
+    }) => Promise<void>;
+    get: (params?: { stage?: 'title_abstract' | 'full_text' }) => Promise<unknown[]>;
+    stats: (
+      stage: 'title_abstract' | 'full_text',
+    ) => Promise<{ total: number; include: number; exclude: number; maybe: number }>;
+  };
+  notebooks: {
+    list: (limit?: number) => Promise<Array<{ id: string; title: string; createdAt: string }>>;
+  };
+  citations: {
+    getForPaper: (paperId: string) => Promise<
+      Array<{
+        id: string;
+        paperId: string;
+        title: string;
+        authors: string[];
+        year?: number;
+        venue?: string;
+        doi?: string;
+        url?: string;
+        citationStyle: string;
+        formattedCitation: string;
+        rawCitation?: string;
+        context?: string;
+        pageNumber?: number;
+      }>
+    >;
+    extract: (paperId: string) => Promise<
+      Array<{
+        id: string;
+        paperId: string;
+        title: string;
+        authors: string[];
+        year?: number;
+        venue?: string;
+        doi?: string;
+        url?: string;
+        citationStyle: string;
+        formattedCitation: string;
+        rawCitation?: string;
+        context?: string;
+        pageNumber?: number;
+      }>
+    >;
+    getCollections: () => Promise<
+      Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        citationStyle: string;
+        paperIds: string[];
+        generatedContent: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }>
+    >;
+    createCollection: (
+      name: string,
+      description?: string,
+      citationIds?: readonly string[],
+      citationStyle?: string,
+    ) => Promise<string>;
+    getCollectionContent: (bibliographyId: string) => Promise<string>;
+  };
+  analytics: {
+    getMetrics: () => Promise<{
+      totalPapers: number;
+      totalSessions: number;
+      avgSessionTime: number;
+      weeklySessions: number;
+      monthlySessions: number;
+      papersRead: number;
+      topics?: Array<{ name: string; count: number }>;
+    }>;
+    getTopicAnalysis: () => Promise<{
+      topics: Array<{ name: string; count: number; growth: number }>;
+      trends: Array<{ topic: string; sessions: number; papers: number }>;
+    }>;
+    getProductivityInsights: () => Promise<{
+      readingStreak: number;
+      weeklyGoal: number;
+      monthlyGoal: number;
+      completionRate: number;
+      recommendations: string[];
+    }>;
+    trackSession: (
+      paperId: string,
+      action: 'start' | 'pause' | 'resume' | 'end',
+      data?: Record<string, unknown>,
+    ) => Promise<void>;
+    getReadingHistory: (timeframe: 'week' | 'month' | 'year') => Promise<
+      Array<{
+        date: string;
+        sessions: number;
+        papersRead: number;
+        totalTime: number;
+      }>
+    >;
+    export: (format: 'json' | 'csv') => Promise<string>;
   };
 }
 
@@ -248,6 +403,17 @@ contextBridge.exposeInMainWorld('api', {
       },
     },
     testOpenAI: (apiKey: string) => ipcRenderer.invoke('ai:test-openai', apiKey),
+    'synthesize-review': (paperIds: string[]) =>
+      ipcRenderer.invoke('ai:synthesize-review', paperIds),
+    'extract-methodology': (paperId: string) =>
+      ipcRenderer.invoke('ai:extract-methodology', paperId),
+    'identify-gaps': (paperIds: string[]) => ipcRenderer.invoke('ai:identify-gaps', paperIds),
+    'topic-modeling': (paperIds: string[]) => ipcRenderer.invoke('ai:topic-modeling', paperIds),
+    'extract-concepts': (paperId: string) => ipcRenderer.invoke('ai:extract-concepts', paperId),
+    'generate-questions': (paperId: string) => ipcRenderer.invoke('ai:generate-questions', paperId),
+    'analyze-trends': (paperIds: string[]) => ipcRenderer.invoke('ai:analyze-trends', paperIds),
+    'generate-proposal': (paperIds: string[]) =>
+      ipcRenderer.invoke('ai:generate-proposal', paperIds),
   },
   license: {
     set: (pro: boolean) => ipcRenderer.invoke('license:set', pro),
@@ -333,8 +499,112 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('academic:search-pubmed', query, limit),
     'search-ieee': (query: string, limit?: number) =>
       ipcRenderer.invoke('academic:search-ieee', query, limit),
+    'search-clinicaltrials': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-clinicaltrials', query, limit),
     'search-all': (query: string, limit?: number) =>
       ipcRenderer.invoke('academic:search-all', query, limit),
     'get-by-doi': (doi: string) => ipcRenderer.invoke('academic:get-by-doi', doi),
+  },
+  openalex: {
+    search: (
+      query: string,
+      limit?: number,
+      page?: number,
+      filters?: {
+        fromYear?: number;
+        toYear?: number;
+        openAccess?: boolean;
+        minCitations?: number;
+        type?: 'journal-article' | 'conference-paper' | 'other';
+      },
+    ) => ipcRenderer.invoke('openalex:search', query, limit, page, filters),
+  },
+  extraction: {
+    templates: {
+      list: () => ipcRenderer.invoke('extraction:templates:list'),
+    },
+    extractPaper: (paperId: string, templateId: string) =>
+      ipcRenderer.invoke('extraction:extract-paper', paperId, templateId),
+    batch: (jobId: string, paperIds: string[], templateId: string) =>
+      ipcRenderer.invoke('extraction:batch', jobId, paperIds, templateId),
+    jobStatus: (jobId: string) => ipcRenderer.invoke('extraction:job-status', jobId),
+    getResults: (params?: { templateId?: string; paperIds?: string[] }) =>
+      ipcRenderer.invoke('extraction:get-results', params),
+  },
+  reports: {
+    generate: (paperIds: string[], options?: { sections?: string[] }) =>
+      ipcRenderer.invoke('reports:generate', paperIds, options),
+    getReport: (reportId: string) => ipcRenderer.invoke('reports:get-report', reportId),
+  },
+  alerts: {
+    runNow: (alertId: string) => ipcRenderer.invoke('alerts:run-now', alertId),
+    create: (payload: {
+      queryId: string;
+      frequency: 'daily' | 'weekly' | 'monthly';
+      enabled: boolean;
+    }) => ipcRenderer.invoke('alerts:create', payload),
+    update: (
+      id: string,
+      updates: Partial<{ frequency: 'daily' | 'weekly' | 'monthly'; enabled: boolean }>,
+    ) => ipcRenderer.invoke('alerts:update', id, updates),
+    delete: (id: string) => ipcRenderer.invoke('alerts:delete', id),
+    getResults: (alertId: string) => ipcRenderer.invoke('alerts:get-results', alertId),
+    markRead: (alertResultId: string, read: boolean) =>
+      ipcRenderer.invoke('alerts:mark-read', alertResultId, read),
+  },
+  screening: {
+    decide: (payload: {
+      paperId: string;
+      stage: 'title_abstract' | 'full_text';
+      decision: 'include' | 'exclude' | 'maybe';
+      reason?: string;
+    }) => ipcRenderer.invoke('screening:decide', payload),
+    get: (params?: { stage?: 'title_abstract' | 'full_text' }) =>
+      ipcRenderer.invoke('screening:get', params),
+    stats: (stage: 'title_abstract' | 'full_text') => ipcRenderer.invoke('screening:stats', stage),
+  },
+  search: {
+    saveQuery: (payload: { name: string; query: string; filters?: Record<string, unknown> }) =>
+      ipcRenderer.invoke('search:save-query', payload),
+    listQueries: () => ipcRenderer.invoke('search:list-queries'),
+  },
+  alertsList: {
+    list: () => ipcRenderer.invoke('alerts:list'),
+  },
+  notebooks: {
+    list: (limit?: number) => ipcRenderer.invoke('notebooks:list', limit ?? 10),
+  },
+  analytics: {
+    getMetrics: () => ipcRenderer.invoke('analytics:getMetrics'),
+    getTopicAnalysis: () => ipcRenderer.invoke('analytics:getTopicAnalysis'),
+    getProductivityInsights: () => ipcRenderer.invoke('analytics:getProductivityInsights'),
+    trackSession: (
+      paperId: string,
+      action: 'start' | 'end' | 'update',
+      data?: Record<string, unknown>,
+    ) => ipcRenderer.invoke('analytics:trackSession', paperId, action, data),
+    getReadingHistory: (timeframe: 'week' | 'month' | 'year' = 'month') =>
+      ipcRenderer.invoke('analytics:getReadingHistory', timeframe),
+    export: (format: 'json' | 'csv' = 'json') => ipcRenderer.invoke('analytics:export', format),
+  },
+  citations: {
+    getForPaper: (paperId: string) => ipcRenderer.invoke('citations:get-for-paper', paperId),
+    extract: (paperId: string) => ipcRenderer.invoke('citations:extract', paperId),
+    getCollections: () => ipcRenderer.invoke('citations:get-collections'),
+    createCollection: (
+      name: string,
+      description?: string,
+      citationIds?: readonly string[],
+      citationStyle?: string,
+    ) =>
+      ipcRenderer.invoke(
+        'citations:create-collection',
+        name,
+        description,
+        citationIds,
+        citationStyle,
+      ),
+    getCollectionContent: (bibliographyId: string) =>
+      ipcRenderer.invoke('citations:get-collection-content', bibliographyId),
   },
 });

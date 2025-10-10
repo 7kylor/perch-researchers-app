@@ -127,3 +127,74 @@ export const readingSessions = sqliteTable('reading_sessions', {
   annotationsCreated: integer('annotationsCreated'),
   status: text('status').notNull(), // 'active', 'completed', 'abandoned'
 });
+
+// Saved search queries
+export const searchQueries = sqliteTable('search_queries', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  query: text('query').notNull(),
+  filters: text('filters').notNull(), // JSON string
+  createdAt: text('createdAt').notNull(),
+});
+
+// Research alerts and results
+export const researchAlerts = sqliteTable('research_alerts', {
+  id: text('id').primaryKey().notNull(),
+  queryId: text('queryId').notNull(),
+  frequency: text('frequency').notNull(), // 'daily' | 'weekly' | 'monthly'
+  enabled: integer('enabled').notNull(), // 0/1
+  lastChecked: text('lastChecked'),
+});
+
+export const alertResults = sqliteTable('alert_results', {
+  id: text('id').primaryKey().notNull(),
+  alertId: text('alertId').notNull(),
+  paperId: text('paperId').notNull(),
+  discoveredAt: text('discoveredAt').notNull(),
+  read: integer('read').notNull().default(0), // 0/1
+});
+
+// Extraction templates and results
+export const extractionTemplates = sqliteTable('extraction_templates', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  columns: text('columns').notNull(), // JSON array
+  createdAt: text('createdAt').notNull(),
+});
+
+export const paperExtractions = sqliteTable('paper_extractions', {
+  id: text('id').primaryKey().notNull(),
+  paperId: text('paperId').notNull(),
+  templateId: text('templateId').notNull(),
+  row: text('row').notNull(), // JSON object
+  provenance: text('provenance').notNull(), // JSON object
+  quality: integer('quality'),
+  createdAt: text('createdAt').notNull(),
+});
+
+// Research reports
+export const researchReports = sqliteTable('research_reports', {
+  id: text('id').primaryKey().notNull(),
+  title: text('title').notNull(),
+  paperIds: text('paperIds').notNull(), // JSON array of ids
+  sections: text('sections').notNull(), // JSON of sections
+  createdAt: text('createdAt').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
+// Screening
+export const screeningDecisions = sqliteTable('screening_decisions', {
+  id: text('id').primaryKey().notNull(),
+  paperId: text('paperId').notNull(),
+  stage: text('stage').notNull(), // 'title_abstract' | 'full_text'
+  decision: text('decision').notNull(), // 'include' | 'exclude' | 'maybe'
+  reason: text('reason'),
+  decidedAt: text('decidedAt').notNull(),
+});
+
+export const screeningCriteria = sqliteTable('screening_criteria', {
+  id: text('id').primaryKey().notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  stage: text('stage').notNull(),
+});

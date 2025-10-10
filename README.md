@@ -76,7 +76,7 @@ A powerful, local-first Electron desktop application designed for academic resea
 
 ### Prerequisites
 - **Node.js 20+** (LTS recommended)
-- **npm** or **yarn** package manager
+- **bun** package manager
 - **Git** for version control
 
 ### Development Setup
@@ -89,12 +89,12 @@ A powerful, local-first Electron desktop application designed for academic resea
 
 2. **Install Dependencies**
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Start Development Server**
    ```bash
-   npm run dev
+   bun run dev
    ```
 
    This will launch:
@@ -106,12 +106,12 @@ A powerful, local-first Electron desktop application designed for academic resea
 
 1. **Build Application**
    ```bash
-   npm run build
+   bun run build
    ```
 
 2. **Package for Distribution**
    ```bash
-   npm run dist
+   bun run dist
    ```
 
    Built packages will be available in the `dist/` directory.
@@ -232,23 +232,23 @@ perch-researchers-app/
 
 ```bash
 # Development
-npm run dev          # Start development server with hot reload
-npm run build        # Build for production
-npm run preview      # Preview production build
+bun run dev          # Start development server with hot reload
+bun run build        # Build for production
+bun run preview      # Preview production build
 
 # Testing
-npm run test         # Run unit tests
-npm run test:e2e     # Run end-to-end tests
-npm run test:ui      # Run tests with UI
+bun run test         # Run unit tests
+bun run test:e2e     # Run end-to-end tests
+bun run test:ui      # Run tests with UI
 
 # Code Quality
-npm run lint         # Lint code for issues
-npm run format       # Format code with Prettier
-npm run typecheck    # Check TypeScript types
+bun run lint         # Lint code for issues
+bun run format       # Format code with Prettier
+bun run typecheck    # Check TypeScript types
 
 # Building & Distribution
-npm run pack         # Create development build
-npm run dist         # Create distribution packages
+bun run pack         # Create development build
+bun run dist         # Create distribution packages
 ```
 
 ### Code Standards
@@ -277,7 +277,7 @@ The project uses GitHub Actions for fully automated multi-platform releases:
 1. **Update Version**
    ```bash
    # Update package.json version
-   npm version patch|minor|major
+   bun version patch|minor|major
    ```
 
 2. **Create Release Tag**
@@ -341,7 +341,7 @@ We welcome contributions from the research community! Here's how to get involved
 git checkout -b feature/new-ai-model
 
 # Make changes and add tests
-# Ensure tests pass: npm run test
+# Ensure tests pass: bun run test
 
 # Commit with semantic message
 git commit -m "feat: add support for new embedding model"
@@ -376,7 +376,7 @@ git push origin feature/new-ai-model
 
 **Build Problems:**
 - Ensure Node.js 20+ is installed
-- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Clear node_modules and reinstall: `rm -rf node_modules && bun install`
 - Check available disk space for large builds
 
 **Database Issues:**

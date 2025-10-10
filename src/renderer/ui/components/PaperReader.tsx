@@ -69,16 +69,18 @@ export const PaperReader: React.FC<PaperReaderProps> = ({ paper, isOpen, onClose
   return (
     <div className={`paper-reader-overlay ${isFullscreen ? 'fullscreen' : ''}`}>
       <div className="paper-reader">
-        {/* Header - Using Activity Bar style */}
-        <header className="activity-bar">
-          {/* Left section - Empty for paper reader */}
-          <div className="activity-left"></div>
+        {/* Header - Using Navbar style */}
+        <header className="navbar">
+          {/* Left section - Window controls handled by Electron */}
+          <div className="navbar-left"></div>
 
           {/* Center section - Paper title */}
-          <div className="activity-center">
-            <h1 className="activity-title" title={paper.title}>
-              {paper.title.length > 50 ? `${paper.title.substring(0, 50)}...` : paper.title}
-            </h1>
+          <div className="navbar-center">
+            <div className="navbar-title">
+              <span className="navbar-current-view" title={paper.title}>
+                {paper.title.length > 50 ? `${paper.title.substring(0, 50)}...` : paper.title}
+              </span>
+            </div>
           </div>
 
           {/* Right section - Controls */}

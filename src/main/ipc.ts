@@ -14,6 +14,12 @@ import { processPaperOCR } from './ocr/batch.js';
 import { citationExtractor } from './services/citations/citation-extractor.js';
 import { researchAnalytics } from './services/analytics/research-analytics.js';
 import { academicDatabaseService } from './services/academic-databases.js';
+import { openAlexService } from './services/openalex-service.js';
+import { clinicalTrialsService } from './services/clinicaltrials-service.js';
+import { dataExtractorService } from './services/extraction/data-extractor.js';
+import { BUILTIN_TEMPLATES } from './services/extraction/templates.js';
+import { reportGeneratorService } from './services/reports/report-generator.js';
+import { alertSchedulerService } from './services/alerts/alert-scheduler.js';
 import path from 'node:path';
 import https from 'node:https';
 import { TextDecoder } from 'node:util';
@@ -649,7 +655,7 @@ async function streamSSE(
   res: globalThis.Response,
   onDelta: (delta: string) => void,
 ): Promise<void> {
-  if (!res?.ok || !res?.body) {
+  if (!(res?.ok && res?.body)) {
     const errText = await res.text().catch(() => '');
     throw new Error(`Stream error: ${res.status} ${res.statusText} ${errText}`);
   }
@@ -664,7 +670,7 @@ async function streamSSE(
     while (newlineIndex >= 0) {
       const line = buffer.slice(0, newlineIndex).trim();
       buffer = buffer.slice(newlineIndex + 1);
-      if (line && line.startsWith('data:')) {
+      if (line?.startsWith('data:')) {
         const payload = line.slice(5).trim();
         if (payload === '[DONE]') return;
         try {
@@ -1012,6 +1018,9 @@ ipcMain.handle('academic:search-pubmed', async (_e, query: string, limit = 20) =
 ipcMain.handle('academic:search-ieee', async (_e, query: string, limit = 20) => {
   return await academicDatabaseService.searchIEEE(query, limit);
 });
+ipcMain.handle('academic:search-clinicaltrials', async (_e, query: string, limit = 20) => {
+  return await clinicalTrialsService.search(query, limit, 1);
+});
 
 ipcMain.handle('academic:search-all', async (_e, query: string, limit = 10) => {
   return await academicDatabaseService.searchAllDatabases(query, limit);
@@ -1020,3 +1029,303 @@ ipcMain.handle('academic:search-all', async (_e, query: string, limit = 10) => {
 ipcMain.handle('academic:get-by-doi', async (_e, doi: string) => {
   return await academicDatabaseService.getPaperByDOI(doi);
 });
+
+// OpenAlex handlers
+ipcMain.handle(
+  'openalex:search',
+  async (
+    _e,
+    query: string,
+    limit: number = 25,
+    page: number = 1,
+    filters?: {
+      fromYear?: number;
+      toYear?: number;
+      openAccess?: boolean;
+      minCitations?: number;
+      type?: 'journal-article' | 'conference-paper' | 'other';
+    },
+  ) => {
+    return await openAlexService.search(query, limit, page, filters);
+  },
+);
+
+// Extraction templates
+ipcMain.handle('extraction:templates:list', async () => {
+  return BUILTIN_TEMPLATES;
+});
+
+// Data extraction jobs
+ipcMain.handle('extraction:extract-paper', async (_e, paperId: string, templateId: string) => {
+  const tpl = BUILTIN_TEMPLATES.find((t) => t.id === templateId);
+  if (!tpl) throw new Error('Template not found');
+  return await dataExtractorService.extractForPaper(paperId, tpl);
+});
+
+ipcMain.handle(
+  'extraction:batch',
+  async (_e, jobId: string, paperIds: string[], templateId: string) => {
+    const tpl = BUILTIN_TEMPLATES.find((t) => t.id === templateId);
+    if (!tpl) throw new Error('Template not found');
+    return await dataExtractorService.batchExtract(jobId, paperIds, tpl);
+  },
+);
+
+ipcMain.handle('extraction:job-status', async (_e, jobId: string) => {
+  return dataExtractorService.getJob(jobId);
+});
+
+ipcMain.handle(
+  'extraction:get-results',
+  async (
+    _e,
+    params: { templateId?: string; paperIds?: string[] } = {},
+  ): Promise<
+    Array<{
+      id: string;
+      paperId: string;
+      templateId: string;
+      values: Record<string, unknown>;
+      provenance: Record<string, unknown>;
+      quality?: number | null;
+      createdAt: string;
+    }>
+  > => {
+    const where: string[] = [];
+    const args: unknown[] = [];
+    if (params.templateId) {
+      where.push('templateId = ?');
+      args.push(params.templateId);
+    }
+    if (params.paperIds && params.paperIds.length > 0) {
+      where.push(`paperId in (${params.paperIds.map(() => '?').join(',')})`);
+      args.push(...params.paperIds);
+    }
+    const rows = db
+      .prepare(
+        `select id, paperId, templateId, row as values, provenance, quality, createdAt from paper_extractions$${
+          where.length > 0 ? ` where ${where.join(' and ')}` : ''
+        } order by createdAt desc`,
+      )
+      .all(...args) as Array<{
+      id: string;
+      paperId: string;
+      templateId: string;
+      values: string;
+      provenance: string;
+      quality?: number | null;
+      createdAt: string;
+    }>;
+    return rows.map((r) => ({
+      ...r,
+      values: JSON.parse(r.values),
+      provenance: JSON.parse(r.provenance),
+    }));
+  },
+);
+
+// Screening decisions
+ipcMain.handle(
+  'screening:decide',
+  async (
+    _e,
+    payload: {
+      paperId: string;
+      stage: 'title_abstract' | 'full_text';
+      decision: 'include' | 'exclude' | 'maybe';
+      reason?: string;
+    },
+  ) => {
+    const now = new Date().toISOString();
+    const existing = db
+      .prepare('select id from screening_decisions where paperId = ? and stage = ?')
+      .get(payload.paperId, payload.stage) as { id: string } | undefined;
+    if (existing?.id) {
+      db.prepare(
+        'update screening_decisions set decision = ?, reason = ?, decidedAt = ? where id = ?',
+      ).run(payload.decision, payload.reason ?? null, now, existing.id);
+      return existing.id;
+    }
+    const id = randomUUID();
+    db.prepare(
+      'insert into screening_decisions (id, paperId, stage, decision, reason, decidedAt) values (?, ?, ?, ?, ?, ?)',
+    ).run(id, payload.paperId, payload.stage, payload.decision, payload.reason ?? null, now);
+    return id;
+  },
+);
+
+ipcMain.handle(
+  'screening:get',
+  async (_e, params: { stage?: 'title_abstract' | 'full_text' } = {}) => {
+    const where = params.stage ? ' where stage = ?' : '';
+    return db
+      .prepare(
+        `select id, paperId, stage, decision, reason, decidedAt from screening_decisions${where}`,
+      )
+      .all(params.stage ? params.stage : undefined);
+  },
+);
+
+ipcMain.handle('screening:stats', async (_e, stage: 'title_abstract' | 'full_text') => {
+  const rows = db
+    .prepare(
+      `select decision, count(1) as c from screening_decisions where stage = ? group by decision`,
+    )
+    .all(stage) as Array<{ decision: string; c: number }>;
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.decision] = r.c;
+  return out;
+});
+
+// Alerts CRUD and results
+ipcMain.handle(
+  'search:save-query',
+  async (_e, payload: { name: string; query: string; filters?: Record<string, unknown> }) => {
+    const id = randomUUID();
+    db.prepare(
+      'insert into search_queries (id, name, query, filters, createdAt) values (?, ?, ?, ?, ?)',
+    ).run(
+      id,
+      payload.name,
+      payload.query,
+      JSON.stringify(payload.filters ?? {}),
+      new Date().toISOString(),
+    );
+    return id;
+  },
+);
+
+ipcMain.handle(
+  'alerts:create',
+  async (
+    _e,
+    payload: { queryId: string; frequency: 'daily' | 'weekly' | 'monthly'; enabled: boolean },
+  ) => {
+    const id = randomUUID();
+    db.prepare(
+      'insert into research_alerts (id, queryId, frequency, enabled, lastChecked) values (?, ?, ?, ?, ?)',
+    ).run(id, payload.queryId, payload.frequency, payload.enabled ? 1 : 0, null);
+    return id;
+  },
+);
+
+ipcMain.handle(
+  'alerts:update',
+  async (
+    _e,
+    id: string,
+    updates: Partial<{ frequency: 'daily' | 'weekly' | 'monthly'; enabled: boolean }>,
+  ) => {
+    const fields: string[] = [];
+    const values: Record<string, unknown> = { id };
+    if (updates.frequency) {
+      fields.push('frequency = @frequency');
+      values['frequency'] = updates.frequency;
+    }
+    if (updates.enabled !== undefined) {
+      fields.push('enabled = @enabled');
+      values['enabled'] = updates.enabled ? 1 : 0;
+    }
+    if (fields.length > 0) {
+      db.prepare(`update research_alerts set ${fields.join(', ')} where id = @id`).run(values);
+    }
+    return true;
+  },
+);
+
+ipcMain.handle('alerts:delete', async (_e, id: string) => {
+  db.prepare('delete from alert_results where alertId = ?').run(id);
+  db.prepare('delete from research_alerts where id = ?').run(id);
+  return true;
+});
+
+ipcMain.handle('alerts:get-results', async (_e, alertId: string) => {
+  const rows = db
+    .prepare(
+      `select ar.id as id, ar.paperId as paperId, ar.discoveredAt as discoveredAt, ar.read as read,
+                p.title as title, p.authors as authors, p.venue as venue, p.year as year, p.doi as doi, p.source as source
+         from alert_results ar join papers p on ar.paperId = p.id where ar.alertId = ? order by ar.discoveredAt desc`,
+    )
+    .all(alertId) as Array<{
+    id: string;
+    paperId: string;
+    discoveredAt: string;
+    read: number;
+    title: string;
+    authors: string;
+    venue: string | null;
+    year: number | null;
+    doi: string | null;
+    source: string | null;
+  }>;
+  return rows.map((r) => ({ ...r, authors: JSON.parse(r.authors) as string[] }));
+});
+
+ipcMain.handle('alerts:mark-read', async (_e, alertResultId: string, read: boolean) => {
+  db.prepare('update alert_results set read = ? where id = ?').run(read ? 1 : 0, alertResultId);
+  return true;
+});
+
+// Lists
+ipcMain.handle('search:list-queries', async () => {
+  return db
+    .prepare(
+      'select id, name, query, filters, createdAt from search_queries order by createdAt desc',
+    )
+    .all();
+});
+
+ipcMain.handle('alerts:list', async () => {
+  return db
+    .prepare(
+      `select a.id as id, a.queryId as queryId, a.frequency as frequency, a.enabled as enabled, a.lastChecked as lastChecked,
+              q.name as queryName, q.query as query, q.filters as filters
+       from research_alerts a join search_queries q on a.queryId = q.id
+       order by a.rowid desc`,
+    )
+    .all();
+});
+
+// Reports
+ipcMain.handle(
+  'reports:generate',
+  async (_e, paperIds: string[], options?: { sections?: string[] }) => {
+    return await reportGeneratorService.generate(paperIds, options);
+  },
+);
+
+// Alerts
+ipcMain.handle('alerts:run-now', async (_e, alertId: string) => {
+  return await alertSchedulerService.runAlert(alertId);
+});
+
+// Notebooks list (recents)
+ipcMain.handle('notebooks:list', async (_e, limit: number = 10) => {
+  return db
+    .prepare(
+      `select id, type, title, refId, createdAt from notebooks order by datetime(createdAt) desc limit ?`,
+    )
+    .all(limit);
+});
+
+// Reports get by id
+ipcMain.handle('reports:get-report', async (_e, reportId: string) => {
+  const row = db
+    .prepare(
+      `select id, title, paperIds, sections, createdAt, updatedAt, content from research_reports where id = ?`,
+    )
+    .get(reportId) as
+    | {
+        id: string;
+        title: string;
+        paperIds: string;
+        sections: string;
+        createdAt: string;
+        updatedAt: string;
+        content: string | null;
+      }
+    | undefined;
+  return row || null;
+});
+
+// Window dragging handlers (CSS-based dragging is handled natively by Electron)

@@ -1,42 +1,37 @@
 import React from 'react';
-import { Sidebar as NewSidebar } from './components/sidebar/Sidebar';
-import { ActivityBar } from './components/ActivityBar';
-import { LibraryGrid } from './components/LibraryGrid';
-import { LoadingSkeleton } from './components/LoadingSkeleton';
-import { EmptyState } from './components/EmptyState';
+import { Navbar } from './components/Navbar';
 import { EnhancedAddPaper } from './components/EnhancedAddPaper';
 import { Toast } from './components/Toast';
 import { SettingsPanel } from './components/SettingsPanel';
 import { AIChat } from './components/AIChat';
 import { CitationManager } from './components/CitationManager';
-import { ResearchAnalyticsHub } from './components/ResearchAnalyticsHub';
+import { ResearchView } from './components/ResearchView';
+import { LibraryView } from './components/LibraryView';
+import { ReportsView } from './components/ReportsView';
 
 import { ThemeProvider } from './components/ThemeProvider';
-import { useSidebarStore } from './sidebar/store';
-
-type SortOption = 'recent' | 'title' | 'author' | 'year';
 
 export const App: React.FC = () => {
   const [results, setResults] = React.useState<import('../../shared/types').Paper[]>([]);
-  const [selectedCategory, setSelectedCategory] = React.useState('builtin:all');
+  const [selectedCategory, _setSelectedCategory] = React.useState('builtin:all');
   const [isLoading, setIsLoading] = React.useState(true);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [_searchQuery, _setSearchQuery] = React.useState('');
   const [showSimpleAddModal, setShowSimpleAddModal] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
-  const [sortBy, setSortBy] = React.useState<SortOption>('recent');
-  const [showAIChat, setShowAIChat] = React.useState(false);
+  const [showAIChat, _setShowAIChat] = React.useState(false);
   const [selectedPapersForAI, setSelectedPapersForAI] = React.useState<string[]>([]);
-  const [showHub, setShowHub] = React.useState(false);
+  const [currentView, setCurrentView] = React.useState<'library' | 'research' | 'reports'>(() => {
+    // Initialize from URL hash
+    const hash = window.location.hash.slice(1) || 'library';
+    return (['library', 'research', 'reports'].includes(hash) ? hash : 'library') as
+      | 'library'
+      | 'research'
+      | 'reports';
+  });
   const [showCitationManager, setShowCitationManager] = React.useState(false);
   const [selectedPaperForCitations, setSelectedPaperForCitations] = React.useState<string | null>(
     null,
   );
-  // merged hub replaces separate research modal
-
-  const { prefs, actions } = useSidebarStore();
-
-  // Use store state directly to avoid race conditions
-  const sidebarCollapsed = prefs?.sidebarCollapsed ?? true;
 
   const [toast, setToast] = React.useState<{
     message: string;
@@ -72,31 +67,15 @@ export const App: React.FC = () => {
     setShowSettings(true);
   };
 
-  const handleSidebarToggle = React.useCallback(() => {
-    if (!actions?.setSidebarCollapsed) {
-      return;
-    }
+  const handleAddPaperClick = () => {
+    setShowSimpleAddModal(true);
+  };
 
-    const newCollapsed = !sidebarCollapsed;
-    actions.setSidebarCollapsed(newCollapsed);
-  }, [sidebarCollapsed, actions]);
-
-  const handleCategorySelect = React.useCallback(
-    (categoryId: string) => {
-      setSelectedCategory(categoryId);
-      if (showHub) {
-        setShowHub(false);
-      }
-    },
-    [showHub],
-  );
-
-  const handleHubToggle = React.useCallback(() => {
-    setShowHub(!showHub);
-    if (!showHub && selectedCategory !== 'builtin:all') {
-      setSelectedCategory('builtin:all');
-    }
-  }, [showHub, selectedCategory]);
+  const handleViewChange = (view: 'library' | 'research' | 'reports') => {
+    setCurrentView(view);
+    // Update URL hash
+    window.location.hash = view;
+  };
 
   const handlePaperClick = (paperId: string) => {
     openPaper(paperId);
@@ -310,52 +289,12 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleSearchChange = async (query: string) => {
-    setSearchQuery(query);
-    setIsLoading(true);
-
-    try {
-      const papers = await window.api.papers.search(query);
-      setResults(papers);
-    } catch {
-      // Search failed
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Sort papers based on selected option
-  const sortedResults = React.useMemo(() => {
-    const sorted = [...results];
-
-    switch (sortBy) {
-      case 'title':
-        return sorted.sort((a, b) => a.title.localeCompare(b.title));
-      case 'author':
-        return sorted.sort((a, b) => {
-          const authorA = a.authors[0] || '';
-          const authorB = b.authors[0] || '';
-          return authorA.localeCompare(authorB);
-        });
-      case 'year':
-        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
-      case 'recent':
-      default:
-        // Already sorted by addedAt in backend
-        return sorted;
-    }
-  }, [results, sortBy]);
-
-  const handleSortChange = (newSort: SortOption) => {
-    setSortBy(newSort);
-  };
-
-  // Load papers on selected category change
+  // Load papers on mount
   React.useEffect(() => {
-    const loadByCategory = async () => {
+    const loadPapers = async () => {
       try {
         setIsLoading(true);
-        const papers = await window.api.papers.listByCategory(selectedCategory, 50);
+        const papers = await window.api.papers.search('');
         setResults(papers);
       } catch {
         // Failed to load papers
@@ -363,8 +302,21 @@ export const App: React.FC = () => {
         setIsLoading(false);
       }
     };
-    void loadByCategory();
-  }, [selectedCategory]);
+    void loadPapers();
+  }, []);
+
+  // Hash change listener for navigation
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1) || 'library';
+      if (['library', 'research', 'reports'].includes(hash)) {
+        setCurrentView(hash as 'library' | 'research' | 'reports');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Keyboard shortcuts
   React.useEffect(() => {
@@ -373,11 +325,6 @@ export const App: React.FC = () => {
       if (e.key === 'Escape') {
         if (showSimpleAddModal) setShowSimpleAddModal(false);
         if (showSettings) setShowSettings(false);
-      }
-      // Cmd/Ctrl + B to toggle sidebar
-      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
-        e.preventDefault();
-        handleSidebarToggle();
       }
       // Cmd/Ctrl + , to open settings
       if ((e.metaKey || e.ctrlKey) && e.key === ',') {
@@ -388,63 +335,42 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showSimpleAddModal, showSettings, handleSidebarToggle]);
+  }, [showSimpleAddModal, showSettings]);
 
   return (
     <ThemeProvider>
       <div className="app-root">
-        <ActivityBar
+        <Navbar
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          onAddPaperClick={handleAddPaperClick}
           onSettingsClick={handleSettingsClick}
-          isSidebarCollapsed={sidebarCollapsed}
-          onSidebarToggle={handleSidebarToggle}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          sortBy={sortBy}
-          onSortChange={handleSortChange}
-          onAddItem={() => setShowSimpleAddModal(true)}
-          onAIChatToggle={() => setShowAIChat(!showAIChat)}
-          showAIChat={showAIChat}
         />
-        <div className="library-layout">
-          <NewSidebar
-            key={`sidebar-${prefs?.sidebarCollapsed}`}
-            selectedId={selectedCategory}
-            onSelect={handleCategorySelect}
-            showHub={showHub}
-            onHubToggle={handleHubToggle}
-          />
-          <div className={`library-main ${prefs?.sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-            <div className="library-content">
-              {isLoading ? (
-                <LoadingSkeleton count={9} />
-              ) : results.length === 0 ? (
-                <EmptyState
-                  category={selectedCategory}
-                  onAddItem={() => setShowSimpleAddModal(true)}
-                />
-              ) : showHub ? (
-                <ResearchAnalyticsHub />
-              ) : (
-                <LibraryGrid
-                  papers={sortedResults}
-                  category={selectedCategory}
-                  onPaperSelect={handlePaperClick}
-                  onRefresh={refreshPapers}
-                  onShowCitations={handleShowCitations}
-                />
-              )}
-            </div>
-            {showAIChat && (
-              <div className="ai-chat-panel">
-                <AIChat
-                  availablePapers={sortedResults}
-                  selectedPapers={selectedPapersForAI}
-                  onPapersChange={setSelectedPapersForAI}
-                />
-              </div>
+        <div className="main-layout">
+          <main className="main-content">
+            {currentView === 'library' && (
+              <LibraryView
+                papers={results}
+                isLoading={isLoading}
+                selectedCategory={selectedCategory}
+                onPaperSelect={handlePaperClick}
+                onRefresh={refreshPapers}
+                onShowCitations={handleShowCitations}
+              />
             )}
-            {/* merged hub replaces separate right-side analytics and modal */}
-          </div>
+            {currentView === 'research' && <ResearchView />}
+            {currentView === 'reports' && <ReportsView />}
+          </main>
+
+          {showAIChat && (
+            <aside className="ai-chat-panel">
+              <AIChat
+                availablePapers={results}
+                selectedPapers={selectedPapersForAI}
+                onPapersChange={setSelectedPapersForAI}
+              />
+            </aside>
+          )}
         </div>
 
         <EnhancedAddPaper

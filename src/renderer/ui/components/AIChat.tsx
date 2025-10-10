@@ -129,7 +129,7 @@ export const AIChat: React.FC<AIChatProps> = ({
           result = await window.api.ai['synthesize-review'](selectedPapers);
           break;
         case 'methodology':
-          if (selectedPapers.length === 0) {
+          if (selectedPapers.length === 0 || !selectedPapers[0]) {
             setMessages((prev) => [
               ...prev,
               { role: 'assistant', content: 'Please select a paper first to extract methodology.' },
@@ -178,10 +178,7 @@ export const AIChat: React.FC<AIChatProps> = ({
             return;
           }
           userMessage = `Generate research proposal based on identified gaps`;
-          result = await window.api.ai['generate-proposal'](
-            selectedPapers,
-            'Identified research gaps from literature',
-          );
+          result = await window.api.ai['generate-proposal'](selectedPapers);
           break;
         }
       }
