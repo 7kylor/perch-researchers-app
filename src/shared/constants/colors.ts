@@ -3,7 +3,7 @@
  * Provides a centralized color system for consistent UI theming
  */
 
-// Core colors - Unified design system
+// Core colors
 export const COLORS = {
   // Base colors
   WHITE: '#ffffff',
@@ -21,35 +21,22 @@ export const COLORS = {
     900: '#111827',
   },
 
-  // Primary teal color scheme (0d9488)
-  PRIMARY: '#0d9488',
-  PRIMARY_HOVER: '#0f766e',
-  PRIMARY_LIGHT: '#14b8a6',
-  PRIMARY_DARK: '#0d9488',
-
-  // Secondary colors for accents
-  SECONDARY: '#059669',
-  SECONDARY_HOVER: '#047857',
-  SECONDARY_LIGHT: '#10b981',
-
-  // Status colors
-  SUCCESS: '#059669',
-  SUCCESS_HOVER: '#047857',
-  SUCCESS_LIGHT: '#10b981',
-  WARNING: '#d97706',
-  WARNING_HOVER: '#b45309',
-  WARNING_LIGHT: '#f59e0b',
-  ERROR: '#dc2626',
-  ERROR_HOVER: '#b91c1c',
-  ERROR_LIGHT: '#ef4444',
-
-  // Legacy colors (keeping for backward compatibility)
+  // Research-specific colors
   RESEARCH: {
     PRIMARY: '#0d9488',
     HOVER: '#0f766e',
     LIGHT: '#14b8a6',
     DARK: '#0d9488',
   },
+
+  // Status colors
+  SUCCESS: '#1a7f37',
+  WARNING: '#d4a72c',
+  ERROR: '#cf222e',
+
+  // Primary colors
+  PRIMARY: '#0969da',
+  PRIMARY_HOVER: '#0550ae',
 } as const;
 
 // CSS custom property names for theme integration
@@ -61,22 +48,12 @@ export const CSS_COLOR_VARS = {
   MUTED: '--muted',
   PRIMARY: '--primary',
   PRIMARY_HOVER: '--primary-hover',
-  PRIMARY_LIGHT: '--primary-light',
-  SECONDARY: '--secondary',
-  SECONDARY_HOVER: '--secondary-hover',
+  RESEARCH: '--research',
+  RESEARCH_HOVER: '--research-hover',
   SUCCESS: '--success',
-  SUCCESS_HOVER: '--success-hover',
-  SUCCESS_LIGHT: '--success-light',
   WARNING: '--warning',
-  WARNING_HOVER: '--warning-hover',
-  WARNING_LIGHT: '--warning-light',
   ERROR: '--error',
-  ERROR_HOVER: '--error-hover',
-  ERROR_LIGHT: '--error-light',
   BORDER: '--border',
-  // Legacy support
-  RESEARCH: '--primary',
-  RESEARCH_HOVER: '--primary-hover',
 } as const;
 
 // Type-safe color keys
