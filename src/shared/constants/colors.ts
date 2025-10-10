@@ -1,9 +1,10 @@
 /**
  * Color constants for the research application
  * Provides a centralized color system for consistent UI theming
+ * Uses only white, gray, and black colors for text consistency
  */
 
-// Core colors
+// Core colors - Only white, gray, black
 export const COLORS = {
   // Base colors
   WHITE: '#ffffff',
@@ -21,22 +22,14 @@ export const COLORS = {
     900: '#111827',
   },
 
-  // Research-specific colors
-  RESEARCH: {
-    PRIMARY: '#0d9488',
-    HOVER: '#0f766e',
-    LIGHT: '#14b8a6',
-    DARK: '#0d9488',
-  },
+  // Status colors - Using gray scale only
+  SUCCESS: '#059669',
+  WARNING: '#d97706',
+  ERROR: '#dc2626',
 
-  // Status colors
-  SUCCESS: '#1a7f37',
-  WARNING: '#d4a72c',
-  ERROR: '#cf222e',
-
-  // Primary colors
-  PRIMARY: '#0969da',
-  PRIMARY_HOVER: '#0550ae',
+  // Primary colors - Using gray scale
+  PRIMARY: '#374151',
+  PRIMARY_HOVER: '#1f2937',
 } as const;
 
 // CSS custom property names for theme integration
@@ -48,8 +41,6 @@ export const CSS_COLOR_VARS = {
   MUTED: '--muted',
   PRIMARY: '--primary',
   PRIMARY_HOVER: '--primary-hover',
-  RESEARCH: '--research',
-  RESEARCH_HOVER: '--research-hover',
   SUCCESS: '--success',
   WARNING: '--warning',
   ERROR: '--error',
@@ -58,5 +49,4 @@ export const CSS_COLOR_VARS = {
 
 // Type-safe color keys
 export type ColorKey = keyof typeof COLORS;
-export type ResearchColorKey = keyof typeof COLORS.RESEARCH;
 export type GrayScaleKey = keyof typeof COLORS.GRAY;

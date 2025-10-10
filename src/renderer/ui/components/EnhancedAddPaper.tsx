@@ -334,7 +334,7 @@ export const EnhancedAddPaper: React.FC<EnhancedAddPaperProps> = ({
 
           .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            background: linear-gradient(90deg, var(--primary), var(--primary-hover));
             border-radius: 4px;
             transition: width 0.3s ease;
           }

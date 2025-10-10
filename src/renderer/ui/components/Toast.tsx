@@ -33,21 +33,21 @@ export const Toast: React.FC<ToastProps> = ({ message, type, isVisible, onClose 
     }
   };
 
-  const getToastStyles = () => {
+  const getToastClassName = () => {
     switch (type) {
       case 'success':
-        return { backgroundColor: '#10b981', color: 'white' };
+        return 'toast success';
       case 'error':
-        return { backgroundColor: '#ef4444', color: 'white' };
+        return 'toast error';
       case 'info':
-        return { backgroundColor: '#3b82f6', color: 'white' };
+        return 'toast info';
       default:
-        return { backgroundColor: '#6b7280', color: 'white' };
+        return 'toast info';
     }
   };
 
   return (
-    <div className="toast" style={getToastStyles()}>
+    <div className={getToastClassName()}>
       <div className="toast-icon">{getToastIcon()}</div>
       <span className="toast-message">{message}</span>
       <button type="button" className="toast-close" onClick={onClose}>

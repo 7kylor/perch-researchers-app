@@ -271,6 +271,14 @@
 	color: var(--text-secondary);
 }
 
+.feature-icon.database {
+	color: var(--primary);
+}
+
+.feature-icon.realtime {
+	color: var(--success);
+}
+
 /* Loading State */
 .search-loading {
 	display: flex;
@@ -645,6 +653,48 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+/* Metric icon colors */
+.metric-icon-gray {
+	color: var(--text-secondary);
+}
+
+.metric-icon-success {
+	color: var(--success);
+}
+
+.metric-icon-primary {
+	color: var(--primary);
+}
+
+.metric-icon-warning {
+	color: var(--warning);
+}
+
+.metric-icon-purple {
+	color: #4f46e5;
+}
+
+/* Metric background colors */
+.metric-bg-gray {
+	background-color: #f1f5f9;
+}
+
+.metric-bg-success {
+	background-color: #d1fae5;
+}
+
+.metric-bg-primary {
+	background-color: #dbeafe;
+}
+
+.metric-bg-warning {
+	background-color: #fef3c7;
+}
+
+.metric-bg-purple {
+	background-color: #f3e8ff;
 }
 
 /* Topics Cloud */

@@ -1,4 +1,4 @@
-import { getResearchColor, withOpacity } from '../../../shared/utils/colors';
+import { getColor, withOpacity } from '../../../shared/utils/colors';
 
 type ResearchBadgeProps = {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ export const ResearchBadge = ({
   className = '',
 }: ResearchBadgeProps) => {
   const getVariantStyles = () => {
-    const baseColor = getResearchColor('PRIMARY');
+    const baseColor = getColor('PRIMARY');
 
     switch (variant) {
       case 'primary':

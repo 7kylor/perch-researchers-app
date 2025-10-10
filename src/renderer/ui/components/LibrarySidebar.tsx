@@ -399,7 +399,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
       name: suggestion,
       count: 0,
       icon: <Layers className="h-3 w-3" />,
-      color: '#6b7280',
+      color: 'var(--text-secondary)',
       lastUsed: Date.now(),
       usageCount: 1,
     };
@@ -416,7 +416,7 @@ export const LibrarySidebar: React.FC<LibrarySidebarProps> = ({
         name: categoryName.trim(),
         count: 0,
         icon: <Layers className="h-3 w-3" />,
-        color: '#6b7280',
+        color: 'var(--text-secondary)',
         lastUsed: Date.now(),
         usageCount: 1,
       };

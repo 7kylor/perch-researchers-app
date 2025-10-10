@@ -20,13 +20,6 @@ export function getGrayColor(scale: keyof typeof COLORS.GRAY): string {
 }
 
 /**
- * Get a research color variant
- */
-export function getResearchColor(variant: keyof typeof COLORS.RESEARCH = 'PRIMARY'): string {
-  return COLORS.RESEARCH[variant];
-}
-
-/**
  * Get CSS custom property value for theme-aware colors
  */
 export function getCSSVar(varName: keyof typeof CSS_COLOR_VARS): string {
