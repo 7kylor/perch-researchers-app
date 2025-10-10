@@ -2076,10 +2076,10 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 8px;
+	padding: 3px;
 	background: transparent;
 	border: none;
-	border-radius: 6px;
+	border-radius: 3px;
 	color: rgba(255, 255, 255, 0.9);
 	font-size: 13px;
 	font-weight: 500;
@@ -2087,8 +2087,8 @@ body {
 	transition: all 0.15s ease;
 	-webkit-app-region: no-drag;
 	white-space: nowrap;
-	min-width: 36px;
-	min-height: 36px;
+	min-width: 24px;
+	min-height: 24px;
 }
 
 .navbar-user {
@@ -2159,7 +2159,7 @@ body {
 }
 
 .navbar-nav-button-active {
-	background: rgba(255, 255, 255, 0.25);
+	background: rgba(255, 255, 255, 0.15);
 	color: white;
 }
 
@@ -2175,17 +2175,17 @@ body {
 	}
 
 	.navbar-nav-button {
-		padding: 6px;
-		min-width: 32px;
-		min-height: 32px;
+		padding: 2px;
+		min-width: 20px;
+		min-height: 20px;
 	}
 }
 
 @media (max-width: 768px) {
 	.navbar-nav-button {
-		padding: 5px;
-		min-width: 30px;
-		min-height: 30px;
+		padding: 2px;
+		min-width: 18px;
+		min-height: 18px;
 	}
 
 	.navbar-nav-button svg {
@@ -2204,9 +2204,9 @@ body {
 	}
 
 	.navbar-nav-button {
-		padding: 4px;
-		min-width: 28px;
-		min-height: 28px;
+		padding: 1px;
+		min-width: 16px;
+		min-height: 16px;
 	}
 
 	.user-dropdown {
