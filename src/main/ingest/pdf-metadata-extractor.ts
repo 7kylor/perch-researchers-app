@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import { PDFParse } from 'pdf-parse';
 import { pathToFileURL } from 'node:url';
-import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);

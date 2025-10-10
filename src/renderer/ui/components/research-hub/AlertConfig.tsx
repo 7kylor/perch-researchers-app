@@ -20,19 +20,9 @@ export const AlertConfig: React.FC = () => {
   const [enabled, setEnabled] = React.useState<boolean>(true);
 
   const loadData = React.useCallback(async () => {
-    const qs = (await window.api.search.listQueries()) as Array<{
-      id: string;
-      name: string;
-    }>;
+    const qs = await window.api.search.listQueries();
     setQueries(qs);
-    const as = (await window.api.alertsList.list()) as Array<{
-      id: string;
-      queryId: string;
-      queryName: string;
-      frequency: Frequency;
-      enabled: number;
-      lastChecked?: string | null;
-    }>;
+    const as = await window.api.alertsList.list();
     setAlerts(as);
   }, []);
 

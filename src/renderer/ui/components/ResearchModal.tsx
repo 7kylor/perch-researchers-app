@@ -264,6 +264,10 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
         }
         case 'methodology-extraction': {
           const paperId = selectedPapers[0];
+          if (!paperId) {
+            response = 'No paper selected for methodology extraction';
+            break;
+          }
           response = await window.api.ai['extract-methodology'](paperId);
           break;
         }
@@ -276,14 +280,21 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
           break;
         }
         case 'concept-extraction': {
-          response = await window.api.ai['extract-concepts'](selectedPapers);
+          const paperId = selectedPapers[0];
+          if (!paperId) {
+            response = 'No paper selected for concept extraction';
+            break;
+          }
+          response = await window.api.ai['extract-concepts'](paperId);
           break;
         }
         case 'research-questions': {
-          response = await window.api.ai['generate-questions'](
-            selectedPapers,
-            _focusArea || undefined,
-          );
+          const paperId = selectedPapers[0];
+          if (!paperId) {
+            response = 'No paper selected for research questions generation';
+            break;
+          }
+          response = await window.api.ai['generate-questions'](paperId);
           break;
         }
         case 'trend-analysis': {
@@ -322,6 +333,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({ onClose }) => {
   };
 
   const getSourceColor = (source: string) => {
+    if (!source) return 'bg-gray-100 text-gray-800';
     const colors: Record<string, string> = {
       googlescholar: 'bg-blue-100 text-blue-800',
       semanticscholar: 'bg-green-100 text-green-800',

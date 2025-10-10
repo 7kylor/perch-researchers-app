@@ -157,6 +157,7 @@ export interface PreloadAPI {
   };
   file: {
     read: (filePath: string) => Promise<ArrayBuffer>;
+    write: (filePath: string, data: ArrayBuffer | string) => Promise<void>;
   };
   dialog: {
     showOpenDialog: (options?: OpenDialogOptions) => Promise<OpenDialogReturnValue>;
@@ -187,8 +188,118 @@ export interface PreloadAPI {
     'search-semantic-scholar': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'search-pubmed': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'search-ieee': (query: string, limit?: number) => Promise<AcademicSearchResult>;
+    'search-clinicaltrials': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'search-all': (query: string, limit?: number) => Promise<AcademicSearchResult>;
     'get-by-doi': (doi: string) => Promise<AcademicSearchResult | null>;
+  };
+  search: {
+    saveQuery: (payload: {
+      name: string;
+      query: string;
+      filters?: Record<string, unknown>;
+    }) => Promise<string>;
+    listQueries: () => Promise<Array<{ id: string; name: string; query: string }>>;
+  };
+  alerts: {
+    runNow: (alertId: string) => Promise<boolean>;
+    create: (payload: {
+      queryId: string;
+      frequency: 'daily' | 'weekly' | 'monthly';
+      enabled: boolean;
+    }) => Promise<string>;
+    update: (
+      id: string,
+      updates: Partial<{ frequency: 'daily' | 'weekly' | 'monthly'; enabled: boolean }>,
+    ) => Promise<void>;
+    delete: (id: string) => Promise<void>;
+    getResults: (alertId: string) => Promise<Array<{ id: string; paper: unknown; read: boolean }>>;
+    markRead: (alertResultId: string, read: boolean) => Promise<void>;
+  };
+  alertsList: {
+    list: () => Promise<Array<{ id: string; name: string; frequency: string; enabled: boolean }>>;
+  };
+  extraction: {
+    templates: {
+      list: () => Promise<Array<{ id: string; name: string; columns: unknown[] }>>;
+    };
+    extractPaper: (paperId: string, templateId: string) => Promise<unknown>;
+    batch: (jobId: string, paperIds: string[], templateId: string) => Promise<string>;
+    jobStatus: (jobId: string) => Promise<{ status: string; progress: number }>;
+    getResults: (params?: { templateId?: string; paperIds?: string[] }) => Promise<unknown[]>;
+  };
+  reports: {
+    generate: (paperIds: string[], options?: { sections?: string[] }) => Promise<string>;
+    getReport: (reportId: string) => Promise<{ id: string; content: string; generatedAt: string }>;
+  };
+  screening: {
+    decide: (payload: {
+      paperId: string;
+      stage: 'title_abstract' | 'full_text';
+      decision: 'include' | 'exclude' | 'maybe';
+      reason?: string;
+    }) => Promise<void>;
+    get: (params?: { stage?: 'title_abstract' | 'full_text' }) => Promise<unknown[]>;
+    stats: (
+      stage: 'title_abstract' | 'full_text',
+    ) => Promise<{ total: number; include: number; exclude: number; maybe: number }>;
+  };
+  notebooks: {
+    list: (limit?: number) => Promise<Array<{ id: string; title: string; createdAt: string }>>;
+  };
+  citations: {
+    getForPaper: (paperId: string) => Promise<
+      Array<{
+        id: string;
+        paperId: string;
+        title: string;
+        authors: string[];
+        year?: number;
+        venue?: string;
+        doi?: string;
+        url?: string;
+        citationStyle: string;
+        formattedCitation: string;
+        rawCitation?: string;
+        context?: string;
+        pageNumber?: number;
+      }>
+    >;
+    extract: (paperId: string) => Promise<
+      Array<{
+        id: string;
+        paperId: string;
+        title: string;
+        authors: string[];
+        year?: number;
+        venue?: string;
+        doi?: string;
+        url?: string;
+        citationStyle: string;
+        formattedCitation: string;
+        rawCitation?: string;
+        context?: string;
+        pageNumber?: number;
+      }>
+    >;
+    getCollections: () => Promise<
+      Array<{
+        id: string;
+        name: string;
+        description: string | null;
+        citationStyle: string;
+        paperIds: string[];
+        generatedContent: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }>
+    >;
+    createCollection: (
+      name: string,
+      description?: string,
+      citationIds?: readonly string[],
+      citationStyle?: string,
+    ) => Promise<string>;
+    getCollectionContent: (bibliographyId: string) => Promise<string>;
   };
 }
 
@@ -444,7 +555,19 @@ contextBridge.exposeInMainWorld('api', {
     getForPaper: (paperId: string) => ipcRenderer.invoke('citations:get-for-paper', paperId),
     extract: (paperId: string) => ipcRenderer.invoke('citations:extract', paperId),
     getCollections: () => ipcRenderer.invoke('citations:get-collections'),
-    createCollection: (name: string) => ipcRenderer.invoke('citations:create-collection', name),
+    createCollection: (
+      name: string,
+      description?: string,
+      citationIds?: readonly string[],
+      citationStyle?: string,
+    ) =>
+      ipcRenderer.invoke(
+        'citations:create-collection',
+        name,
+        description,
+        citationIds,
+        citationStyle,
+      ),
     getCollectionContent: (bibliographyId: string) =>
       ipcRenderer.invoke('citations:get-collection-content', bibliographyId),
   },

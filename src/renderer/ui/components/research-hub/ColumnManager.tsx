@@ -23,19 +23,19 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange 
     };
     const next = [...local, col];
     setLocal(next);
-    onChange(next);
+    onChange(next as ReadonlyArray<ExtractionColumn>);
   };
 
   const removeColumn = (id: string) => {
     const next = local.filter((c) => c.id !== id);
     setLocal(next);
-    onChange(next);
+    onChange(next as ReadonlyArray<ExtractionColumn>);
   };
 
   const update = (id: string, patch: Partial<ExtractionColumn>) => {
     const next = local.map((c) => (c.id === id ? { ...c, ...patch } : c));
     setLocal(next);
-    onChange(next);
+    onChange(next as ReadonlyArray<ExtractionColumn>);
   };
 
   const move = (id: string, dir: -1 | 1) => {
@@ -47,7 +47,7 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange 
     const [item] = next.splice(idx, 1);
     next.splice(j, 0, item);
     setLocal(next);
-    onChange(next);
+    onChange(next as ReadonlyArray<ExtractionColumn>);
   };
 
   return (

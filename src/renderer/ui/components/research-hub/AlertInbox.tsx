@@ -20,26 +20,13 @@ export const AlertInbox: React.FC = () => {
 
   React.useEffect(() => {
     void (async () => {
-      const items = (await window.api.alertsList.list()) as Array<{
-        id: string;
-        queryName: string;
-      }>;
+      const items = await window.api.alertsList.list();
       setAlerts(items);
     })();
   }, []);
 
   const loadResults = async (alertId: string) => {
-    const rows = (await window.api.alerts.getResults(alertId)) as Array<{
-      id: string;
-      paperId: string;
-      title: string;
-      authors: string[];
-      year?: number | null;
-      venue?: string | null;
-      doi?: string | null;
-      read: number;
-      discoveredAt: string;
-    }>;
+    const rows = await window.api.alerts.getResults(alertId);
     setResults(rows);
   };
 

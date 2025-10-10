@@ -222,7 +222,10 @@ export const SearchProvider: React.FC<SearchProviderProps> = ({ children }) => {
           ? (currentIndex + 1) % papers.length
           : (currentIndex - 1 + papers.length) % papers.length;
 
-      return { ...prev, sidePanelPaperId: papers[nextIndex].title };
+      const nextPaper = papers[nextIndex];
+      if (!nextPaper) return prev;
+
+      return { ...prev, sidePanelPaperId: nextPaper.title };
     });
   }, []);
 

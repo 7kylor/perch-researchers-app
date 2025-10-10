@@ -1,4 +1,5 @@
-import React from 'react';
+/** biome-ignore-all lint/correctness/useExhaustiveDependencies: <explanation> */
+import * as React from 'react';
 import { Download, BookOpen, Plus, FileText, Copy, ExternalLink } from 'lucide-react';
 
 interface CitationData {
@@ -50,7 +51,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
     loadBibliographies();
   }, [paperId]);
 
-  const loadCitations = async () => {
+  const loadCitations = async (): Promise<void> => {
     if (!paperId) return;
 
     try {
@@ -71,7 +72,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
     }
   };
 
-  const loadBibliographies = async () => {
+  const loadBibliographies = async (): Promise<void> => {
     try {
       const collections = await window.api.citations.getCollections();
       setBibliographies(collections);
@@ -80,7 +81,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
     }
   };
 
-  const createBibliographyCollection = async () => {
+  const createBibliographyCollection = async (): Promise<void> => {
     if (!bibliographyName.trim() || selectedCitations.length === 0) return;
 
     try {
@@ -103,7 +104,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
     }
   };
 
-  const exportBibliography = async (bibliographyId: string) => {
+  const exportBibliography = async (bibliographyId: string): Promise<void> => {
     try {
       const content = await window.api.citations.getCollectionContent(bibliographyId);
       if (content) {
@@ -188,9 +189,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
                   {bib.description && <p className="collection-description">{bib.description}</p>}
                   <div className="collection-meta">
                     <span className="citation-style">{bib.citationStyle.toUpperCase()}</span>
-                    <span className="paper-count">
-                      {JSON.parse(bib.paperIds || '[]').length} papers
-                    </span>
+                    <span className="paper-count">{bib.paperIds.length} papers</span>
                   </div>
                 </div>
               ))}
@@ -203,7 +202,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
             <div className="modal-content">
               <h3>Create Bibliography Collection</h3>
               <div className="form-group">
-                <label>Name</label>
+                <label htmlFor="bibliographyName">Name</label>
                 <input
                   type="text"
                   value={bibliographyName}
@@ -212,7 +211,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
                 />
               </div>
               <div className="form-group">
-                <label>Description (optional)</label>
+                <label htmlFor="bibliographyDescription">Description (optional)</label>
                 <textarea
                   value={bibliographyDescription}
                   onChange={(e) => setBibliographyDescription(e.target.value)}
@@ -221,7 +220,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
                 />
               </div>
               <div className="form-group">
-                <label>Citation Style</label>
+                <label htmlFor="citationStyle">Citation Style</label>
                 <select value={citationStyle} onChange={(e) => setCitationStyle(e.target.value)}>
                   <option value="apa">APA</option>
                   <option value="mla">MLA</option>
@@ -354,7 +353,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
               Create a bibliography collection from {selectedCitations.length} selected citations
             </p>
             <div className="form-group">
-              <label>Name</label>
+              <label htmlFor="bibliographyName">Name</label>
               <input
                 type="text"
                 value={bibliographyName}
@@ -363,7 +362,7 @@ export const CitationManager: React.FC<CitationManagerProps> = ({ paperId, onClo
               />
             </div>
             <div className="form-group">
-              <label>Description (optional)</label>
+              <label htmlFor="bibliographyDescription">Description (optional)</label>
               <textarea
                 value={bibliographyDescription}
                 onChange={(e) => setBibliographyDescription(e.target.value)}

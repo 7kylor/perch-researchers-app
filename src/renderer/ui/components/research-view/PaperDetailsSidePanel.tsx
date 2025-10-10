@@ -10,6 +10,7 @@ import {
   FileText,
   Quote,
   Bookmark,
+  Download,
 } from 'lucide-react';
 import { useSearch } from './SearchProvider';
 

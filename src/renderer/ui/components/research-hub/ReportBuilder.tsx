@@ -43,10 +43,8 @@ export const ReportBuilder: React.FC = () => {
     const selectedSections = DEFAULT_SECTIONS.filter((k) => sections[k]);
     setGenerating(true);
     try {
-      const res = (await window.api.reports.generate(ids, { sections: selectedSections })) as {
-        content: string;
-      };
-      setContent(res.content || '');
+      const res = await window.api.reports.generate(ids, { sections: selectedSections });
+      setContent(res || '');
     } catch (e) {
       console.error('Report generation failed:', e);
     } finally {
