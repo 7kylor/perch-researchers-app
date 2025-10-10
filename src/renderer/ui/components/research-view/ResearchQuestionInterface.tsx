@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Upload, MessageCircle, HelpCircle, ArrowRight } from 'lucide-react';
+import { Search, Upload, MessageCircle, HelpCircle, ArrowRight, History, Clock, TrendingUp } from 'lucide-react';
 import { useSearch } from './SearchProvider';
 
 export const ResearchQuestionInterface: React.FC = () => {

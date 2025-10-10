@@ -80,12 +80,17 @@ export interface AcademicSearchResult {
 // Extraction & Reporting Types
 export type ExtractionColumnType = 'text' | 'number' | 'boolean' | 'date' | 'categorical';
 
+export type ExtractionModel = 'qwen3-0.6b' | 'qwen3-1.7b' | 'phi-4-mini';
+
 export interface ExtractionColumn {
   id: string;
   name: string; // column display name
   type: ExtractionColumnType;
   prompt: string; // instruction for AI extraction
   options?: string[]; // allowed values for categorical
+  model?: ExtractionModel; // preferred AI model for extraction
+  isVisible?: boolean; // column visibility in table
+  order?: number; // column display order
 }
 
 export interface ExtractionTemplate {
@@ -135,3 +140,31 @@ export interface ResearchAnalytics {
   papersRead: number;
   topics: ResearchTopic[];
 }
+
+// Research View State Types
+export interface CustomColumn extends ExtractionColumn {
+  extractedValues?: Record<string, ExtractedCellValue>; // paperId -> value
+  isExtracting?: boolean; // loading state
+  error?: string; // extraction error
+}
+
+export interface SearchState {
+  query: string;
+  results: AcademicSearchResult | null;
+  selectedPapers: string[];
+  expandedPaperIds: string[];
+  sidePanelPaperId: string | null;
+  customColumns: CustomColumn[];
+  columnVisibility: Record<string, boolean>;
+  sorting: Array<{ id: string; desc: boolean }>;
+  filters: {
+    yearRange: [number | null, number | null];
+    sources: string[];
+    hasAbstract: boolean | null;
+    hasPdf: boolean | null;
+    journalQuality: number | null;
+    studyTypes: string[];
+  };
+}
+
+export type ExportFormat = 'csv' | 'bibtex' | 'ris' | 'json';
