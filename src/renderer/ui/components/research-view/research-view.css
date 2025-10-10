@@ -770,6 +770,45 @@
 	overflow: hidden;
 }
 
+.filters-actions {
+	display: flex;
+	justify-content: space-between;
+	padding-bottom: 16px;
+	border-bottom: 1px solid #e5e7eb;
+	margin-bottom: 20px;
+}
+
+.clear-filters-button {
+	padding: 8px 16px;
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	font-size: 12px;
+	color: #ef4444;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.clear-filters-button:hover {
+	background: #fef2f2;
+	border-color: #ef4444;
+}
+
+.apply-filters-button {
+	padding: 8px 16px;
+	background: #3b82f6;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 12px;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.apply-filters-button:hover {
+	background: #2563eb;
+}
+
 .filters-panel {
 	display: flex;
 	flex-direction: column;
@@ -960,6 +999,223 @@ input:checked + .toggle-slider:before {
 
 .checkbox-item input[type="checkbox"] {
 	margin: 0;
+}
+
+/* Results Header */
+.results-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 24px 24px 16px;
+	border-bottom: 1px solid #e5e7eb;
+	margin-bottom: 16px;
+}
+
+.results-info {
+	flex: 1;
+}
+
+.results-title {
+	font-size: 24px;
+	font-weight: 700;
+	color: #111827;
+	margin: 0 0 8px 0;
+}
+
+.results-summary {
+	font-size: 14px;
+	color: #6b7280;
+	line-height: 1.5;
+	margin: 0 0 12px 0;
+	max-width: 600px;
+}
+
+.results-stats {
+	display: flex;
+	gap: 16px;
+}
+
+.stat-item {
+	font-size: 13px;
+	color: #374151;
+}
+
+.stat-item strong {
+	color: #3b82f6;
+}
+
+.back-to-search {
+	padding: 8px 16px;
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	font-size: 12px;
+	color: #374151;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.back-to-search:hover {
+	border-color: #d1d5db;
+	background: #f9fafb;
+}
+
+/* Paper Actions */
+.paper-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-left: auto;
+}
+
+.action-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	background: none;
+	border: 1px solid #e5e7eb;
+	border-radius: 4px;
+	color: #6b7280;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.action-button:hover {
+	border-color: #3b82f6;
+	color: #3b82f6;
+	background: #eff6ff;
+}
+
+.action-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.action-button svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* Paper Details Modal */
+.paper-details-modal {
+	background: white;
+	border-radius: 12px;
+	box-shadow:
+		0 20px 25px -5px rgba(0, 0, 0, 0.1),
+		0 10px 10px -5px rgba(0, 0, 0, 0.04);
+	max-width: 800px;
+	width: 90%;
+	max-height: 90vh;
+	overflow: hidden;
+}
+
+.paper-details-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 24px;
+}
+
+.paper-meta-section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.paper-meta-section h4 {
+	font-size: 14px;
+	font-weight: 600;
+	color: #111827;
+	margin: 0;
+}
+
+.paper-meta-section p {
+	font-size: 14px;
+	color: #374151;
+	margin: 0;
+	line-height: 1.4;
+}
+
+.paper-abstract-section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.paper-abstract-section h4 {
+	font-size: 16px;
+	font-weight: 600;
+	color: #111827;
+	margin: 0;
+}
+
+.paper-abstract-section p {
+	font-size: 14px;
+	color: #374151;
+	margin: 0;
+	line-height: 1.6;
+}
+
+.paper-actions-section {
+	display: flex;
+	gap: 12px;
+	padding-top: 8px;
+	border-top: 1px solid #e5e7eb;
+}
+
+.primary-action-button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 20px;
+	background: #3b82f6;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.primary-action-button:hover:not(:disabled) {
+	background: #2563eb;
+}
+
+.primary-action-button:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.secondary-action-button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 20px;
+	background: #ffffff;
+	color: #374151;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.secondary-action-button:hover {
+	border-color: #d1d5db;
+	background: #f9fafb;
+}
+
+.primary-action-button svg,
+.secondary-action-button svg {
+	width: 16px;
+	height: 16px;
 }
 
 /* Source chips */
