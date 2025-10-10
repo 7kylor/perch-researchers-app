@@ -2023,17 +2023,20 @@ body {
 }
 
 .navbar-left {
-	flex: 0 0 auto;
+	flex: 1 1 0;
+	min-width: 100px;
 	/* Window controls are handled by Electron natively */
 }
 
 .navbar-center {
-	flex: 1;
+	flex: 0 0 auto;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	-webkit-app-region: drag; /* Make the center area draggable */
 	cursor: move;
+	min-width: 180px;
+	max-width: 280px;
 }
 
 .navbar-title {
@@ -2065,7 +2068,10 @@ body {
 }
 
 .navbar-right {
-	flex: 0 0 auto;
+	flex: 1 1 0;
+	min-width: 200px;
+	display: flex;
+	justify-content: flex-end;
 	/* Navigation controls */
 }
 
