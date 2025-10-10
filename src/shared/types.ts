@@ -64,13 +64,57 @@ export interface AcademicPaper {
     | 'crossref'
     | 'sciencedirect'
     | 'jstor'
-    | 'pdf';
+    | 'pdf'
+    | 'openalex'
+    | 'clinicaltrials';
 }
 
 export interface AcademicSearchResult {
   papers: AcademicPaper[];
   totalResults: number;
   searchTime: number;
+}
+
+// Extraction & Reporting Types
+export type ExtractionColumnType = 'text' | 'number' | 'boolean' | 'date' | 'categorical';
+
+export interface ExtractionColumn {
+  id: string;
+  name: string; // column display name
+  type: ExtractionColumnType;
+  prompt: string; // instruction for AI extraction
+  options?: string[]; // allowed values for categorical
+}
+
+export interface ExtractionTemplate {
+  id: string;
+  name: string;
+  columns: ExtractionColumn[];
+  createdAt: ISODateString;
+}
+
+export type ExtractedCellValue = string | number | boolean | null;
+
+export interface TextQuote {
+  exact: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+export interface CellProvenance {
+  quote?: TextQuote;
+  page?: number;
+  confidence?: number; // 0..1
+}
+
+export interface PaperExtractionRow {
+  id: string;
+  paperId: string;
+  templateId: string;
+  values: Record<string, ExtractedCellValue>;
+  provenance: Record<string, CellProvenance>;
+  quality?: number; // 0..1
+  createdAt: ISODateString;
 }
 
 // Analytics Types

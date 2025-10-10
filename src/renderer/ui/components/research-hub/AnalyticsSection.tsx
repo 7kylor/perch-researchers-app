@@ -30,7 +30,7 @@ export const AnalyticsSection: React.FC = () => {
         if (!mounted) return;
         setMetrics(data as AnalyticsMetrics);
       } catch (err) {
-        // eslint-disable-next-line no-console
+         
         console.error('Failed to load analytics', err);
       } finally {
         if (mounted) setIsLoading(false);
@@ -55,7 +55,7 @@ export const AnalyticsSection: React.FC = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Failed to export analytics:', error);
     }
   };

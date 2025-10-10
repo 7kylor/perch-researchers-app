@@ -99,6 +99,95 @@ export function openDatabase(): Database.Database {
       payload text not null,
       updatedAt text not null
     );
+
+    -- Saved searches
+    create table if not exists search_queries (
+      id text primary key,
+      name text not null,
+      query text not null,
+      filters text not null,
+      createdAt text not null
+    );
+
+    -- Research alerts configuration
+    create table if not exists research_alerts (
+      id text primary key,
+      queryId text not null,
+      frequency text not null,
+      enabled integer not null,
+      lastChecked text
+    );
+    create index if not exists idx_research_alerts_query on research_alerts(queryId);
+
+    -- Alert results
+    create table if not exists alert_results (
+      id text primary key,
+      alertId text not null,
+      paperId text not null,
+      discoveredAt text not null,
+      read integer not null default 0
+    );
+    create index if not exists idx_alert_results_alert on alert_results(alertId);
+    create index if not exists idx_alert_results_paper on alert_results(paperId);
+
+    -- Extraction templates
+    create table if not exists extraction_templates (
+      id text primary key,
+      name text not null,
+      columns text not null,
+      createdAt text not null
+    );
+
+    -- Extracted data per paper and template
+    create table if not exists paper_extractions (
+      id text primary key,
+      paperId text not null,
+      templateId text not null,
+      row text not null,
+      provenance text not null,
+      quality real,
+      createdAt text not null
+    );
+    create index if not exists idx_paper_extractions_paper on paper_extractions(paperId);
+    create index if not exists idx_paper_extractions_template on paper_extractions(templateId);
+
+    -- Research reports
+    create table if not exists research_reports (
+      id text primary key,
+      title text not null,
+      paperIds text not null,
+      sections text not null,
+      createdAt text not null,
+      updatedAt text not null
+    );
+
+    -- Screening decisions and criteria
+    create table if not exists screening_decisions (
+      id text primary key,
+      paperId text not null,
+      stage text not null,
+      decision text not null,
+      reason text,
+      decidedAt text not null
+    );
+    create index if not exists idx_screening_decisions_paper on screening_decisions(paperId);
+
+    create table if not exists screening_criteria (
+      id text primary key,
+      name text not null,
+      description text,
+      stage text not null
+    );
+
+    -- Notebooks index (reports, extractions, saved searches)
+    create table if not exists notebooks (
+      id text primary key,
+      type text not null,
+      title text not null,
+      refId text,
+      createdAt text not null
+    );
+    create index if not exists idx_notebooks_created on notebooks(createdAt);
   `);
 
   // Ensure papers table has annotations column (SQLite lacks IF NOT EXISTS for columns)
@@ -107,6 +196,13 @@ export function openDatabase(): Database.Database {
     const hasAnnotations = columns.some((c) => c.name === 'annotations');
     if (!hasAnnotations) {
       db.exec(`ALTER TABLE papers ADD COLUMN annotations text`);
+    }
+    const rrCols = db.prepare(`PRAGMA table_info(research_reports)`).all() as Array<{
+      name: string;
+    }>;
+    const hasContent = rrCols.some((c) => c.name === 'content');
+    if (!hasContent) {
+      db.exec(`ALTER TABLE research_reports ADD COLUMN content text`);
     }
   } catch {
     // Best-effort; ignore if pragma/alter not supported

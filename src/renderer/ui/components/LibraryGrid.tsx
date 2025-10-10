@@ -1,4 +1,5 @@
 import React from 'react';
+import { Grid, List, Filter, BookOpen } from 'lucide-react';
 import { LibraryCard } from './LibraryCard';
 
 type Paper = {
@@ -16,6 +17,7 @@ type Paper = {
 };
 
 type ViewMode = 'grid' | 'list' | 'compact';
+type SortOption = 'recent' | 'title' | 'author' | 'year';
 
 type LibraryGridProps = {
   papers: Paper[];
@@ -35,6 +37,10 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   onShowCitations,
 }) => {
   const [animatedPapers, setAnimatedPapers] = React.useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [sortBy, setSortBy] = React.useState<SortOption>('recent');
+  const [showSortDropdown, setShowSortDropdown] = React.useState(false);
+  const [localViewMode, setLocalViewMode] = React.useState<ViewMode>(viewMode);
 
   // Animate new papers as they appear
   React.useEffect(() => {
@@ -44,6 +50,42 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
     }, 50);
     return () => clearTimeout(timer);
   }, [papers]);
+
+  // Filter papers based on search query
+  const filteredPapers = React.useMemo(() => {
+    if (!searchQuery.trim()) return papers;
+
+    const query = searchQuery.toLowerCase();
+    return papers.filter(
+      (paper) =>
+        paper.title.toLowerCase().includes(query) ||
+        paper.authors.some((author) => author.toLowerCase().includes(query)) ||
+        (paper.venue && paper.venue.toLowerCase().includes(query)) ||
+        (paper.abstract && paper.abstract.toLowerCase().includes(query)),
+    );
+  }, [papers, searchQuery]);
+
+  // Sort papers based on selected option
+  const sortedPapers = React.useMemo(() => {
+    const sorted = [...filteredPapers];
+
+    switch (sortBy) {
+      case 'title':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'author':
+        return sorted.sort((a, b) => {
+          const authorA = a.authors[0] || '';
+          const authorB = b.authors[0] || '';
+          return authorA.localeCompare(authorB);
+        });
+      case 'year':
+        return sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
+      case 'recent':
+      default:
+        // Already sorted by addedAt in backend
+        return sorted;
+    }
+  }, [filteredPapers, sortBy]);
 
   const getPaperStatus = (paper: Paper) => {
     if (paper.status === 'to_read') return 'unknown';
@@ -59,36 +101,118 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
     return Math.min(index * delayIncrement, maxDelay);
   };
 
+  const sortOptions = [
+    { value: 'recent' as SortOption, label: 'Recently Added' },
+    { value: 'title' as SortOption, label: 'Title' },
+    { value: 'author' as SortOption, label: 'Author' },
+    { value: 'year' as SortOption, label: 'Year' },
+  ];
+
   return (
-    <div className={`library-grid library-grid-${viewMode}`}>
-      {papers.map((paper, index) => (
-        <div
-          key={paper.id}
-          className={`library-grid-item ${animatedPapers.has(paper.id) ? 'animated' : ''}`}
-          style={{
-            animationDelay: `${getStaggerDelay(index)}s`,
-          }}
-        >
-          <LibraryCard
-            id={paper.id}
-            title={paper.title}
-            authors={paper.authors}
-            venue={paper.venue}
-            year={paper.year}
-            doi={paper.doi}
-            abstract={paper.abstract}
-            source={paper.source}
-            status={getPaperStatus(paper)}
-            category={category}
-            isNew={index < 3}
-            count={0}
-            onClick={onPaperSelect}
-            onRefresh={onRefresh}
-            dateAdded={paper.filePath ? new Date().toISOString() : undefined}
-            onShowCitations={onShowCitations}
+    <div className="library-grid-container">
+      {/* Library Controls */}
+      <div className="library-controls">
+        <div className="library-search">
+          <BookOpen className="search-icon animate-pulse" size={16} />
+          <input
+            type="text"
+            placeholder="Search papers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
           />
         </div>
-      ))}
+
+        <div className="library-actions">
+          {/* Sort Dropdown */}
+          <div className="sort-dropdown">
+            <button
+              type="button"
+              className="sort-button"
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+            >
+              <Filter size={16} className="animate-spin" />
+              <span>Sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}</span>
+            </button>
+
+            {showSortDropdown && (
+              <div className="sort-menu">
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`sort-option ${sortBy === option.value ? 'active' : ''}`}
+                    onClick={() => {
+                      setSortBy(option.value);
+                      setShowSortDropdown(false);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="view-toggle">
+            <button
+              type="button"
+              className={`view-button ${localViewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setLocalViewMode('grid')}
+              title="Grid view"
+            >
+              <Grid size={16} className="animate-bounce" />
+            </button>
+            <button
+              type="button"
+              className={`view-button ${localViewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setLocalViewMode('list')}
+              title="List view"
+            >
+              <List size={16} className="animate-pulse" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Papers Grid/List */}
+      <div className={`library-grid library-grid-${localViewMode}`}>
+        {sortedPapers.map((paper, index) => (
+          <div
+            key={paper.id}
+            className={`library-grid-item ${animatedPapers.has(paper.id) ? 'animated' : ''}`}
+            style={{
+              animationDelay: `${getStaggerDelay(index)}s`,
+            }}
+          >
+            <LibraryCard
+              id={paper.id}
+              title={paper.title}
+              authors={paper.authors}
+              venue={paper.venue}
+              year={paper.year}
+              doi={paper.doi}
+              abstract={paper.abstract}
+              source={paper.source}
+              status={getPaperStatus(paper)}
+              category={category}
+              isNew={index < 3}
+              count={0}
+              onClick={onPaperSelect}
+              onRefresh={onRefresh}
+              dateAdded={paper.filePath ? new Date().toISOString() : undefined}
+              onShowCitations={onShowCitations}
+            />
+          </div>
+        ))}
+      </div>
+
+      {sortedPapers.length === 0 && (
+        <div className="empty-library-state">
+          <p>No papers found matching your search.</p>
+        </div>
+      )}
     </div>
   );
 };

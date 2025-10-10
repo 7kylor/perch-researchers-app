@@ -1,183 +1,117 @@
 import React from 'react';
-import {
-  Settings,
-  PanelLeftOpen,
-  PanelLeftClose,
-  Search,
-  Plus,
-  ArrowUpDown,
-  Calendar,
-  User,
-  X,
-  Bot,
-} from 'lucide-react';
-
-type SortOption = 'recent' | 'title' | 'author' | 'year';
+import { Settings, User, HelpCircle, LogOut, Library, Brain, FileText, Bell } from 'lucide-react';
 
 type ActivityBarProps = {
   onSettingsClick: () => void;
-  isSidebarCollapsed: boolean;
-  onSidebarToggle: () => void;
-
-  // Search props
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  // Sort and add props
-  sortBy: SortOption;
-  onSortChange: (sort: SortOption) => void;
-  onAddItem: () => void;
-  // AI chat props
-  onAIChatToggle: () => void;
-  showAIChat: boolean;
+  currentRoute?: string;
+  onViewChange: (view: 'library' | 'research' | 'reports' | 'alerts') => void;
 };
 
 export const ActivityBar: React.FC<ActivityBarProps> = ({
   onSettingsClick,
-  isSidebarCollapsed,
-  onSidebarToggle,
-  searchQuery,
-  onSearchChange,
-  sortBy,
-  onSortChange,
-  onAddItem,
-  onAIChatToggle,
-  showAIChat,
+  currentRoute = 'research',
+  onViewChange,
 }) => {
-  const renderCount = React.useRef(0);
-  renderCount.current += 1;
-
-  const [showSortDropdown, setShowSortDropdown] = React.useState(false);
-  const sortRef = React.useRef<HTMLDivElement>(null);
+  const [showUserMenu, setShowUserMenu] = React.useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (sortRef.current && e.target && !sortRef.current.contains(e.target as HTMLElement)) {
-        setShowSortDropdown(false);
+      if (
+        userMenuRef.current &&
+        e.target &&
+        !userMenuRef.current.contains(e.target as HTMLElement)
+      ) {
+        setShowUserMenu(false);
       }
     };
 
-    if (showSortDropdown) {
+    if (showUserMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showSortDropdown]);
+  }, [showUserMenu]);
 
-  const sortOptions = [
-    {
-      value: 'recent' as SortOption,
-      label: 'Recently Added',
-      icon: <Calendar className="h-3 w-3" />,
-    },
-    { value: 'title' as SortOption, label: 'Title', icon: <ArrowUpDown className="h-3 w-3" /> },
-    { value: 'author' as SortOption, label: 'Author', icon: <User className="h-3 w-3" /> },
-    { value: 'year' as SortOption, label: 'Year', icon: <Calendar className="h-3 w-3" /> },
-  ];
+  const getNavLinkClass = (route: string) => {
+    return `top-nav-link ${currentRoute === route ? 'top-nav-link-active' : ''}`;
+  };
 
   return (
     <header className="activity-bar">
-      {/* Left section - Logo and Sidebar toggle */}
+      {/* Left section - Brand and Navigation */}
       <div className="activity-left">
-        <button
-          type="button"
-          className="activity-sidebar-toggle"
-          onClick={onSidebarToggle}
-          title={isSidebarCollapsed ? 'Show sidebar (⌘B)' : 'Hide sidebar (⌘B)'}
-          aria-label={isSidebarCollapsed ? 'Show sidebar' : 'Hide sidebar'}
-        >
-          {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-        </button>
-        <div className="activity-divider" />
         <h1 className="activity-title">Perch</h1>
+        <nav className="top-nav">
+          <button
+            type="button"
+            className={getNavLinkClass('library')}
+            onClick={() => onViewChange('library')}
+          >
+            <Library size={16} />
+            Library
+          </button>
+          <button
+            type="button"
+            className={getNavLinkClass('research')}
+            onClick={() => onViewChange('research')}
+          >
+            <Brain size={16} />
+            Semantic research
+          </button>
+          <button
+            type="button"
+            className={getNavLinkClass('reports')}
+            onClick={() => onViewChange('reports')}
+          >
+            <FileText size={16} />
+            Reports
+          </button>
+          <button
+            type="button"
+            className={getNavLinkClass('alerts')}
+            onClick={() => onViewChange('alerts')}
+          >
+            <Bell size={16} />
+            Alerts
+          </button>
+        </nav>
       </div>
 
-      {/* Center section - Search */}
-      <div className="activity-center">
-        <div className="search-bar">
-          <Search className="search-icon" size={18} />
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search papers by title, author, or keyword..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-          {searchQuery && (
-            <button type="button" className="search-clear" onClick={() => onSearchChange('')}>
-              <X size={16} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Right section - Actions */}
+      {/* Right section - User and Settings */}
       <div className="activity-right">
-        {/* Sort Dropdown */}
-        <div className="activity-actions" ref={sortRef}>
+        <div className="activity-user" ref={userMenuRef}>
           <button
             type="button"
             className="activity-compact-btn"
-            onClick={() => setShowSortDropdown(!showSortDropdown)}
-            title="Sort papers"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            title="Account menu"
           >
-            <ArrowUpDown size={18} />
+            <User size={18} />
           </button>
 
-          {showSortDropdown && (
-            <div className="quick-actions-menu">
-              <div className="quick-actions-section">
-                <div className="quick-action-label">Sort by</div>
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`quick-action-item ${sortBy === option.value ? 'active' : ''}`}
-                    onClick={() => {
-                      onSortChange(option.value);
-                      setShowSortDropdown(false);
-                    }}
-                  >
-                    {option.icon}
-                    <div className="quick-action-content">
-                      <div className="quick-action-title">{option.label}</div>
-                    </div>
-                  </button>
-                ))}
+          {showUserMenu && (
+            <div className="user-menu">
+              <div className="user-menu-item">
+                <User size={14} />
+                <span>talikim@gmail.com</span>
               </div>
+              <div className="user-menu-divider" />
+              <button type="button" className="user-menu-item" onClick={onSettingsClick}>
+                <Settings size={14} />
+                <span>Settings</span>
+              </button>
+              <button type="button" className="user-menu-item">
+                <HelpCircle size={14} />
+                <span>Help</span>
+              </button>
+              <div className="user-menu-divider" />
+              <button type="button" className="user-menu-item user-menu-logout">
+                <LogOut size={14} />
+                <span>Sign out</span>
+              </button>
             </div>
           )}
         </div>
-
-        {/* AI Chat Button */}
-        <button
-          type="button"
-          className={`activity-compact-btn ${showAIChat ? 'active' : ''}`}
-          onClick={onAIChatToggle}
-          title={showAIChat ? 'Hide AI Assistant' : 'Show AI Assistant'}
-        >
-          <Bot size={18} />
-        </button>
-
-        {/* Deprecated: Research Modal Button removed in favor of merged hub */}
-
-        {/* Add Paper Button */}
-        <button
-          type="button"
-          className="activity-compact-btn add-btn"
-          onClick={onAddItem}
-          title="Add new paper"
-        >
-          <Plus size={18} />
-          <span>Add Paper</span>
-        </button>
-
-        <button
-          type="button"
-          className="activity-compact-btn"
-          onClick={onSettingsClick}
-          title="Settings (⌘,)"
-        >
-          <Settings size={18} />
-        </button>
       </div>
     </header>
   );

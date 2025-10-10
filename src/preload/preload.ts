@@ -333,8 +333,92 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('academic:search-pubmed', query, limit),
     'search-ieee': (query: string, limit?: number) =>
       ipcRenderer.invoke('academic:search-ieee', query, limit),
+    'search-clinicaltrials': (query: string, limit?: number) =>
+      ipcRenderer.invoke('academic:search-clinicaltrials', query, limit),
     'search-all': (query: string, limit?: number) =>
       ipcRenderer.invoke('academic:search-all', query, limit),
     'get-by-doi': (doi: string) => ipcRenderer.invoke('academic:get-by-doi', doi),
+  },
+  openalex: {
+    search: (
+      query: string,
+      limit?: number,
+      page?: number,
+      filters?: {
+        fromYear?: number;
+        toYear?: number;
+        openAccess?: boolean;
+        minCitations?: number;
+        type?: 'journal-article' | 'conference-paper' | 'other';
+      },
+    ) => ipcRenderer.invoke('openalex:search', query, limit, page, filters),
+  },
+  extraction: {
+    templates: {
+      list: () => ipcRenderer.invoke('extraction:templates:list'),
+    },
+    extractPaper: (paperId: string, templateId: string) =>
+      ipcRenderer.invoke('extraction:extract-paper', paperId, templateId),
+    batch: (jobId: string, paperIds: string[], templateId: string) =>
+      ipcRenderer.invoke('extraction:batch', jobId, paperIds, templateId),
+    jobStatus: (jobId: string) => ipcRenderer.invoke('extraction:job-status', jobId),
+    getResults: (params?: { templateId?: string; paperIds?: string[] }) =>
+      ipcRenderer.invoke('extraction:get-results', params),
+  },
+  reports: {
+    generate: (paperIds: string[], options?: { sections?: string[] }) =>
+      ipcRenderer.invoke('reports:generate', paperIds, options),
+    getReport: (reportId: string) => ipcRenderer.invoke('reports:get-report', reportId),
+  },
+  alerts: {
+    runNow: (alertId: string) => ipcRenderer.invoke('alerts:run-now', alertId),
+    create: (payload: {
+      queryId: string;
+      frequency: 'daily' | 'weekly' | 'monthly';
+      enabled: boolean;
+    }) => ipcRenderer.invoke('alerts:create', payload),
+    update: (
+      id: string,
+      updates: Partial<{ frequency: 'daily' | 'weekly' | 'monthly'; enabled: boolean }>,
+    ) => ipcRenderer.invoke('alerts:update', id, updates),
+    delete: (id: string) => ipcRenderer.invoke('alerts:delete', id),
+    getResults: (alertId: string) => ipcRenderer.invoke('alerts:get-results', alertId),
+    markRead: (alertResultId: string, read: boolean) =>
+      ipcRenderer.invoke('alerts:mark-read', alertResultId, read),
+  },
+  screening: {
+    decide: (payload: {
+      paperId: string;
+      stage: 'title_abstract' | 'full_text';
+      decision: 'include' | 'exclude' | 'maybe';
+      reason?: string;
+    }) => ipcRenderer.invoke('screening:decide', payload),
+    get: (params?: { stage?: 'title_abstract' | 'full_text' }) =>
+      ipcRenderer.invoke('screening:get', params),
+    stats: (stage: 'title_abstract' | 'full_text') => ipcRenderer.invoke('screening:stats', stage),
+  },
+  search: {
+    saveQuery: (payload: { name: string; query: string; filters?: Record<string, unknown> }) =>
+      ipcRenderer.invoke('search:save-query', payload),
+    listQueries: () => ipcRenderer.invoke('search:list-queries'),
+  },
+  alertsList: {
+    list: () => ipcRenderer.invoke('alerts:list'),
+  },
+  notebooks: {
+    list: (limit?: number) => ipcRenderer.invoke('notebooks:list', limit ?? 10),
+  },
+  analytics: {
+    getMetrics: () => ipcRenderer.invoke('analytics:getMetrics'),
+    getTopicAnalysis: () => ipcRenderer.invoke('analytics:getTopicAnalysis'),
+    getProductivityInsights: () => ipcRenderer.invoke('analytics:getProductivityInsights'),
+    trackSession: (
+      paperId: string,
+      action: 'start' | 'end' | 'update',
+      data?: Record<string, unknown>,
+    ) => ipcRenderer.invoke('analytics:trackSession', paperId, action, data),
+    getReadingHistory: (timeframe: 'week' | 'month' | 'year' = 'month') =>
+      ipcRenderer.invoke('analytics:getReadingHistory', timeframe),
+    export: (format: 'json' | 'csv' = 'json') => ipcRenderer.invoke('analytics:export', format),
   },
 });

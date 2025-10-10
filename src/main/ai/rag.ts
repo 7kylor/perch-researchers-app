@@ -238,7 +238,12 @@ ${context}
 **GAP ANALYSIS FRAMEWORK:**
 
 1. **Temporal Evolution Gaps**
-   - Compare recent papers [${recentPapers.map((_, i) => papers.indexOf(recentPapers[i]!) + 1).join(', ')}] with earlier work
+  - Compare recent papers [${recentPapers
+    .map((_, i) => {
+      const idx = papers.indexOf(recentPapers[i] as (typeof papers)[number]);
+      return idx >= 0 ? idx + 1 : '?';
+    })
+    .join(', ')}] with earlier work
    - Identify stalled research directions or outdated approaches
 
 2. **Methodological Limitations**
@@ -424,6 +429,31 @@ ${context}
 - **Concept Definitions**: Clear explanations of key terms`;
 
     return this.aiProvider.answerQuestion(prompt, context);
+  }
+
+  // New: Structured data extraction helpers
+  async extractDataPoint(paperId: string, prompt: string): Promise<string> {
+    if (!this.canUseAI()) return 'AI features not available in free tier';
+    const paper = db.prepare('select title, abstract from papers where id = ?').get(paperId) as
+      | { title: string; abstract: string | null }
+      | undefined;
+    if (!paper) return 'Paper not found';
+    const context = `${paper.title}\n\n${paper.abstract ?? ''}`;
+    const system = 'Extract strictly from context. If unknown, return NULL.';
+    return this.aiProvider.answerQuestion(`${system}\n\n${prompt}`, context);
+  }
+
+  async validateExtraction(
+    values: Record<string, unknown>,
+    contextSnippet: string,
+  ): Promise<number> {
+    if (!this.canUseAI()) return 0;
+    const prompt = `Given the extracted values below, assess consistency and plausibility (0..1).
+Values: ${JSON.stringify(values)}
+Context: ${contextSnippet}`;
+    const scoreText = await this.aiProvider.answerQuestion(prompt, contextSnippet);
+    const n = Number(scoreText.replace(/[^0-9.]/g, ''));
+    return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0.5;
   }
 
   async generateResearchQuestions(paperIds: string[], focusArea?: string): Promise<string> {
