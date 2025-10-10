@@ -1,6 +1,6 @@
 import React from 'react';
 
-type Notebook = {
+export type Notebook = {
   id: string;
   type: 'report' | 'extraction' | 'search';
   title: string;

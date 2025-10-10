@@ -58,6 +58,14 @@ export interface PreloadAPI {
       onError: (listener: (payload: { chatId: string; error: string }) => void) => void;
     };
     testOpenAI: (apiKey: string) => Promise<boolean>;
+    'synthesize-review': (paperIds: string[]) => Promise<string>;
+    'extract-methodology': (paperId: string) => Promise<string>;
+    'identify-gaps': (paperIds: string[]) => Promise<string>;
+    'topic-modeling': (paperIds: string[]) => Promise<string>;
+    'extract-concepts': (paperId: string) => Promise<string[]>;
+    'generate-questions': (paperId: string) => Promise<string[]>;
+    'analyze-trends': (paperIds: string[]) => Promise<string>;
+    'generate-proposal': (paperIds: string[]) => Promise<string>;
   };
   license: {
     set: (pro: boolean) => Promise<void>;
@@ -248,6 +256,17 @@ contextBridge.exposeInMainWorld('api', {
       },
     },
     testOpenAI: (apiKey: string) => ipcRenderer.invoke('ai:test-openai', apiKey),
+    'synthesize-review': (paperIds: string[]) =>
+      ipcRenderer.invoke('ai:synthesize-review', paperIds),
+    'extract-methodology': (paperId: string) =>
+      ipcRenderer.invoke('ai:extract-methodology', paperId),
+    'identify-gaps': (paperIds: string[]) => ipcRenderer.invoke('ai:identify-gaps', paperIds),
+    'topic-modeling': (paperIds: string[]) => ipcRenderer.invoke('ai:topic-modeling', paperIds),
+    'extract-concepts': (paperId: string) => ipcRenderer.invoke('ai:extract-concepts', paperId),
+    'generate-questions': (paperId: string) => ipcRenderer.invoke('ai:generate-questions', paperId),
+    'analyze-trends': (paperIds: string[]) => ipcRenderer.invoke('ai:analyze-trends', paperIds),
+    'generate-proposal': (paperIds: string[]) =>
+      ipcRenderer.invoke('ai:generate-proposal', paperIds),
   },
   license: {
     set: (pro: boolean) => ipcRenderer.invoke('license:set', pro),
@@ -420,5 +439,13 @@ contextBridge.exposeInMainWorld('api', {
     getReadingHistory: (timeframe: 'week' | 'month' | 'year' = 'month') =>
       ipcRenderer.invoke('analytics:getReadingHistory', timeframe),
     export: (format: 'json' | 'csv' = 'json') => ipcRenderer.invoke('analytics:export', format),
+  },
+  citations: {
+    getForPaper: (paperId: string) => ipcRenderer.invoke('citations:get-for-paper', paperId),
+    extract: (paperId: string) => ipcRenderer.invoke('citations:extract', paperId),
+    getCollections: () => ipcRenderer.invoke('citations:get-collections'),
+    createCollection: (name: string) => ipcRenderer.invoke('citations:create-collection', name),
+    getCollectionContent: (bibliographyId: string) =>
+      ipcRenderer.invoke('citations:get-collection-content', bibliographyId),
   },
 });

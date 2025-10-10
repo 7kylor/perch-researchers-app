@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookOpen, Edit, Trash2, FileText, Quote } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
+import { ResearchBadge } from './ResearchBadge';
 
 type LibraryCardProps = {
   id: string;
@@ -31,6 +32,7 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
   abstract,
   source,
   status,
+  category,
   isNew = false,
   count,
   onClick,
@@ -132,6 +134,8 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
         return 'var(--primary)';
       case 'annotated':
         return 'var(--success)';
+      case 'research':
+        return 'var(--research)';
       case 'archived':
         return 'var(--muted)';
       default:
@@ -139,83 +143,122 @@ export const LibraryCard: React.FC<LibraryCardProps> = ({
     }
   };
 
+  // Check if this is a research-related paper (could be based on category, source, or other criteria)
+  const isResearchPaper = React.useMemo(() => {
+    return (
+      category === 'research' ||
+      source?.toLowerCase().includes('arxiv') ||
+      source?.toLowerCase().includes('scholar') ||
+      status === 'research'
+    );
+  }, [category, source, status]);
+
   return (
     <>
-      <div className={`book-card ${isHovered ? 'hovered' : ''}`}>
-        <button
-          className="book-card-button"
-          onClick={() => onClick(id)}
-          onContextMenu={handleRightClick}
-          onKeyDown={handleKeyDown}
-          onKeyUp={(e) => {
-            if (e.key === ' ') {
-              e.preventDefault();
-            }
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          type="button"
-          aria-label={`Open paper: ${title}`}
-        >
-          <div className="book-cover">
-            <div className="book-spine"></div>
+      <div style={{ paddingLeft: '40px', paddingRight: '10px' }}>
+        <div className={`book-card ${isHovered ? 'hovered' : ''}`}>
+          <button
+            className="book-card-button"
+            onClick={() => onClick(id)}
+            onContextMenu={handleRightClick}
+            onKeyDown={handleKeyDown}
+            onKeyUp={(e) => {
+              if (e.key === ' ') {
+                e.preventDefault();
+              }
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            type="button"
+            aria-label={`Open paper: ${title}`}
+          >
+            <div className="book-cover">
+              <div
+                className="book-spine"
+                style={isResearchPaper ? { backgroundColor: 'var(--research)' } : {}}
+              ></div>
 
-            <div className="book-front">
-              <div className="book-header">
-                <div
-                  className="book-status-indicator"
-                  style={{ backgroundColor: getStatusColor(status) }}
-                ></div>
-                {isNew && <div className="book-new-badge">New</div>}
-              </div>
-
-              <div className="book-content">
-                {/* Title Section */}
-                <div className="book-title-section">
-                  <div className="book-title">{truncateText(title, 55)}</div>
-                  {authors.length > 0 && (
-                    <div className="book-authors">
-                      {authors.slice(0, 3).join(', ')}
-                      {authors.length > 3 ? ` +${authors.length - 3} more` : ''}
-                    </div>
+              <div className="book-front">
+                <div className="book-header">
+                  <div
+                    className="book-status-indicator"
+                    style={{ backgroundColor: getStatusColor(status) }}
+                  ></div>
+                  {isNew && <div className="book-new-badge">New</div>}
+                  {isResearchPaper && (
+                    <ResearchBadge variant="subtle" size="sm">
+                      Research
+                    </ResearchBadge>
                   )}
                 </div>
 
-                {/* Publication Info */}
-                <div className="book-publication">
-                  <div className="publication-row">
-                    {year && <span className="publication-year">{year}</span>}
-                    {venue && <span className="publication-venue">{truncateText(venue, 30)}</span>}
+                <div className="book-content">
+                  {/* Title Section */}
+                  <div className="book-title-section">
+                    <div
+                      className="book-title"
+                      style={isResearchPaper ? { color: 'var(--research)' } : {}}
+                    >
+                      {truncateText(title, 55)}
+                    </div>
+                    {authors.length > 0 && (
+                      <div className="book-authors">
+                        {authors.slice(0, 3).join(', ')}
+                        {authors.length > 3 ? ` +${authors.length - 3} more` : ''}
+                      </div>
+                    )}
+                    {isResearchPaper && (
+                      <div style={{ marginTop: '4px' }}>
+                        <ResearchBadge variant="outline" size="sm">
+                          Academic
+                        </ResearchBadge>
+                      </div>
+                    )}
                   </div>
-                  {(doi || source) && (
-                    <div className="publication-details">
-                      {doi && <span className="publication-doi">DOI: {truncateText(doi, 20)}</span>}
-                      {source && <span className="publication-source">{source}</span>}
+
+                  {/* Publication Info */}
+                  <div className="book-publication">
+                    <div className="publication-row">
+                      {year && <span className="publication-year">{year}</span>}
+                      {venue && (
+                        <span className="publication-venue">{truncateText(venue, 30)}</span>
+                      )}
+                    </div>
+                    {(doi || source) && (
+                      <div className="publication-details">
+                        {doi && (
+                          <span className="publication-doi">DOI: {truncateText(doi, 20)}</span>
+                        )}
+                        {source && <span className="publication-source">{source}</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Abstract Preview */}
+                  {abstract && (
+                    <div className="book-abstract">
+                      <div className="abstract-content">{truncateText(abstract, 100)}</div>
                     </div>
                   )}
-                </div>
 
-                {/* Abstract Preview */}
-                {abstract && (
-                  <div className="book-abstract">
-                    <div className="abstract-content">{truncateText(abstract, 100)}</div>
+                  {/* Footer Info */}
+                  <div className="book-footer">
+                    <div className="book-date">Added {formatDate(dateAdded)}</div>
+                    {count > 0 && (
+                      <div
+                        className="book-notes"
+                        style={isResearchPaper ? { color: 'var(--research)' } : {}}
+                      >
+                        <FileText size={12} />
+                        <span>{count} notes</span>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {/* Footer Info */}
-                <div className="book-footer">
-                  <div className="book-date">Added {formatDate(dateAdded)}</div>
-                  {count > 0 && (
-                    <div className="book-notes">
-                      <FileText size={12} />
-                      <span>{count} notes</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </button>
+          </button>
+        </div>
       </div>
 
       <ContextMenu

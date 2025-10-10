@@ -23,6 +23,8 @@
 	--success: #1a7f37;
 	--warning: #d4a72c;
 	--error: #cf222e;
+	--research: #0d9488;
+	--research-hover: #0f766e;
 	/* Theme-aware book cover variables */
 	--cover-gradient: linear-gradient(
 		135deg,
@@ -56,6 +58,8 @@
 	--success: #3fb950;
 	--warning: #d29922;
 	--error: #f85149;
+	--research: #14b8a6;
+	--research-hover: #0d9488;
 	/* Theme-aware book cover variables (dark) */
 	--cover-gradient: linear-gradient(
 		135deg,
@@ -1549,74 +1553,98 @@ body {
 }
 
 /* Library Grid - Responsive Grid System */
+.library-grid-container {
+	background: var(--surface);
+	min-height: calc(100vh - 100px);
+}
+
 .library-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-	gap: clamp(16px, 2.5vw, 24px);
-	padding: clamp(16px, 2.5vw, 24px);
-	max-width: 100%; /* Use full width available */
-	margin: 0; /* Remove auto centering to start from left */
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: clamp(12px, 2vw, 20px);
+	padding: 12px 12px 16px;
+	max-width: 100%;
+	margin: 0;
 	width: 100%;
 	box-sizing: border-box;
 	min-height: 200px;
-	justify-items: start;
-	align-items: start;
-	justify-content: start; /* Ensure items start from left */
+	justify-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.library-grid-grid {
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	justify-items: center;
 }
 
 /* Responsive breakpoints with consistent sizing */
+@media (max-width: 1400px) {
+	.library-grid {
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+		gap: clamp(10px, 1.8vw, 16px);
+		padding: 10px 10px 12px;
+	}
+}
+
 @media (max-width: 1200px) {
 	.library-grid {
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: clamp(14px, 2.2vw, 20px);
-		padding: clamp(14px, 2.2vw, 20px);
+		gap: clamp(8px, 1.5vw, 14px);
+		padding: 8px 8px 12px;
 	}
 }
 
 @media (max-width: 900px) {
 	.library-grid {
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: clamp(12px, 2vw, 18px);
-		padding: clamp(12px, 2vw, 18px);
+		gap: clamp(8px, 1.2vw, 12px);
+		padding: 8px 8px 10px;
 	}
 }
 
 @media (max-width: 768px) {
 	.library-grid {
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-		gap: clamp(12px, 2vw, 18px);
-		padding: clamp(12px, 2vw, 18px);
+		gap: clamp(6px, 1vw, 10px);
+		padding: 6px 6px 8px;
 	}
 }
 
 @media (max-width: 600px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-		gap: clamp(10px, 1.8vw, 16px);
-		padding: clamp(10px, 1.8vw, 16px);
+		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+		gap: clamp(4px, 0.8vw, 8px);
+		padding: 4px 4px 6px;
 	}
 }
 
 @media (max-width: 480px) {
 	.library-grid {
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-		gap: clamp(8px, 1.5vw, 12px);
-		padding: clamp(8px, 1.5vw, 12px);
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: clamp(3px, 0.6vw, 6px);
+		padding: 3px 3px 4px;
 	}
 }
 
 /* Book Card Design */
 .book-card {
-	width: clamp(200px, 20vw, 280px);
-	height: calc(clamp(200px, 20vw, 280px) * 1.3);
+	width: clamp(220px, 22vw, 300px);
+	height: calc(clamp(220px, 22vw, 300px) * 1.25);
 	cursor: pointer;
 	position: relative;
-	transition: all 0.1s ease;
+	transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	border-radius: 8px;
+	overflow: hidden;
+	background: var(--surface-elevated);
+	border: 1px solid var(--border-subtle);
 }
 
 .book-card:hover {
-	transform: translateY(-2px);
-	box-shadow: var(--shadow-md);
+	transform: translateY(-6px) scale(1.02);
+	box-shadow: var(--shadow-lg);
+	border-color: var(--primary);
+	z-index: 10;
 }
 
 .book-card:not(:hover) {
@@ -1644,7 +1672,10 @@ body {
 	position: relative;
 	width: 100%;
 	height: 100%;
-	border-radius: 4px;
+	border-radius: 8px;
+	overflow: hidden;
+	background: linear-gradient(135deg, var(--surface) 0%, var(--surface-secondary) 100%);
+}
 	box-shadow: var(--shadow-sm);
 	transition: all 0.1s ease;
 }
@@ -1653,24 +1684,25 @@ body {
 	position: absolute;
 	left: 0;
 	top: 0;
-	width: 8px;
+	width: 12px;
 	height: 100%;
-	background: var(--surface-elevated);
-	border-radius: 4px 0 0 4px;
+	background: linear-gradient(to bottom, var(--surface-tertiary), var(--surface-secondary));
+	border-radius: 8px 0 0 8px;
 	z-index: 1;
 }
 
 .book-front {
 	position: absolute;
 	inset: 0;
-	background: var(--cover-gradient);
-	padding: 16px 12px 16px 20px;
+	background: var(--surface);
+	padding: 20px 16px 20px 24px;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	color: var(--text);
-	border-radius: 0 4px 4px 0;
+	border-radius: 0 8px 8px 0;
 	overflow: hidden;
+	box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
 .book-header {
@@ -1702,7 +1734,8 @@ body {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	gap: 14px;
+	gap: 16px;
+	line-height: 1.4;
 }
 
 /* Title Section */
@@ -1713,9 +1746,9 @@ body {
 }
 
 .book-title {
-	font-size: 15px;
+	font-size: 16px;
 	font-weight: 600;
-	line-height: 1.25;
+	line-height: 1.3;
 	color: var(--text);
 	margin: 0;
 	display: -webkit-box;
@@ -1723,18 +1756,20 @@ body {
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 	word-wrap: break-word;
+	letter-spacing: -0.01em;
 	hyphens: auto;
 }
 
 .book-authors {
-	font-size: 12px;
+	font-size: 13px;
 	color: var(--text-secondary);
-	line-height: 1.3;
+	line-height: 1.4;
 	font-weight: 400;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+	opacity: 0.9;
 }
 
 /* Publication Info */
@@ -1937,11 +1972,11 @@ body {
 /* Activity Bar (Top Navigation) */
 .activity-bar {
 	background: white;
-	padding: 0 24px;
+	padding: 0 0 0 32px; /* Added left padding, removed right padding */
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	height: 64px;
+	height: 48px; /* Reduced height for smaller, more minimal design */
 	flex-shrink: 0;
 	z-index: 100;
 	position: relative;
@@ -1978,7 +2013,7 @@ body {
 }
 
 .activity-title {
-	font-size: 14px;
+	font-size: 13px; /* Smaller font size for minimal design */
 	font-weight: 500;
 	color: var(--text);
 	margin: 0;
@@ -2080,13 +2115,13 @@ body {
 .nav-button {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 8px 16px;
+	gap: 6px;
+	padding: 6px 12px; /* Reduced padding for more minimal look */
 	background: none;
 	border: none;
 	border-radius: 8px;
 	color: var(--text-secondary);
-	font-size: 14px;
+	font-size: 12px; /* Smaller font size for minimal design */
 	font-weight: 500;
 	cursor: pointer;
 	transition: all 0.15s ease;
@@ -2465,7 +2500,8 @@ body {
 /* Responsive activity bar */
 @media (max-width: 900px) {
 	.activity-bar {
-		padding: 0 12px;
+		padding: 0 0 0 20px; /* Adjusted left padding for responsive design */
+		height: 44px; /* Smaller height for responsive design */
 	}
 
 	.activity-sidebar-toggle {
@@ -2494,8 +2530,8 @@ body {
 
 @media (max-width: 768px) {
 	.activity-bar {
-		padding: 0 8px;
-		height: 36px;
+		padding: 0 0 0 16px; /* Adjusted left padding for responsive design */
+		height: 40px; /* Smaller height for responsive design */
 	}
 
 	.activity-sidebar-toggle {
@@ -2530,8 +2566,8 @@ body {
 
 @media (max-width: 600px) {
 	.activity-bar {
-		padding: 0 6px;
-		height: 32px;
+		padding: 0 0 0 12px; /* Adjusted left padding for responsive design */
+		height: 36px; /* Smaller height for responsive design */
 	}
 
 	.activity-sidebar-toggle {
@@ -5892,6 +5928,66 @@ textarea:focus-visible {
 	min-width: 300px;
 }
 
+/* Library Search Bar */
+.library-search {
+	position: relative;
+	flex: 1;
+	max-width: 500px;
+	height: 40px;
+	background: var(--surface-secondary);
+	border: 1px solid var(--border-subtle);
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	padding: 0 12px;
+	transition: all 0.2s ease;
+}
+
+.library-search.focused {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.library-search .search-icon {
+	color: var(--text-secondary);
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+.library-search .search-input {
+	flex: 1;
+	background: none;
+	border: none;
+	outline: none;
+	color: var(--text);
+	font-size: 14px;
+	font-weight: 400;
+	letter-spacing: -0.01em;
+}
+
+.library-search .search-input::placeholder {
+	color: var(--text-secondary);
+}
+
+.library-search .search-clear {
+	font-size: 18px;
+	font-weight: bold;
+	width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 4px;
+	transition: all 0.2s ease;
+	margin-left: 8px;
+	flex-shrink: 0;
+}
+
+.library-search .search-clear:hover {
+	background: var(--surface-tertiary);
+	color: var(--text);
+}
+
 .controls-right {
 	display: flex;
 	align-items: center;
@@ -5938,9 +6034,48 @@ textarea:focus-visible {
 }
 
 /* Sort Dropdown */
-.sort-dropdown {
+.sort-dropdown-container {
+	position: relative;
+}
+
+.sort-button {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--surface-secondary);
+	border: 1px solid var(--border-subtle);
+	border-radius: 8px;
+	color: var(--text);
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	position: relative;
+}
+
+.sort-button:hover {
+	background: var(--surface-tertiary);
+	border-color: var(--border);
+}
+
+.sort-button.active {
+	background: var(--primary);
+	color: var(--primary-foreground);
+	border-color: var(--primary);
+}
+
+.sort-button .lucide {
+	transition: transform 0.2s ease;
+}
+
+.sort-button.active .lucide {
+	transform: rotate(180deg);
+}
+
+.sort-dropdown-menu {
 	position: absolute;
-	top: calc(100% + 6px);
+	top: calc(100% + 4px);
 	right: 0;
 	min-width: 200px;
 	background: var(--surface-elevated);
@@ -5949,6 +6084,31 @@ textarea:focus-visible {
 	box-shadow: var(--shadow-lg);
 	overflow: hidden;
 	z-index: 50;
+	padding: 4px 0;
+}
+
+.sort-option {
+	display: block;
+	width: 100%;
+	padding: 10px 16px;
+	background: none;
+	border: none;
+	text-align: left;
+	color: var(--text);
+	font-size: 14px;
+	font-weight: 400;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.sort-option:hover {
+	background: var(--surface-secondary);
+	color: var(--text);
+}
+
+.sort-option.active {
+	background: var(--primary);
+	color: var(--primary-foreground);
 }
 
 .dropdown-section {
@@ -6313,6 +6473,31 @@ textarea:focus-visible {
 }
 
 /* Responsive Enhancements */
+@media (max-width: 900px) {
+	.library-search {
+		max-width: 350px;
+		height: 36px;
+		padding: 0 10px;
+	}
+
+	.library-search .search-icon {
+		margin-right: 6px;
+	}
+
+	.library-search .search-input {
+		font-size: 13px;
+	}
+
+	.sort-button {
+		padding: 6px 10px;
+		font-size: 12px;
+	}
+
+	.sort-dropdown-menu {
+		min-width: 180px;
+	}
+}
+
 @media (max-width: 768px) {
 	.library-controls {
 		flex-direction: column;
@@ -6327,6 +6512,56 @@ textarea:focus-visible {
 	.controls-right {
 		justify-content: space-between;
 	}
+
+	.library-search {
+		max-width: none;
+		height: 36px;
+		padding: 0 10px;
+	}
+
+	.library-search .search-input {
+		font-size: 13px;
+	}
+
+	.sort-button {
+		padding: 6px 8px;
+		font-size: 11px;
+		min-width: 120px;
+		justify-content: center;
+	}
+
+	.sort-dropdown-menu {
+		min-width: 160px;
+		right: -50px;
+	}
+}
+
+@media (max-width: 600px) {
+	.library-search {
+		height: 32px;
+		padding: 0 8px;
+	}
+
+	.library-search .search-icon {
+		margin-right: 4px;
+		size: 14px;
+	}
+
+	.library-search .search-input {
+		font-size: 12px;
+	}
+
+	.sort-button {
+		padding: 4px 6px;
+		font-size: 10px;
+		min-width: 100px;
+	}
+
+	.sort-dropdown-menu {
+		min-width: 140px;
+		right: -40px;
+	}
+}
 
 	.settings-panel {
 		width: 100%;
@@ -6364,11 +6599,11 @@ textarea:focus-visible {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 10px 16px;
+	padding: 10px 0 10px 32px; /* Added left padding, maintained top/bottom padding */
 	background: var(--surface);
 	border-bottom: 1px solid var(--border-subtle);
 	flex-shrink: 0;
-	height: 48px;
+	height: 40px; /* Reduced height for smaller, more minimal design */
 }
 
 /* Research Hub Panel */
@@ -6557,18 +6792,25 @@ textarea:focus-visible {
 /* Enhanced Library Grid */
 .library-grid-item {
 	opacity: 0;
-	transform: translateY(15px) scale(0.97);
-	animation: fadeSlideIn 0.25s ease-out forwards;
+	transform: translateY(20px) scale(0.95);
+	animation: fadeSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+	transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .library-grid-item.animated {
-	animation: fadeSlideIn 0.25s ease-out forwards;
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+
+.library-grid-item:hover {
+	transform: translateY(-4px) scale(1.02);
+	z-index: 10;
 }
 
 @keyframes fadeSlideIn {
 	from {
 		opacity: 0;
-		transform: translateY(15px) scale(0.97);
+		transform: translateY(20px) scale(0.95);
 	}
 	to {
 		opacity: 1;

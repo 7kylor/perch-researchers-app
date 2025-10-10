@@ -37,6 +37,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortOption>('recent');
   const [showSortDropdown, setShowSortDropdown] = React.useState(false);
+  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
 
   // Animate new papers as they appear
   React.useEffect(() => {
@@ -54,8 +55,8 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
     const query = searchQuery.toLowerCase();
     return papers.filter(
       (paper) =>
-        paper.title.toLowerCase().includes(query) ||
-        paper.authors.some((author) => author.toLowerCase().includes(query)) ||
+        paper.title?.toLowerCase().includes(query) ||
+        paper.authors?.some((author) => author?.toLowerCase().includes(query)) ||
         (paper.venue && paper.venue.toLowerCase().includes(query)) ||
         (paper.abstract && paper.abstract.toLowerCase().includes(query)),
     );
@@ -114,31 +115,45 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
     <div className="library-grid-container">
       {/* Library Controls */}
       <div className="library-controls">
-        <div className="library-search">
-          <BookOpen className="search-icon animate-pulse" size={16} />
+        <div className={`library-search ${isSearchFocused ? 'focused' : ''}`}>
+          <BookOpen className="search-icon" size={16} />
           <input
             type="text"
-            placeholder="Search papers..."
+            placeholder="Search papers by title, author, venue..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
             className="search-input"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              className="search-clear"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
         </div>
 
         <div className="library-actions">
           {/* Sort Dropdown */}
-          <div className="sort-dropdown">
+          <div className="sort-dropdown-container">
             <button
               type="button"
-              className="sort-button"
+              className={`sort-button ${showSortDropdown ? 'active' : ''}`}
               onClick={() => setShowSortDropdown(!showSortDropdown)}
+              aria-haspopup="true"
+              aria-expanded={showSortDropdown}
             >
-              <Filter size={16} className="animate-spin" />
-              <span>Sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}</span>
+              <Filter size={16} />
+              <span>Sort by {sortOptions.find((opt) => opt.value === sortBy)?.label}</span>
             </button>
 
             {showSortDropdown && (
-              <div className="sort-menu">
+              <div className="sort-dropdown-menu" role="menu">
                 {sortOptions.map((option) => (
                   <button
                     key={option.value}
@@ -148,6 +163,7 @@ export const LibraryGrid: React.FC<LibraryGridProps> = ({
                       setSortBy(option.value);
                       setShowSortDropdown(false);
                     }}
+                    role="menuitem"
                   >
                     {option.label}
                   </button>

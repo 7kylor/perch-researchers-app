@@ -48,7 +48,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
   return (
     <header className="activity-bar">
       {/* Left section - Brand and Navigation */}
-      <div className="activity-left">
+      <div className="activity-left" style={{ marginLeft: '200px' }}>
         <div className="activity-brand">
           <h1 className="activity-title">Perch</h1>
         </div>
@@ -58,7 +58,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             className={getNavButtonClass('library')}
             onClick={() => onViewChange('library')}
           >
-            <Library size={18} />
+            <Library size={16} />
             <span>Library</span>
           </button>
           <button
@@ -66,7 +66,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             className={getNavButtonClass('research')}
             onClick={() => onViewChange('research')}
           >
-            <Brain size={18} />
+            <Brain size={16} />
             <span>Semantic research</span>
           </button>
           <button
@@ -74,7 +74,7 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             className={getNavButtonClass('reports')}
             onClick={() => onViewChange('reports')}
           >
-            <FileText size={18} />
+            <FileText size={16} />
             <span>Reports</span>
           </button>
           <button
@@ -82,14 +82,14 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             className={getNavButtonClass('recent')}
             onClick={() => onViewChange('recent')}
           >
-            <History size={18} />
+            <History size={16} />
             <span>Recent</span>
           </button>
         </nav>
       </div>
 
       {/* Right section - User and Settings */}
-      <div className="activity-right">
+      <div className="activity-right" style={{ marginRight: '100px' }}>
         <div className="activity-user" ref={userMenuRef}>
           <button
             type="button"
@@ -97,27 +97,27 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
             onClick={() => setShowUserMenu(!showUserMenu)}
             title="Account menu"
           >
-            <User size={20} />
+            <User size={18} />
           </button>
 
           {showUserMenu && (
             <div className="user-dropdown">
               <div className="user-info">
-                <User size={16} />
+                <User size={14} />
                 <span>talikim@gmail.com</span>
               </div>
               <div className="dropdown-divider" />
               <button type="button" className="dropdown-item" onClick={onSettingsClick}>
-                <Settings size={16} />
+                <Settings size={14} />
                 <span>Settings</span>
               </button>
               <button type="button" className="dropdown-item">
-                <HelpCircle size={16} />
+                <HelpCircle size={14} />
                 <span>Help</span>
               </button>
               <div className="dropdown-divider" />
               <button type="button" className="dropdown-item dropdown-item-danger">
-                <LogOut size={16} />
+                <LogOut size={14} />
                 <span>Sign out</span>
               </button>
             </div>

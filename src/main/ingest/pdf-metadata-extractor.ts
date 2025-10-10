@@ -1,5 +1,10 @@
 import fs from 'node:fs/promises';
-import { pdf as pdfParse } from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
+import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 export interface ExtractedMetadata {
   title?: string;
@@ -11,45 +16,68 @@ export interface ExtractedMetadata {
 }
 
 export class PDFMetadataExtractor {
+  constructor() {
+    // Configure worker for Node.js/Electron environment
+    this.configureWorker();
+  }
+
+  private configureWorker(): void {
+    try {
+      // For ESM in Node.js/Electron, configure the worker path
+      const workerPath = require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
+      const workerUrl = pathToFileURL(workerPath).href;
+      PDFParse.setWorker(workerUrl);
+    } catch (error) {
+      // If worker configuration fails, PDFParse will use default behavior
+      console.warn('Failed to configure PDF.js worker:', error);
+    }
+  }
+
   /**
    * Extract metadata from PDF file
    */
   async extractFromFile(filePath: string): Promise<ExtractedMetadata> {
+    let parser: PDFParse | null = null;
+
     try {
       const dataBuffer = await fs.readFile(filePath);
-      const pdfData = await pdfParse(dataBuffer);
+      parser = new PDFParse({ data: dataBuffer });
 
-      return this.extractMetadataFromPDF(pdfData);
+      // Get both info and text data
+      const [infoResult, textResult] = await Promise.all([parser.getInfo(), parser.getText()]);
+
+      return this.extractMetadataFromPDF(infoResult, textResult);
     } catch {
       return {};
+    } finally {
+      if (parser) {
+        await parser.destroy();
+      }
     }
   }
 
   /**
    * Extract metadata from parsed PDF data
    */
-  private extractMetadataFromPDF(pdfData: {
-    info?: { Title?: string; Author?: string; CreationDate?: string };
-    text?: string;
-  }): ExtractedMetadata {
+  private extractMetadataFromPDF(infoResult: any, textResult: any): ExtractedMetadata {
     const metadata: ExtractedMetadata = {};
 
     // Extract from PDF metadata
-    if (pdfData.info) {
-      if (pdfData.info.Title) {
-        metadata.title = this.cleanTitle(pdfData.info.Title);
+    if (infoResult?.info) {
+      if (infoResult.info.Title) {
+        metadata.title = this.cleanTitle(infoResult.info.Title);
       }
-      if (pdfData.info.Author) {
-        metadata.authors = this.parseAuthors(pdfData.info.Author);
+      if (infoResult.info.Author) {
+        metadata.authors = this.parseAuthors(infoResult.info.Author);
       }
-      if (pdfData.info.CreationDate) {
-        const year = this.extractYear(pdfData.info.CreationDate);
+      if (infoResult.info.CreationDate) {
+        const year = this.extractYear(infoResult.info.CreationDate);
         if (year) metadata.year = year;
       }
     }
 
     // Extract from text content (first 2 pages for metadata)
-    const text = pdfData.text || '';
+    const text = textResult?.text || '';
     const firstPages = text.slice(0, 5000); // First ~2 pages
 
     // Try to extract title from first line if not found in metadata

@@ -1,4 +1,4 @@
-import type React from 'react';
+import React from 'react';
 import { PaperResultCard } from './PaperResultCard';
 import type { AcademicSearchResult, AcademicPaper } from '../../../../shared/types';
 

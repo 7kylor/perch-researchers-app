@@ -26,10 +26,6 @@
     }
   }, []);
 ```
-
-
-
-
 ```65:77:/Users/taher/researchers-app/src/renderer/ui/components/LibrarySidebar.tsx
   const handleAddCategory = () => {
     const categoryName = prompt('Enter category name:');
@@ -46,6 +42,7 @@
     }
   };
 ```
+
 
 ## Data model (DB + renderer)
 

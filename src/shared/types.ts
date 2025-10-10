@@ -19,7 +19,9 @@ export interface Paper {
     | 'sciencedirect'
     | 'jstor'
     | 'googlescholar'
-    | 'pdf';
+    | 'pdf'
+    | 'openalex'
+    | 'clinicaltrials';
   abstract?: string;
   status: Status;
   filePath?: string; // absolute path to stored PDF
