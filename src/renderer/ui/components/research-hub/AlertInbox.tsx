@@ -21,13 +21,30 @@ export const AlertInbox: React.FC = () => {
   React.useEffect(() => {
     void (async () => {
       const items = await window.api.alertsList.list();
-      setAlerts(items);
+      // Transform API data to match component interface
+      const transformedAlerts = items.map((alert) => ({
+        id: alert.id,
+        queryName: alert.name,
+      }));
+      setAlerts(transformedAlerts);
     })();
   }, []);
 
   const loadResults = async (alertId: string) => {
     const rows = await window.api.alerts.getResults(alertId);
-    setResults(rows);
+    // Transform API data to match component interface
+    const transformedResults = rows.map((row) => ({
+      id: row.id,
+      paperId: (row.paper as any)?.id || '',
+      title: (row.paper as any)?.title || '',
+      authors: (row.paper as any)?.authors || [],
+      year: (row.paper as any)?.year || null,
+      venue: (row.paper as any)?.venue || null,
+      doi: (row.paper as any)?.doi || null,
+      read: row.read ? 1 : 0,
+      discoveredAt: new Date().toISOString(), // API doesn't provide this, using current time
+    }));
+    setResults(transformedResults);
   };
 
   const markRead = async (id: string, read: boolean) => {

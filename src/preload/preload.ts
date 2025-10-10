@@ -65,7 +65,7 @@ export interface PreloadAPI {
     'extract-concepts': (paperId: string) => Promise<string[]>;
     'generate-questions': (paperId: string) => Promise<string[]>;
     'analyze-trends': (paperIds: string[]) => Promise<string>;
-    'generate-proposal': (paperIds: string[]) => Promise<string>;
+    'generate-proposal': (paperIds: string[], gapPrompt?: string) => Promise<string>;
   };
   license: {
     set: (pro: boolean) => Promise<void>;
@@ -300,6 +300,42 @@ export interface PreloadAPI {
       citationStyle?: string,
     ) => Promise<string>;
     getCollectionContent: (bibliographyId: string) => Promise<string>;
+  };
+  analytics: {
+    getMetrics: () => Promise<{
+      totalPapers: number;
+      totalSessions: number;
+      avgSessionTime: number;
+      weeklySessions: number;
+      monthlySessions: number;
+      papersRead: number;
+      topics?: Array<{ name: string; count: number }>;
+    }>;
+    getTopicAnalysis: () => Promise<{
+      topics: Array<{ name: string; count: number; growth: number }>;
+      trends: Array<{ topic: string; sessions: number; papers: number }>;
+    }>;
+    getProductivityInsights: () => Promise<{
+      readingStreak: number;
+      weeklyGoal: number;
+      monthlyGoal: number;
+      completionRate: number;
+      recommendations: string[];
+    }>;
+    trackSession: (
+      paperId: string,
+      action: 'start' | 'pause' | 'resume' | 'end',
+      data?: Record<string, unknown>,
+    ) => Promise<void>;
+    getReadingHistory: (timeframe: 'week' | 'month' | 'year') => Promise<
+      Array<{
+        date: string;
+        sessions: number;
+        papersRead: number;
+        totalTime: number;
+      }>
+    >;
+    export: (format: 'json' | 'csv') => Promise<string>;
   };
 }
 

@@ -253,7 +253,7 @@ async function renderDisplayListToRGBA(
   scale: number,
 ): Promise<{ width: number; height: number; rgba: Uint8Array }> {
   const _mupdf = await ensureMuPDF();
-  const m = _mupdf.Matrix.scale(scale, scale) as unknown as MuTypes.TransformMatrix;
+  const m = _mupdf.Matrix.scale(scale, scale);
   const pix = dl.toPixmap(m, _mupdf.ColorSpace.DeviceBGR, true);
   const width = pix.getWidth();
   const height = pix.getHeight();
@@ -380,7 +380,14 @@ globalThis.onmessage = async (e: unknown) => {
         destroyDoc();
         {
           const mupdf = await ensureMuPDF();
-          doc = mupdf.PDFDocument.openDocument(payload.bytes as ArrayBuffer, 'application/pdf');
+          const document = mupdf.Document.openDocument(
+            payload.bytes as ArrayBuffer,
+            'application/pdf',
+          );
+          doc = document.asPDF();
+        }
+        if (!doc) {
+          throw new Error('Failed to open PDF document');
         }
         const pageCount = doc.countPages();
         post({ id, result: { pageCount } });
@@ -401,10 +408,7 @@ globalThis.onmessage = async (e: unknown) => {
         const _m = await ensureMuPDF();
         const dl = await ensureDisplayList(payload.pageIndex);
 
-        const m = _m.Matrix.scale(
-          payload.scale,
-          payload.scale,
-        ) as unknown as MuTypes.TransformMatrix;
+        const m = _m.Matrix.scale(payload.scale, payload.scale);
         const pix = dl.toPixmap(m, _m.ColorSpace.DeviceRGB, true);
         const width = pix.getWidth();
         const height = pix.getHeight();

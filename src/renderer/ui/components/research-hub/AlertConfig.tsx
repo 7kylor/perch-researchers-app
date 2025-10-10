@@ -23,7 +23,16 @@ export const AlertConfig: React.FC = () => {
     const qs = await window.api.search.listQueries();
     setQueries(qs);
     const as = await window.api.alertsList.list();
-    setAlerts(as);
+    // Transform API data to match component interface
+    const transformedAlerts = as.map((alert) => ({
+      id: alert.id,
+      queryId: '', // API doesn't provide queryId, using empty string
+      queryName: alert.name,
+      frequency: alert.frequency as Frequency,
+      enabled: alert.enabled ? 1 : 0,
+      lastChecked: null,
+    }));
+    setAlerts(transformedAlerts);
   }, []);
 
   React.useEffect(() => {

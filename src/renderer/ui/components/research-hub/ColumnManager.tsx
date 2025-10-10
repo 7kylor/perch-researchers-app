@@ -45,9 +45,11 @@ export const ColumnManager: React.FC<ColumnManagerProps> = ({ columns, onChange 
     if (j < 0 || j >= local.length) return;
     const next = [...local];
     const [item] = next.splice(idx, 1);
-    next.splice(j, 0, item);
-    setLocal(next);
-    onChange(next as ReadonlyArray<ExtractionColumn>);
+    if (item) {
+      next.splice(j, 0, item);
+      setLocal(next);
+      onChange(next as ReadonlyArray<ExtractionColumn>);
+    }
   };
 
   return (
