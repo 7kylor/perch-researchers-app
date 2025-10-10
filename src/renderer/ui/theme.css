@@ -2080,19 +2080,37 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 3px;
+	padding: 3px 8px;
 	background: transparent;
 	border: none;
 	border-radius: 3px;
 	color: rgba(255, 255, 255, 0.9);
 	font-size: 13px;
 	font-weight: 500;
+	min-width: auto;
+	min-height: 20px;
 	cursor: pointer;
 	transition: all 0.15s ease;
 	-webkit-app-region: no-drag;
 	white-space: nowrap;
-	min-width: 24px;
-	min-height: 24px;
+}
+
+.navbar-button-content {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-width: 50px;
+}
+
+.navbar-button-text {
+	font-size: 10px;
+	font-weight: 400;
+	opacity: 0.8;
+	line-height: 1;
+	white-space: nowrap;
+	text-align: center;
 }
 
 .navbar-user {
@@ -2179,22 +2197,40 @@ body {
 	}
 
 	.navbar-nav-button {
-		padding: 2px;
-		min-width: 20px;
+		padding: 2px 6px;
+		min-width: 45px;
 		min-height: 20px;
+	}
+
+	.navbar-button-content {
+		min-width: 45px;
+		gap: 1px;
+	}
+
+	.navbar-button-text {
+		font-size: 9px;
 	}
 }
 
 @media (max-width: 768px) {
 	.navbar-nav-button {
-		padding: 2px;
-		min-width: 18px;
+		padding: 2px 5px;
+		min-width: 40px;
 		min-height: 18px;
 	}
 
+	.navbar-button-content {
+		min-width: 40px;
+		gap: 1px;
+	}
+
+	.navbar-button-text {
+		font-size: 8px;
+	}
+
 	.navbar-nav-button svg {
-		width: 14px;
-		height: 14px;
+		width: 12px;
+		height: 12px;
 	}
 
 	.user-dropdown {
@@ -2208,9 +2244,19 @@ body {
 	}
 
 	.navbar-nav-button {
-		padding: 1px;
-		min-width: 16px;
+		padding: 1px 4px;
+		min-width: 35px;
 		min-height: 16px;
+	}
+
+	.navbar-button-content {
+		min-width: 35px;
+		gap: 0px;
+	}
+
+	.navbar-button-text {
+		font-size: 7px;
+		display: none; /* Hide text on very small screens */
 	}
 
 	.user-dropdown {

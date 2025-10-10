@@ -70,7 +70,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onViewChange?.('library')}
               title="Library"
             >
-              <Library size={16} />
+              <div className="navbar-button-content">
+                <Library size={14} />
+                <span className="navbar-button-text">Library</span>
+              </div>
             </button>
             <button
               type="button"
@@ -78,7 +81,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onViewChange?.('research')}
               title="Semantic Research"
             >
-              <Brain size={16} />
+              <div className="navbar-button-content">
+                <Brain size={14} />
+                <span className="navbar-button-text">Research</span>
+              </div>
             </button>
             <button
               type="button"
@@ -86,7 +92,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onAddPaperClick}
               title="Add Research Paper"
             >
-              <Plus size={16} />
+              <div className="navbar-button-content">
+                <Plus size={14} />
+                <span className="navbar-button-text">Add</span>
+              </div>
             </button>
             <div className="navbar-user" ref={userMenuRef}>
               <button
