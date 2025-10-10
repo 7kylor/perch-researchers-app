@@ -1,0 +1,17 @@
+[install]
+# Use exact versions for reproducible builds
+exact = true
+
+# Registry configuration
+registry = "https://registry.npmjs.org/"
+
+[install.cache]
+# Enable caching for faster installs
+enabled = true
+
+[test]
+# Use bun as the test runner
+runner = "bun"
+
+# Preload test environment
+preload = ["./src/renderer/test/setup.ts"]
