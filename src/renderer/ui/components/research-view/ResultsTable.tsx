@@ -249,6 +249,8 @@ type PaperRowProps = {
 
 const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
   const { selectedPapers, togglePaperSelection, openSidePanel } = useSearch();
+  const [showPreview, setShowPreview] = React.useState(false);
+  const [previewPosition, setPreviewPosition] = React.useState({ x: 0, y: 0 });
 
   const isSelected = selectedPapers.includes(paper.title);
 
@@ -285,108 +287,224 @@ const PaperRow: React.FC<PaperRowProps> = ({ paper, customColumns }) => {
   };
 
   return (
-    <tr className={`paper-row-elicit ${isSelected ? 'selected' : ''}`}>
-      <td className="checkbox-cell">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={() => togglePaperSelection(paper.title)}
-          onClick={(e) => e.stopPropagation()}
-          aria-label="Select paper"
-        />
-      </td>
+    <>
+      <tr
+        className={`paper-row-elicit ${isSelected ? 'selected' : ''}`}
+        onMouseEnter={() => setShowPreview(true)}
+        onMouseLeave={() => setShowPreview(false)}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setPreviewPosition({ x: e.clientX, y: e.clientY });
+        }}
+      >
+        <td className="checkbox-cell">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => togglePaperSelection(paper.title)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Select paper"
+          />
+        </td>
 
-      <td className="paper-cell-elicit">
-        <div className="paper-header-row">
-          <h4 className="paper-title-elicit">{paper.title}</h4>
-          <div className="paper-actions-top">
-            <button
-              type="button"
-              className="action-btn-top"
-              onClick={handleAddToLibrary}
-              title="Add to library"
-              aria-label="Add to library"
-            >
-              <Bookmark size={14} />
-            </button>
-            <button
-              type="button"
-              className="action-btn-top"
-              onClick={handleOpenPaper}
-              disabled={!paper.url}
-              title="Open paper"
-              aria-label="Open paper"
-            >
-              <ExternalLink size={14} />
-            </button>
-            <button
-              type="button"
-              className="action-btn-top"
-              onClick={handleViewDetails}
-              title="View details"
-              aria-label="View details"
-            >
-              <BookOpen size={14} />
-            </button>
+        <td className="paper-cell-elicit">
+          <div className="paper-header-row">
+            <h4 className="paper-title-elicit">{paper.title}</h4>
+            <div className="paper-actions-top">
+              <button
+                type="button"
+                className="action-btn-top"
+                onClick={handleAddToLibrary}
+                title="Add to library"
+                aria-label="Add to library"
+              >
+                <Bookmark size={14} />
+              </button>
+              <button
+                type="button"
+                className="action-btn-top"
+                onClick={handleOpenPaper}
+                disabled={!paper.url}
+                title="Open paper"
+                aria-label="Open paper"
+              >
+                <ExternalLink size={14} />
+              </button>
+              <button
+                type="button"
+                className="action-btn-top"
+                onClick={handleViewDetails}
+                title="View details"
+                aria-label="View details"
+              >
+                <BookOpen size={14} />
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="paper-metadata-row">
-          {paper.authors.length > 0 && (
-            <span className="metadata-item">
-              <Users size={12} />
-              {paper.authors.slice(0, 1).join(', ')}
-              {paper.authors.length > 1 && ` +${paper.authors.length - 1}`}
+          <div className="paper-metadata-row">
+            {paper.authors.length > 0 && (
+              <span className="metadata-item">
+                <Users size={12} />
+                {paper.authors.slice(0, 1).join(', ')}
+                {paper.authors.length > 1 && ` +${paper.authors.length - 1}`}
+              </span>
+            )}
+            {paper.venue && (
+              <span className="metadata-item">
+                <FileText size={12} />
+                {paper.venue}
+              </span>
+            )}
+          </div>
+
+          <div className="paper-stats-row">
+            {paper.year && <span className="stat-badge year-badge">{paper.year}</span>}
+            {paper.citations !== undefined && (
+              <span className="stat-badge citations-badge">{paper.citations} citations</span>
+            )}
+            <span className={`stat-badge source-badge-inline source-${paper.source}`}>
+              {paper.source}
             </span>
-          )}
-          {paper.venue && (
-            <span className="metadata-item">
-              <FileText size={12} />
-              {paper.venue}
-            </span>
-          )}
-        </div>
+            {paper.doi && (
+              <a
+                href={`https://doi.org/${paper.doi}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="doi-link-inline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink size={10} />
+                DOI
+              </a>
+            )}
+          </div>
+        </td>
 
-        <div className="paper-stats-row">
-          {paper.year && <span className="stat-badge year-badge">{paper.year}</span>}
-          {paper.citations !== undefined && (
-            <span className="stat-badge citations-badge">{paper.citations} citations</span>
-          )}
-          <span className={`stat-badge source-badge-inline source-${paper.source}`}>
-            {paper.source}
-          </span>
-          {paper.doi && (
-            <a
-              href={`https://doi.org/${paper.doi}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="doi-link-inline"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink size={10} />
-              DOI
-            </a>
-          )}
-        </div>
-      </td>
-
-      <td className="abstract-cell-elicit">
-        {paper.abstract ? (
-          <p className="abstract-text-elicit">{paper.abstract}</p>
-        ) : (
-          <span className="no-data">No abstract available for this paper.</span>
-        )}
-      </td>
-
-      {customColumns.map((col) => (
-        <td key={col.id} className="custom-cell-elicit">
-          {col.extractedValues?.[paper.title] ? (
-            <div className="extracted-value">{String(col.extractedValues[paper.title])}</div>
+        <td className="abstract-cell-elicit">
+          {paper.abstract ? (
+            <p className="abstract-text-elicit">{paper.abstract}</p>
           ) : (
-            <span className="no-data">—</span>
+            <span className="no-data">No abstract available for this paper.</span>
           )}
         </td>
-      ))}
-    </tr>
+
+        {customColumns.map((col) => (
+          <td key={col.id} className="custom-cell-elicit">
+            {col.extractedValues?.[paper.title] ? (
+              <div className="extracted-value">{String(col.extractedValues[paper.title])}</div>
+            ) : (
+              <span className="no-data">—</span>
+            )}
+          </td>
+        ))}
+      </tr>
+
+      {/* Instant Preview Tooltip */}
+      {showPreview && (
+        <div
+          className="paper-preview-tooltip"
+          style={{
+            left: `${Math.min(previewPosition.x + 10, window.innerWidth - 420)}px`,
+            top: `${Math.min(previewPosition.y - 10, window.innerHeight - 520)}px`,
+          }}
+        >
+          <div className="preview-tooltip-content">
+            <div className="preview-tooltip-header">
+              <h5 className="preview-tooltip-title">{paper.title}</h5>
+              <button
+                type="button"
+                className="preview-close-button"
+                onClick={() => setShowPreview(false)}
+                aria-label="Close preview"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="preview-tooltip-body">
+              {paper.authors.length > 0 && (
+                <div className="preview-section">
+                  <strong>Authors:</strong> {paper.authors.join(', ')}
+                </div>
+              )}
+
+              {paper.venue && (
+                <div className="preview-section">
+                  <strong>Published in:</strong> {paper.venue} ({paper.year || 'Unknown year'})
+                </div>
+              )}
+
+              {paper.citations !== undefined && (
+                <div className="preview-section">
+                  <strong>Citations:</strong> {paper.citations}
+                </div>
+              )}
+
+              {paper.doi && (
+                <div className="preview-section">
+                  <strong>DOI:</strong>
+                  <a
+                    href={`https://doi.org/${paper.doi}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="preview-doi-link"
+                  >
+                    {paper.doi}
+                  </a>
+                </div>
+              )}
+
+              {paper.abstract && (
+                <div className="preview-section">
+                  <strong>Abstract:</strong>
+                  <p className="preview-abstract">{paper.abstract}</p>
+                </div>
+              )}
+
+              {customColumns.length > 0 && (
+                <div className="preview-section">
+                  <strong>Extractions:</strong>
+                  <div className="preview-extractions">
+                    {customColumns.map(
+                      (col) =>
+                        col.extractedValues?.[paper.title] && (
+                          <div key={col.id} className="preview-extraction">
+                            <span className="extraction-label">{col.name}:</span>
+                            <span className="extraction-value">
+                              {String(col.extractedValues[paper.title])}
+                            </span>
+                          </div>
+                        ),
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="preview-tooltip-actions">
+              <button
+                type="button"
+                className="preview-action-button preview-primary"
+                onClick={handleAddToLibrary}
+              >
+                <Bookmark size={14} />
+                Add to Library
+              </button>
+              <button type="button" className="preview-action-button" onClick={handleViewDetails}>
+                <BookOpen size={14} />
+                View Details
+              </button>
+              {paper.url && (
+                <button type="button" className="preview-action-button" onClick={handleOpenPaper}>
+                  <ExternalLink size={14} />
+                  Open Paper
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
