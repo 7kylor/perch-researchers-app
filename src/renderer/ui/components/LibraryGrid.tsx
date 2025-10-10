@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, List, Filter, BookOpen } from 'lucide-react';
+import { Filter, BookOpen } from 'lucide-react';
 import { LibraryCard } from './LibraryCard';
 
 type Paper = {

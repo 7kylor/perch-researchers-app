@@ -346,7 +346,7 @@ export const App: React.FC = () => {
           onViewChange={handleViewChange}
         />
         <div className="main-layout">
-          <div className="main-content">
+          <main className="main-content">
             {currentView === 'library' && (
               <LibraryView
                 papers={results}
@@ -360,15 +360,16 @@ export const App: React.FC = () => {
             {currentView === 'research' && <ResearchAnalyticsHub />}
             {currentView === 'reports' && <ReportsView />}
             {currentView === 'recent' && <RecentView />}
-          </div>
+          </main>
+
           {showAIChat && (
-            <div className="ai-chat-panel">
+            <aside className="ai-chat-panel">
               <AIChat
                 availablePapers={results}
                 selectedPapers={selectedPapersForAI}
                 onPapersChange={setSelectedPapersForAI}
               />
-            </div>
+            </aside>
           )}
         </div>
 

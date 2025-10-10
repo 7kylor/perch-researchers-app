@@ -19,7 +19,13 @@ export const RecentView: React.FC = () => {
 
   return (
     <div className="recent-view">
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="recent-container">
+        <div className="recent-header">
+          <h1>Recent Activity</h1>
+          <p className="recent-subtitle">
+            Your latest research activities, reports, and discoveries
+          </p>
+        </div>
         <RecentList onOpen={handleOpenRecent} limit={20} />
       </div>
     </div>

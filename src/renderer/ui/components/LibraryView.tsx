@@ -36,25 +36,27 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 }) => {
   return (
     <div className="library-view">
-      {isLoading ? (
-        <LoadingSkeleton count={9} />
-      ) : papers.length === 0 ? (
-        <EmptyState
-          category={selectedCategory}
-          onAddItem={() => {
-            // This would trigger the add paper modal
-            console.log('Add paper');
-          }}
-        />
-      ) : (
-        <LibraryGrid
-          papers={papers}
-          category={selectedCategory}
-          onPaperSelect={onPaperSelect}
-          onRefresh={onRefresh}
-          onShowCitations={onShowCitations}
-        />
-      )}
+      <div className="library-container">
+        {isLoading ? (
+          <LoadingSkeleton count={9} />
+        ) : papers.length === 0 ? (
+          <EmptyState
+            category={selectedCategory}
+            onAddItem={() => {
+              // This would trigger the add paper modal
+              console.log('Add paper');
+            }}
+          />
+        ) : (
+          <LibraryGrid
+            papers={papers}
+            category={selectedCategory}
+            onPaperSelect={onPaperSelect}
+            onRefresh={onRefresh}
+            onShowCitations={onShowCitations}
+          />
+        )}
+      </div>
     </div>
   );
 };

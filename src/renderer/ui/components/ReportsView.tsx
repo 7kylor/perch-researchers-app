@@ -29,23 +29,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({ onOpenReport }) => {
 
   return (
     <div className="reports-view">
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24 }}>
+      <div className="reports-layout">
         {/* Left Sidebar - Recent Reports */}
-        <div>
-          <RecentList
-            onOpen={handleOpenReport}
-            limit={10}
-          />
-        </div>
+        <aside className="reports-sidebar">
+          <div className="sidebar-header">
+            <h2>Recent Reports</h2>
+          </div>
+          <RecentList onOpen={handleOpenReport} limit={10} />
+        </aside>
 
         {/* Main Content */}
-        <div>
-          {selectedReport ? (
-            <ReportViewer content={reportContent} />
-          ) : (
-            <ReportBuilder />
-          )}
-        </div>
+        <main className="reports-main">
+          {selectedReport ? <ReportViewer content={reportContent} /> : <ReportBuilder />}
+        </main>
       </div>
     </div>
   );

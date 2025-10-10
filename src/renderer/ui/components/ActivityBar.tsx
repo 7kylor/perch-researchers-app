@@ -41,47 +41,49 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
     }
   }, [showUserMenu]);
 
-  const getNavLinkClass = (route: string) => {
-    return `top-nav-link ${currentRoute === route ? 'top-nav-link-active' : ''}`;
+  const getNavButtonClass = (route: string) => {
+    return `nav-button ${currentRoute === route ? 'nav-button-active' : ''}`;
   };
 
   return (
     <header className="activity-bar">
       {/* Left section - Brand and Navigation */}
       <div className="activity-left">
-        <h1 className="activity-title">Perch</h1>
-        <nav className="top-nav">
+        <div className="activity-brand">
+          <h1 className="activity-title">Perch</h1>
+        </div>
+        <nav className="main-nav">
           <button
             type="button"
-            className={getNavLinkClass('library')}
+            className={getNavButtonClass('library')}
             onClick={() => onViewChange('library')}
           >
-            <Library size={16} />
-            Library
+            <Library size={18} />
+            <span>Library</span>
           </button>
           <button
             type="button"
-            className={getNavLinkClass('research')}
+            className={getNavButtonClass('research')}
             onClick={() => onViewChange('research')}
           >
-            <Brain size={16} />
-            Semantic research
+            <Brain size={18} />
+            <span>Semantic research</span>
           </button>
           <button
             type="button"
-            className={getNavLinkClass('reports')}
+            className={getNavButtonClass('reports')}
             onClick={() => onViewChange('reports')}
           >
-            <FileText size={16} />
-            Reports
+            <FileText size={18} />
+            <span>Reports</span>
           </button>
           <button
             type="button"
-            className={getNavLinkClass('recent')}
+            className={getNavButtonClass('recent')}
             onClick={() => onViewChange('recent')}
           >
-            <History size={16} />
-            Recent
+            <History size={18} />
+            <span>Recent</span>
           </button>
         </nav>
       </div>
@@ -91,31 +93,31 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
         <div className="activity-user" ref={userMenuRef}>
           <button
             type="button"
-            className="activity-compact-btn"
+            className="user-menu-trigger"
             onClick={() => setShowUserMenu(!showUserMenu)}
             title="Account menu"
           >
-            <User size={18} />
+            <User size={20} />
           </button>
 
           {showUserMenu && (
-            <div className="user-menu">
-              <div className="user-menu-item">
-                <User size={14} />
+            <div className="user-dropdown">
+              <div className="user-info">
+                <User size={16} />
                 <span>talikim@gmail.com</span>
               </div>
-              <div className="user-menu-divider" />
-              <button type="button" className="user-menu-item" onClick={onSettingsClick}>
-                <Settings size={14} />
+              <div className="dropdown-divider" />
+              <button type="button" className="dropdown-item" onClick={onSettingsClick}>
+                <Settings size={16} />
                 <span>Settings</span>
               </button>
-              <button type="button" className="user-menu-item">
-                <HelpCircle size={14} />
+              <button type="button" className="dropdown-item">
+                <HelpCircle size={16} />
                 <span>Help</span>
               </button>
-              <div className="user-menu-divider" />
-              <button type="button" className="user-menu-item user-menu-logout">
-                <LogOut size={14} />
+              <div className="dropdown-divider" />
+              <button type="button" className="dropdown-item dropdown-item-danger">
+                <LogOut size={16} />
                 <span>Sign out</span>
               </button>
             </div>
